@@ -111,13 +111,7 @@ def common_prefix(str1: str, str2: str) -> None:
 
 def preprocess_code(cpp_code):
     preprocess = subprocess.Popen(
-        ["clang", "-x", "c++", "-std=c++17", "-fPIC",
-            "-I/usr/include/x86_64-linux-gnu/qt5",
-            "-I/usr/include/x86_64-linux-gnu/qt5/QtCore",
-            "-I/home/gael/Projets/Lima/lima/lima_common/src/",
-            "-I/home/gael/Projets/Lima/lima/lima_common/src/common/XMLConfigurationFiles",
-            "-E", "-"],
-
+        cpplang.parser.preprocess_command,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)

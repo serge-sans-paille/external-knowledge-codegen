@@ -14,6 +14,17 @@ from . import tree
 
 ENABLE_DEBUG_SUPPORT = True
 
+preprocess_command = [
+    shutil.which("clang"), "-x", "c++", "-std=c++17", "-fPIC",
+    "-I/usr/include/x86_64-linux-gnu/qt5",
+    "-I/usr/include/x86_64-linux-gnu/qt5/QtCore",
+    "-I/home/gael/Projets/Lima/lima/lima_common/src/",
+    "-I/home/gael/Projets/Lima/lima/lima_common/src/common",
+    "-I/home/gael/Projets/Lima/lima/lima_common/src/common/AbstractFactoryPattern",
+    "-I/home/gael/Projets/Lima/lima/lima_common/src/common/QsLog",
+    "-I/home/gael/Projets/Lima/lima/lima_common/src/common/XMLConfigurationFiles",
+    "-E", "-"]
+
 def parse_debug(method):
     global ENABLE_DEBUG_SUPPORT
 
@@ -103,16 +114,6 @@ class Parser(object):
             self.filepath = filepath
             # TODO replace in commandss below the include path by thosee given by the
             # C++ project build system
-            preprocess_command = [
-                shutil.which("clang"), "-x", "c++", "-std=c++17", "-fPIC",
-                "-I/usr/include/x86_64-linux-gnu/qt5",
-                "-I/usr/include/x86_64-linux-gnu/qt5/QtCore",
-                "-I/home/gael/Projets/Lima/lima/lima_common/src/",
-                "-I/home/gael/Projets/Lima/lima/lima_common/src/common",
-                "-I/home/gael/Projets/Lima/lima/lima_common/src/common/AbstractFactoryPattern",
-                "-I/home/gael/Projets/Lima/lima/lima_common/src/common/QsLog",
-                "-I/home/gael/Projets/Lima/lima/lima_common/src/common/XMLConfigurationFiles",
-                "-E", "-"]
             preprocess = subprocess.run(
                 preprocess_command,
                 capture_output=True,
@@ -135,9 +136,12 @@ class Parser(object):
             "-I/home/gael/Projets/Lima/lima/lima_common/src/",
             "-I/home/gael/Projets/Lima/lima/lima_common/src/common",
             "-I/home/gael/Projets/Lima/lima/lima_common/src/common/AbstractFactoryPattern",
+            "-I/home/gael/Projets/Lima/lima/lima_common/src/common/QsLog",
             "-I/home/gael/Projets/Lima/lima/lima_common/src/common/XMLConfigurationFiles",
             "-Xclang", "-ast-dump=json",
             "-fsyntax-only", "-"]
+        # if ENABLE_DEBUG_SUPPORT:
+        #     print(f"process_command:\n{' '.join(process_command)}\n\n", file=sys.stderr)
         try:
             p = subprocess.run(
                 process_command,
@@ -148,6 +152,7 @@ class Parser(object):
             if self.filepath is not None:
                 print(f"While handling {self.filepath},\n")
             print(f"Parsing error {e.returncode}:\n{e.stderr.decode()}", file=sys.stderr)
+            print(f"    command was:\n{' '.join(process_command)}", file=sys.stderr)
             raise
         stdout_data = p.stdout
         # if ENABLE_DEBUG_SUPPORT:

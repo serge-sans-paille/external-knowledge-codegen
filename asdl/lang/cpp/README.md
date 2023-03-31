@@ -1,4 +1,3 @@
-
 This dir contains the tool allowing to convert C++ code to AST and back to the equivalent C++. This is used to generate
 the sequence of grammar rule calls corresponding to input C++ code. This will be the training data of the model learning
 to convert natural language into valid C++ code.
@@ -10,7 +9,7 @@ The equivalent exist (and is complete) for Java and Python3. It can be used as a
 is not complete.
 
 To test the AST generator, one must first have `cpplang` in its PYTHONPATH. To do so, you can source the `setenv.sh`
-file in the project root.
+file in the project root. Please use LLVM 15. LLVM 12 is known to fail.
 
 Then, you can try:
 

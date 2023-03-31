@@ -399,7 +399,11 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write(node.name.replace("operator", "", 1))
             return
         self.write(node.name)
-        if node.kind == "CXXMethodDecl":
+        if node.kind == "CXXMethodDecl" and node.name not in [
+                '+', '-', '*', '/', '//', '%', '**', '==', '!=', '<', '>', '<=', '>=',
+                'and', 'or', 'not', '&', '|', '^', '~', '<<', '>>', '+=', '-=', '*=',
+                '/=', '//=', '%=', '**=', '&=', '|=', '^=', '<<=', '>>=', 'is',
+                'is not', 'in', 'not in']:
             self.write("(")
             self.comma_list(node.subnodes)
             self.write(")")
@@ -530,7 +534,8 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write(node.opcode, node.subnodes[0])
 
     def visit_DeclStmt(self, node: tree.DeclStmt):
-        self.write(node.subnodes[0])
+        if node.subnodes:
+            self.write(node.subnodes[0])
 
     # ReturnStmt(identifier* label, expression expression)
     def visit_ReturnStmt(self, node: tree.ReturnStmt):
