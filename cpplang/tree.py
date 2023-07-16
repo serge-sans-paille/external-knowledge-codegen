@@ -513,6 +513,10 @@ class UnaryOperator(Node):
     attrs = ("opcode", "postfix",)
 
 
+class ArraySubscriptExpr(Node):
+    attrs = ()
+
+
 class MethodReference(Primary):
     attrs = ("expression", "method", "type_arguments")
 

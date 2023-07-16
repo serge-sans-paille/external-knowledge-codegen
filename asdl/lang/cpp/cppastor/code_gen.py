@@ -438,7 +438,8 @@ class SourceGenerator(ExplicitNodeVisitor):
                 else:
                     self.write(" = ", node.subnodes[0])
                     self.conditional_write(";")
-            pass
+            else:
+                self.conditional_write(";")
 
     def visit_FieldDecl(self, node: tree.FieldDecl):
         self.write(node.type, " ", node.name)
@@ -536,6 +537,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         else:
             self.write(node.opcode, node.subnodes[0])
 
+    def visit_ArraySubscriptExpr(self, node: tree.ArraySubscriptExpr):
+        self.write(node.subnodes[0], "[", node.subnodes[1], "]")
+
     def visit_DeclStmt(self, node: tree.DeclStmt):
         if node.subnodes:
             self.write(node.subnodes[0])
@@ -570,10 +574,11 @@ class SourceGenerator(ExplicitNodeVisitor):
         if node.subnodes is not None:
             for statement in node.subnodes:
                 self.write(statement)
-                if (isinstance(statement, tree.BinaryOperator)
-                        or isinstance(statement, tree.ExprWithCleanups)
-                        or isinstance(statement, tree.CXXOperatorCallExpr)
-                        or isinstance(statement, tree.CXXMemberCallExpr)):
+                if isinstance(statement, (tree.BinaryOperator,
+                                          tree.ArraySubscriptExpr,
+                                          tree.ExprWithCleanups,
+                                          tree.CXXOperatorCallExpr,
+                                          tree.CXXMemberCallExpr)):
                     self.write(";\n")
         self.write("}")
         self.newline(extra=1)

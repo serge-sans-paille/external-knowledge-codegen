@@ -912,6 +912,12 @@ class Parser(object):
         return tree.UnaryOperator(opcode=opcode, postfix=postfix, subnodes=subnodes)
 
     @parse_debug
+    def parse_ArraySubscriptExpr(self, node) -> tree.ArraySubscriptExpr:
+        assert node['kind'] == "ArraySubscriptExpr"
+        subnodes = self.parse_subnodes(node)
+        return tree.ArraySubscriptExpr(subnodes=subnodes)
+
+    @parse_debug
     def parse_ParenExpr(self, node) -> tree.ParenExpr:
         assert node['kind'] == "ParenExpr"
         subnodes = self.parse_subnodes(node)
