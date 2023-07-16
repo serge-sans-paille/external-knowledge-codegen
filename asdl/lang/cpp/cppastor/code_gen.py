@@ -574,7 +574,8 @@ class SourceGenerator(ExplicitNodeVisitor):
         if node.subnodes is not None:
             for statement in node.subnodes:
                 self.write(statement)
-                if isinstance(statement, (tree.BinaryOperator,
+                if isinstance(statement, (tree.UnaryOperator,
+                                          tree.BinaryOperator,
                                           tree.ArraySubscriptExpr,
                                           tree.ExprWithCleanups,
                                           tree.CXXOperatorCallExpr,
