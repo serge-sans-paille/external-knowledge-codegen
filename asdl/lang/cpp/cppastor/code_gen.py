@@ -744,14 +744,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(";")
 
     def visit_CStyleCastExpr(self, node: tree.CStyleCastExpr):
-        def get_deeper_member_name(node):
-            if node.subnodes is not None and len(node.subnodes) > 0:
-                return get_deeper_member_name(node.subnodes[0])
-            elif node.__class__.__name__ != "MemberExpr":
-                return None
-            else:
-                return node.name
-        self.write(node.type, get_deeper_member_name(node))
+        self.write(node.type, node.subnodes[0])
 
     def visit_CXXThisExpr(self, node: tree.CXXThisExpr):
         self.write("this")
