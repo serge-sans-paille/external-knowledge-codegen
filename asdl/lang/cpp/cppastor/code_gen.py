@@ -451,6 +451,9 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_TypeRef(self, node: tree.TypeRef):
         self.write(node.name)
 
+    def visit_QualType(self, node: tree.QualType):
+        self.write(node.type)
+
     def visit_CXXMethodDecl(self, node: tree.CXXMethodDecl):
         parameters = []
         statements = []

@@ -768,33 +768,38 @@ class Parser(object):
         subnodes = self.parse_subnodes(node)
         return tree.DeclStmt(subnodes=subnodes)
 
+
+    @parse_debug
+    def parse_QualType(self, node) -> tree.QualType:
+        return tree.QualType(subnodes=[], type=node['qualType'])
+
     @parse_debug
     def parse_VarDecl(self, node) -> tree.VarDecl:
         assert node['kind'] == "VarDecl"
         name = node['name']
-        init = node['init']
         implicit = 'implicit' if 'isImplicit' in node and node['isImplicit'] else ''
         referenced = 'referenced' if 'isReferenced' in node and node['isReferenced'] else ''
         storage_class = node['storageClass'] if "storageClass" in node else ""
-        splitted_type = self.source_code[
-            node['range']['begin']['offset']:
-                node['range']['end']['offset']].strip()
-        if splitted_type and splitted_type[-1] == "=":
-            splitted_type = splitted_type[:-1].strip()
-        splitted_type = splitted_type.split(" ")
-        # breakpoint()
-        if len(storage_class) > 0:
-            splitted_type.pop(0)
-        var_type, array_decl = (splitted_type[:2] if len(splitted_type) >= 2
-                                else (splitted_type[0], ""))
-        array_decl = re.sub(r'^' + re.escape(name), '', array_decl)
+
+        qual_type = self.parse_QualType(node['type'])
+
+        # FIXME: this looks messy
+        array_start = qual_type.type.find('[')
+        if array_start >= 0:
+            qual_type.type, array_decl = qual_type.type[:array_start], qual_type.type[array_start:]
+        else:
+            array_decl = ''
+
         if 'init' in node:
             subnodes = self.parse_subnodes(node)
+            init = node['init']
         else:
             subnodes = []
+            init = ''
+
         return tree.VarDecl(name=name,
                             storage_class=storage_class,
-                            type=var_type,
+                            type=qual_type,
                             array=array_decl,
                             init=init,
                             implicit=implicit,
