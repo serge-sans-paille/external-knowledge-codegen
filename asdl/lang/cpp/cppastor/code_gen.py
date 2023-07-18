@@ -415,11 +415,8 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.subnodes[0])
 
     def visit_ImplicitCastExpr(self, node: tree.ImplicitCastExpr):
-        if node.subnodes is not None and len(node.subnodes) > 0:
-            self.write(node.subnodes[0])
-        else:
-        # if node.name is not None and len(node.name) > 0:
-            self.write(node.name)
+        # The cast is implicit, no need to pretty-print it.
+        self.write(node.subnodes[0])
 
     def visit_VarDecl(self, node: tree.VarDecl):
         if len(node.storage_class) > 0:
@@ -433,8 +430,6 @@ class SourceGenerator(ExplicitNodeVisitor):
                 if node.init == 'call':
                     self.write("(", node.subnodes[0], ")")
                     self.conditional_write(";")
-                elif "ImplicitCastExpr" in node.subnodes[0].__class__.__name__   and len(node.subnodes[0].name) == 0:
-                    pass
                 else:
                     self.write(" = ", node.subnodes[0])
                     self.conditional_write(";")
@@ -744,7 +739,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(";")
 
     def visit_CStyleCastExpr(self, node: tree.CStyleCastExpr):
-        self.write(node.type, node.subnodes[0])
+        self.write("(", node.type, ")", node.subnodes[0])
 
     def visit_CXXThisExpr(self, node: tree.CXXThisExpr):
         self.write("this")

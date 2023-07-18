@@ -864,18 +864,9 @@ class Parser(object):
     @parse_debug
     def parse_ImplicitCastExpr(self, node) -> tree.ImplicitCastExpr:
         assert node['kind'] == "ImplicitCastExpr"
+        the_type = self.parse_QualType(node['type'])
         subnodes = self.parse_subnodes(node)
-        if len(subnodes) == 0:
-            return None
-        if 'name' in subnodes[0].__dict__:
-            name = subnodes[0].name
-        elif 'value' in subnodes[0].__dict__:
-            name = subnodes[0].value
-        else:
-            name = ""
-
-        print(f"parse_ImplicitCastExpr {name}", file=sys.stderr)
-        return tree.ImplicitCastExpr(name=name, subnodes=subnodes)
+        return tree.ImplicitCastExpr(type=the_type, subnodes=subnodes)
 
     @parse_debug
     def parse_CXXDefaultArgExpr(self, node) -> None:
@@ -1051,7 +1042,7 @@ class Parser(object):
     @parse_debug
     def parse_CStyleCastExpr(self, node) -> tree.CStyleCastExpr:
         assert node['kind'] == "CStyleCastExpr"
-        the_type = self.get_node_source_code(node)
+        the_type = self.parse_QualType(node['type'])
         subnodes = self.parse_subnodes(node)
         return tree.CStyleCastExpr(type=the_type, subnodes=subnodes)
 
