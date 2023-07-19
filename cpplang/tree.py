@@ -435,7 +435,7 @@ class CXXForRangeStmt(Node):
 
 
 class ImplicitCastExpr(Node):
-    attrs = ("name",)
+    attrs = ("type",)
 
 # ------------------------------------------------------------------------------
 
