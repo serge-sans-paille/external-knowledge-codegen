@@ -3,4 +3,9 @@ clang
 colorama
 javalang
 libclang
+nltk
 six
+torch==1.11.0
+transformers
+#fairseq from patched sources
+xgboost

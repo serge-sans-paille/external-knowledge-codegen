@@ -4,6 +4,7 @@ set -o pipefail
 set -o nounset
 
 seed=0
+data_path="/home/gael/Projets/Decoder-ICT-16/recycle_bert_data/data_concode_pretok"
 vocab="data/concode/vocab.src_freq3.code_freq3.bin"
 train_file="data/concode/train.all_0.bin"
 dev_file="data/concode/dev.bin"
@@ -18,6 +19,7 @@ lr_decay=0.5
 batch_size=32
 max_epoch=80
 beam_size=15
+encoder=bert
 lstm='lstm'  # lstm
 lr_decay_after_epoch=15
 model_name=concode.${lstm}.hidden${hidden_size}.embed${embed_size}.action${action_embed_size}.field${field_embed_size}.type${type_embed_size}.dr${dropout}.lr${lr}.lr_de${lr_decay}.lr_da${lr_decay_after_epoch}.beam${beam_size}.$(basename ${vocab}).$(basename ${train_file}).glorot.par_state.seed${seed}
@@ -27,7 +29,7 @@ mkdir -p logs/concode
 echo commit hash: `git rev-parse HEAD` > logs/concode/${model_name}.log
 
 #     --cuda \
-python -u exp.py \
+python -u  -m pdb exp.py \
     --lang java \
     --seed ${seed} \
     --mode train \
@@ -37,7 +39,10 @@ python -u exp.py \
     --transition_system java \
     --train_file ${train_file} \
     --dev_file ${dev_file} \
+    --bert_model /home/gael/Projets/Decoder-ICT-16/recycle_bert_data/data_concode_pretok/mymodel \
+    --data_path ${data_path} \
     --vocab ${vocab} \
+    --encoder ${encoder} \
     --lstm ${lstm} \
     --no_parent_field_type_embed \
     --no_parent_production_embed \

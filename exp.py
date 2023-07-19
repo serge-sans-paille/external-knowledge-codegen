@@ -24,6 +24,7 @@ from model.utils import GloveHelper
 
 # important, make sure the astor version matches here.
 assert astor.__version__ == "0.7.1"
+import six
 if six.PY3:
     pass
 

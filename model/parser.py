@@ -26,6 +26,29 @@ from model.attention_util import AttentionUtil
 from model.nn_utils import LabelSmoothing
 from model.pointer_net import PointerNet
 
+from .transformer_with_pretrained_bert import TransformerWithBertEncoder
+from fairseq import options, utils
+import fairseq
+from transformers import BertTokenizer
+
+
+def Embedding(num_embeddings, embedding_dim, padding_idx):
+    m = nn.Embedding(num_embeddings, embedding_dim, padding_idx=padding_idx)
+    nn.init.normal_(m.weight, mean=0, std=embedding_dim ** -0.5)
+    nn.init.constant_(m.weight[padding_idx], 0)
+    return m
+
+
+def build_embedding(dictionary, embed_dim, path=None):
+    num_embeddings = len(dictionary)
+    padding_idx = dictionary.pad()
+    emb = Embedding(num_embeddings, embed_dim, padding_idx)
+    # if provided, load from preloaded dictionaries
+    if path:
+        embed_dict = utils.parse_embedding(path)
+        utils.load_embedding(embed_dict, dictionary, emb)
+    return emb
+
 
 @Registrable.register('default_parser')
 class Parser(nn.Module):
@@ -44,6 +67,9 @@ class Parser(nn.Module):
         self.grammar = self.transition_system.grammar
 
         # Embedding layers
+
+        # Load the pre-trained BERT tokenizer
+        self.bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
         # source token embedding
         self.src_embed = nn.Embedding(len(vocab.source), args.embed_size)
@@ -68,30 +94,30 @@ class Parser(nn.Module):
         nn.init.xavier_normal_(self.type_embed.weight.data)
 
         # LSTMs
+        if args.encoder == 'bert':
+            src_dict = fairseq.data.dictionary.Dictionary.load(os.path.join(
+                args.data_path, f"dict.src.txt"))
+
+            encoder_embed_tokens = build_embedding(src_dict, args.encoder_embed_dim)
+            embed_tokens = encoder_embed_tokens
+            self.encoder = TransformerWithBertEncoder(args, src_dict, embed_tokens)
+        elif args.encoder == 'lstm':
+            self.encoder = nn.LSTM(args.embed_size, int(args.hidden_size / 2),
+                                   bidirectional=True)
+        else:
+            raise ValueError(f"Unknown encoder type {args.lstm}")
+
+        input_dim = args.action_embed_size  # previous action
+        # frontier info
+        input_dim += args.action_embed_size * (not args.no_parent_production_embed)
+        input_dim += args.field_embed_size * (not args.no_parent_field_embed)
+        input_dim += args.type_embed_size * (not args.no_parent_field_type_embed)
+        input_dim += args.att_vec_size * (not args.no_input_feed)  # input feeding
         if args.lstm == 'lstm':
-            self.encoder_lstm = nn.LSTM(args.embed_size, int(args.hidden_size / 2), bidirectional=True)
-
-            input_dim = args.action_embed_size  # previous action
-            # frontier info
-            input_dim += args.action_embed_size * (not args.no_parent_production_embed)
-            input_dim += args.field_embed_size * (not args.no_parent_field_embed)
-            input_dim += args.type_embed_size * (not args.no_parent_field_type_embed)
             input_dim += args.hidden_size * (not args.no_parent_state)
-
-            input_dim += args.att_vec_size * (not args.no_input_feed)  # input feeding
-
             self.decoder_lstm = nn.LSTMCell(input_dim, args.hidden_size)
         elif args.lstm == 'parent_feed':
-            self.encoder_lstm = nn.LSTM(args.embed_size, int(args.hidden_size / 2), bidirectional=True)
             from .lstm import ParentFeedingLSTMCell
-
-            input_dim = args.action_embed_size  # previous action
-            # frontier info
-            input_dim += args.action_embed_size * (not args.no_parent_production_embed)
-            input_dim += args.field_embed_size * (not args.no_parent_field_embed)
-            input_dim += args.type_embed_size * (not args.no_parent_field_type_embed)
-            input_dim += args.att_vec_size * (not args.no_input_feed)  # input feeding
-
             self.decoder_lstm = ParentFeedingLSTMCell(input_dim, args.hidden_size)
         else:
             raise ValueError('Unknown LSTM type %s' % args.lstm)
@@ -182,10 +208,95 @@ class Parser(nn.Module):
             src_sents_var = src_sents_var * mask + (1 - mask) * self.vocab.source.unk_id
 
         src_token_embed = self.src_embed(src_sents_var)
-        packed_src_token_embed = pack_padded_sequence(src_token_embed, src_sents_len)
+        # packed_src_token_embed = pack_padded_sequence(src_token_embed, src_sents_len)
 
         # src_encodings: (tgt_query_len, batch_size, hidden_size)
-        src_encodings, (last_state, last_cell) = self.encoder_lstm(packed_src_token_embed)
+        """
+        Args:
+            src_tokens (LongTensor): tokens in the source language of shape
+                `(batch, src_len)`
+            src_lengths (torch.LongTensor): lengths of each source sentence of
+                shape `(batch)`
+            return_all_hiddens (bool, optional): also return all of the
+                intermediate hidden states (default: False).
+
+        Returns:
+            namedtuple:
+                - **encoder_out** (Tensor): the last encoder layer's output of
+                  shape `(src_len, batch, embed_dim)`
+                - **encoder_padding_mask** (ByteTensor): the positions of
+                  padding elements of shape `(batch, src_len)`
+                - **encoder_embedding** (Tensor): the (scaled) embedding lookup
+                  of shape `(batch, src_len, embed_dim)`
+                - **encoder_states** (List[Tensor]): all intermediate
+                  hidden states of shape `(src_len, batch, embed_dim)`.
+                  Only populated if *return_all_hiddens* is True.
+        """
+        src_encodings, (last_state, last_cell) = self.encoder(src_token_embed, src_sents_len)
+        src_encodings, _ = pad_packed_sequence(src_encodings)
+        # src_encodings: (batch_size, tgt_query_len, hidden_size)
+        src_encodings = src_encodings.permute(1, 0, 2)
+
+        # (batch_size, hidden_size * 2)
+        last_state = torch.cat([last_state[0], last_state[1]], 1)
+        last_cell = torch.cat([last_cell[0], last_cell[1]], 1)
+
+        return src_encodings, (last_state, last_cell)
+
+    # Encode input text using BERT tokenizer
+    def bert_encode_input_text(self, text, max_length):
+        encoded_input = self.bert_tokenizer.encode_plus(
+            text,
+            add_special_tokens=True,
+            padding="max_length",
+            max_length=max_length,
+            truncation=True,
+            return_attention_mask=True,
+            return_tensors="pt"
+        )
+        input_ids = encoded_input["input_ids"].squeeze()
+        attention_mask = encoded_input["attention_mask"].squeeze()
+        return input_ids, attention_mask
+
+    def bert_encode(self, src_sents_var, src_sents_len):
+        """Encode the input natural language utterance using the BERT encoder
+
+        Args:
+            src_sents_var: a variable of shape (src_sent_len, batch_size), representing word ids of the input
+            src_sents_len: a list of lengths of input source sentences, sorted by descending order
+
+        Returns:
+            src_encodings: source encodings of shape (batch_size, src_sent_len, hidden_size * 2)
+            last_state, last_cell: the last hidden state and cell state of the encoder,
+                                   of shape (batch_size, hidden_size)
+        """
+        breakpoint()
+        src_token_embed = self.bert_encode_input_text(src_sents_var)
+        # packed_src_token_embed = pack_padded_sequence(src_token_embed, src_sents_len)
+
+        # src_encodings: (tgt_query_len, batch_size, hidden_size)
+        """
+        Args:
+            src_tokens (LongTensor): tokens in the source language of shape
+                `(batch, src_len)`
+            src_lengths (torch.LongTensor): lengths of each source sentence of
+                shape `(batch)`
+            return_all_hiddens (bool, optional): also return all of the
+                intermediate hidden states (default: False).
+
+        Returns:
+            namedtuple:
+                - **encoder_out** (Tensor): the last encoder layer's output of
+                  shape `(src_len, batch, embed_dim)`
+                - **encoder_padding_mask** (ByteTensor): the positions of
+                  padding elements of shape `(batch, src_len)`
+                - **encoder_embedding** (Tensor): the (scaled) embedding lookup
+                  of shape `(batch, src_len, embed_dim)`
+                - **encoder_states** (List[Tensor]): all intermediate
+                  hidden states of shape `(src_len, batch, embed_dim)`.
+                  Only populated if *return_all_hiddens* is True.
+        """
+        src_encodings, (last_state, last_cell) = self.encoder(src_token_embed, src_sents_len)
         src_encodings, _ = pad_packed_sequence(src_encodings)
         # src_encodings: (batch_size, tgt_query_len, hidden_size)
         src_encodings = src_encodings.permute(1, 0, 2)
@@ -217,7 +328,14 @@ class Parser(nn.Module):
 
         # src_encodings: (batch_size, src_sent_len, hidden_size * 2)
         # (last_state, last_cell, dec_init_vec): (batch_size, hidden_size)
-        src_encodings, (last_state, last_cell) = self.encode(batch.src_sents_var, batch.src_sents_len)
+        if self.args.encoder == 'bert':
+            src_encodings, (last_state, last_cell) = self.bert_encode(
+                batch.src_sents_var, batch.src_sents_len)
+        elif self.args.encoder == 'lstm':
+            src_encodings, (last_state, last_cell) = self.encode(batch.src_sents_var,
+                                                                 batch.src_sents_len)
+        else:
+            raise RuntimeError(f"Unknown uncoder: {self.args.encoder}")
         dec_init_vec = self.init_decoder_state(last_state, last_cell)
 
         # query vectors are sufficient statistics used to compute action probabilities

@@ -25,6 +25,8 @@ def init_arg_parser():
     arg_parser = argparse.ArgumentParser()
 
     # ### General configuration ####
+    arg_parser.add_argument('--fine_tuning', default=False, action='store_true',
+                            help='Are we at the fine tuning step')
     arg_parser.add_argument('--seed', default=0, type=int, help='Random seed')
     arg_parser.add_argument('--cuda', action='store_true', default=False,
                             help='Use gpu')
@@ -59,10 +61,13 @@ def init_arg_parser():
                             help='name of evaluator class to use')
 
     # ### Model configuration ####
+    arg_parser.add_argument('--encoder', choices=['lstm', 'bert'], default='lstm',
+                            help='Type of encoder used')
     arg_parser.add_argument('--lstm', choices=['lstm'], default='lstm',
                             help='Type of LSTM used, currently only standard LSTM cell is supported')
 
     # Embedding sizes
+    arg_parser.add_argument('--encoder_embed_dim', default=768, type=int, help='Size of encoder embeddings')
     arg_parser.add_argument('--embed_size', default=128, type=int, help='Size of word embeddings')
     arg_parser.add_argument('--action_embed_size', default=128, type=int, help='Size of ApplyRule/GenToken action embeddings')
     arg_parser.add_argument('--field_embed_size', default=64, type=int, help='Embedding size of ASDL fields')
@@ -98,6 +103,8 @@ def init_arg_parser():
     arg_parser.add_argument('--no_copy', default=False, action='store_true', help='Do not use copy mechanism')
 
     #### Training ####
+    arg_parser.add_argument('--bert_model', type=str, help='Path to the BERT model to use')
+    arg_parser.add_argument('--data_path', type=str, help='Path of the serialized vocabulary')
     arg_parser.add_argument('--vocab', type=str, help='Path of the serialized vocabulary')
     arg_parser.add_argument('--glove_embed_path', default=None, type=str, help='Path to pretrained Glove mebedding')
 
