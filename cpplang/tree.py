@@ -545,11 +545,11 @@ class CharacterLiteral(Literal):
 
 
 class IntegerLiteral(Literal):
-    attrs = ()
+    attrs = ("type",)
 
 
 class FloatingLiteral(Literal):
-    attrs = ()
+    attrs = ("type",)
 
 
 class StringLiteral(Literal):

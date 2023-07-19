@@ -725,22 +725,24 @@ class Parser(object):
     def parse_IntegerLiteral(self, node) -> tree.IntegerLiteral:
         assert node['kind'] == "IntegerLiteral"
         value = node['value']
+        ty = node['type']['qualType']
         subnodes = self.parse_subnodes(node)
-        return tree.IntegerLiteral(value=value, subnodes=subnodes)
+        return tree.IntegerLiteral(type=ty, value=value, subnodes=subnodes)
 
     @parse_debug
     def parse_FloatingLiteral(self, node) -> tree.FloatingLiteral:
         assert node['kind'] == "FloatingLiteral"
         value = node['value']
+        ty = node['type']['qualType']
         subnodes = self.parse_subnodes(node)
-        return tree.FloatingLiteral(value=value, subnodes=subnodes)
+        return tree.FloatingLiteral(type=ty, value=value, subnodes=subnodes)
 
     @parse_debug
     def parse_CharacterLiteral(self, node) -> tree.CharacterLiteral:
         assert node['kind'] == "CharacterLiteral"
-        value = chr(node['value'])
+        value = node['value']
         subnodes = self.parse_subnodes(node)
-        return tree.CharacterLiteral(value=value, subnodes=subnodes)
+        return tree.CharacterLiteral(value=chr(value), subnodes=subnodes)
 
     @parse_debug
     def parse_StringLiteral(self, node) -> tree.StringLiteral:
