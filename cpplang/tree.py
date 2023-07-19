@@ -148,6 +148,8 @@ class Type(Node):
 class BasicType(Type):
     attrs = ()
 
+class QualType(Node):
+    attrs = ("type",)
 
 class DiamondType(Type):
     attrs = ("sub_type",)

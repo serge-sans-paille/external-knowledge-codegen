@@ -67,6 +67,7 @@ statement = AccessSpecDecl(identifier access_spec)
       | TypeRef(identifier name)
       | UnaryOperator(constant opcode, constant postfix, statement* subnodes)
       | UsingDirectiveDecl(identifier name)
-      | VarDecl(identifier name, identifier type, identifier storage_class, identifier array, identifier init, constant implicit, constant referenced, statement* subnodes)
+      | VarDecl(identifier name, type type, identifier storage_class, identifier array, identifier init, constant implicit, constant referenced, statement* subnodes)
       | CXXStdInitializerListExpr(statement* subnodes)
 
+type = QualType(identifier type)
