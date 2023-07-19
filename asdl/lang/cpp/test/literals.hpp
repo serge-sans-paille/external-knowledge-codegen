@@ -30,4 +30,5 @@ void c() {
 void cxx() {
   true;
   false;
+  nullptr;
 }

@@ -537,6 +537,9 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_StringLiteral(self, node: tree.StringLiteral):
         self.write(node.value)
 
+    def visit_CXXNullPtrLiteralExpr(self, node: tree.CXXNullPtrLiteralExpr):
+        self.write("nullptr")
+
     def visit_BinaryOperator(self, node: tree.BinaryOperator):
         self.write(node.subnodes[0])
         self.write(" ", node.opcode, " ")

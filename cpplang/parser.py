@@ -752,6 +752,11 @@ class Parser(object):
         return tree.StringLiteral(value=value, subnodes=subnodes)
 
     @parse_debug
+    def parse_CXXNullPtrLiteralExpr(self, node) -> tree.CXXNullPtrLiteralExpr:
+        assert node['kind'] == "CXXNullPtrLiteralExpr"
+        return tree.CXXNullPtrLiteralExpr()
+
+    @parse_debug
     def parse_NamespaceDecl(self, node) -> tree.NamespaceDecl:
         assert node['kind'] == "NamespaceDecl"
         name = node['name']

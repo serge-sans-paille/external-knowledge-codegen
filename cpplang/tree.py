@@ -556,6 +556,10 @@ class StringLiteral(Literal):
     attrs = ()
 
 
+class CXXNullPtrLiteralExpr(Literal):
+    attrs = ()
+
+
 class CXXThisExpr(Primary):
     attrs = ()
 
