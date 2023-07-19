@@ -131,7 +131,7 @@ def preprocess_code(cpp_code):
     return "\n".join(lines_in)
 
 
-def test(cpp_code, filepath, check_hypothesis=False, fail_on_error=False, member=False,
+def roundtrip(cpp_code, filepath, check_hypothesis=False, fail_on_error=False, member=False,
          debug=False):
 
     # get the (domain-specific) cpp AST of the example Cpp code snippet
@@ -246,7 +246,7 @@ cpp_code = [
     ]
 
 
-def test_filepath(filepath: str,
+def check_filepath(filepath: str,
                   check_hypothesis: bool = False,
                   fail_on_error=False,
                   member=False,
@@ -263,7 +263,7 @@ def test_filepath(filepath: str,
         with open(filepath, "r") as f:
             try:
                 cpp = f.read()
-                if not test(cpp, filepath, check_hypothesis=check_hypothesis,
+                if not roundtrip(cpp, filepath, check_hypothesis=check_hypothesis,
                             fail_on_error=fail_on_error, member=member,
                             debug=debug):
                     cprint(bcolors.RED,
@@ -378,7 +378,7 @@ if __name__ == '__main__':
     for filepath in files:
         test_num += 1
         if filepath not in exclusions:
-            test_result = test_filepath(filepath,
+            test_result = check_filepath(filepath,
                                         check_hypothesis=check_hypothesis,
                                         fail_on_error=fail_on_error,
                                         member=args.member,

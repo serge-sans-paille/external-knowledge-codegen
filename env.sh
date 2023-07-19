@@ -1,1 +1,1 @@
-export PYTHONPATH=$PWD
+export PYTHONPATH=$PWD:$PWD/asdl/lang/cpp

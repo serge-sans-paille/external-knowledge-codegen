@@ -1,5 +1,5 @@
 astor==0.7.1
-clang
+clang==14.0
 colorama
 javalang
 libclang
