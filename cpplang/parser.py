@@ -630,6 +630,9 @@ class Parser(object):
     def parse_CompoundStmt(self, node) -> tree.CompoundStmt:
         assert node['kind'] == "CompoundStmt"
         subnodes = self.parse_subnodes(node)
+        for i, subnode in enumerate(subnodes):
+            if isinstance(subnode, tree.Expression):
+                subnodes[i] = tree.ExprStmt(subnodes=[subnode])
         return tree.CompoundStmt(subnodes=subnodes)
 
     @parse_debug

@@ -414,28 +414,9 @@ class ExprWithCleanups(Node):
     attrs = ()
 
 
-class CXXConstructExpr(Node):
-    attrs = ("type",)
-
-
-class MaterializeTemporaryExpr(Node):
-    attrs = ()
-
-
-class CXXBindTemporaryExpr(Node):
-    attrs = ()
-
-
-class CXXNewExpr(Node):
-    attrs = ()
-
-
 class CXXForRangeStmt(Node):
     attrs = ()
 
-
-class ImplicitCastExpr(Node):
-    attrs = ("type",)
 
 # ------------------------------------------------------------------------------
 
@@ -464,6 +445,10 @@ class ForControl(Node):
 
 class EnhancedForControl(Node):
     attrs = ("var", "iterable")
+
+
+class ExprStmt(Node):
+    attrs = ()
 
 # ------------------------------------------------------------------------------
 
@@ -505,15 +490,15 @@ class TernaryExpression(Primary):
     attrs = ("condition", "if_true", "if_false")
 
 
-class BinaryOperator(Node):
+class BinaryOperator(Expression):
     attrs = ("opcode",)
 
 
-class UnaryOperator(Node):
+class UnaryOperator(Expression):
     attrs = ("opcode", "postfix",)
 
 
-class ArraySubscriptExpr(Node):
+class ArraySubscriptExpr(Expression):
     attrs = ()
 
 
@@ -523,6 +508,26 @@ class MethodReference(Primary):
 
 class LambdaExpression(Primary):
     attrs = ('parameter', 'parameters', 'body')
+
+
+class CXXConstructExpr(Expression):
+    attrs = ("type",)
+
+
+class MaterializeTemporaryExpr(Expression):
+    attrs = ()
+
+
+class CXXBindTemporaryExpr(Expression):
+    attrs = ()
+
+
+class CXXNewExpr(Expression):
+    attrs = ()
+
+
+class ImplicitCastExpr(Expression):
+    attrs = ("type",)
 
 # ------------------------------------------------------------------------------
 
