@@ -540,6 +540,11 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_CXXNullPtrLiteralExpr(self, node: tree.CXXNullPtrLiteralExpr):
         self.write("nullptr")
 
+    def visit_UnaryExprOrTypeTraitExpr(self, node: tree.UnaryExprOrTypeTraitExpr):
+        self.write(node.name, "(")
+        self.visit(node.type if node.type is not None else node.expr)
+        self.write(")")
+
     def visit_BinaryOperator(self, node: tree.BinaryOperator):
         self.write(node.subnodes[0])
         self.write(" ", node.opcode, " ")

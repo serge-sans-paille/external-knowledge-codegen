@@ -931,6 +931,18 @@ class Parser(object):
         return tree.ParenExpr(subnodes=subnodes)
 
     @parse_debug
+    def parse_UnaryExprOrTypeTraitExpr(self, node) -> tree.UnaryExprOrTypeTraitExpr:
+        assert node['kind'] == "UnaryExprOrTypeTraitExpr"
+        name = node['name']
+        if 'argType' in node:
+            expr = None
+            ty = self.parse_QualType(node['argType'])
+        else:
+            expr = self.parse_subnodes(node)[0]
+            ty = None
+        return tree.UnaryExprOrTypeTraitExpr(name=name, expr=expr, type=ty)
+
+    @parse_debug
     def parse_ClassTemplateDecl(self, node) -> tree.ClassTemplateDecl:
         assert node['kind'] == "ClassTemplateDecl"
         subnodes = self.parse_subnodes(node)

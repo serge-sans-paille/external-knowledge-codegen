@@ -526,6 +526,10 @@ class CXXNewExpr(Expression):
     attrs = ()
 
 
+class UnaryExprOrTypeTraitExpr(Expression):
+    attrs = ("name", "expr", "type")
+
+
 class ImplicitCastExpr(Expression):
     attrs = ("type",)
 
