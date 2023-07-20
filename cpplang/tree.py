@@ -486,16 +486,16 @@ class Assignment(Primary):
     attrs = ("expressionl", "value", "type")
 
 
-class TernaryExpression(Primary):
-    attrs = ("condition", "if_true", "if_false")
-
-
 class BinaryOperator(Expression):
     attrs = ("opcode",)
 
 
 class UnaryOperator(Expression):
     attrs = ("opcode", "postfix",)
+
+
+class ConditionalOperator(Expression):
+    attrs = ()
 
 
 class ArraySubscriptExpr(Expression):

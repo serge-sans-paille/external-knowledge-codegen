@@ -913,6 +913,12 @@ class Parser(object):
         return tree.UnaryOperator(opcode=opcode, postfix=postfix, subnodes=subnodes)
 
     @parse_debug
+    def parse_ConditionalOperator(self, node) -> tree.ConditionalOperator:
+        assert node['kind'] == "ConditionalOperator"
+        subnodes = self.parse_subnodes(node)
+        return tree.ConditionalOperator(subnodes=subnodes)
+
+    @parse_debug
     def parse_ArraySubscriptExpr(self, node) -> tree.ArraySubscriptExpr:
         assert node['kind'] == "ArraySubscriptExpr"
         subnodes = self.parse_subnodes(node)

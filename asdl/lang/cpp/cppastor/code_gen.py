@@ -551,6 +551,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         else:
             self.write(node.opcode, node.subnodes[0])
 
+    def visit_ConditionalOperator(self, node: tree.ConditionalOperator):
+        self.write(node.subnodes[0], "?", node.subnodes[1], ":",
+                   node.subnodes[2])
+
     def visit_ArraySubscriptExpr(self, node: tree.ArraySubscriptExpr):
         self.write(node.subnodes[0], "[", node.subnodes[1], "]")
 
