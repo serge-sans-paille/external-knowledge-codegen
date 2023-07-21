@@ -180,10 +180,7 @@ class SourceGenerator(ExplicitNodeVisitor):
                         if self.indentation > 0:
                             append(self.indent_with * self.indentation)
                         self.new_lines = 0
-                    if item:
-                        #if item == 'NoParameters':
-                            #breakpoint()
-                        append(item)
+                    append(item)
 
         self.write = write
 
@@ -436,6 +433,9 @@ class SourceGenerator(ExplicitNodeVisitor):
             else:
                 self.conditional_write(";")
 
+    def visit_ExprStmt(self, node: tree.ExprStmt):
+        self.write(node.subnodes[0], ";")
+
     def visit_FieldDecl(self, node: tree.FieldDecl):
         self.write(node.type, " ", node.name)
         if node.subnodes is not None and len(node.subnodes) > 0:
@@ -510,16 +510,40 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.newline(extra=1)
 
     def visit_IntegerLiteral(self, node: tree.IntegerLiteral):
-        self.write(node.value)
+        suffixes = {
+                'unsigned int': 'u',
+                'long': 'l',
+                'unsigned long': 'ul',
+                'long long': 'll',
+                'unsigned long long': 'ull'}
+        self.write(node.value + suffixes.get(node.type, ''))
 
     def visit_FloatingLiteral(self, node: tree.FloatingLiteral):
-        self.write(node.value)
+        suffixes = {'float': 'f', 'long double': 'l'}
+        # FIXME: we may loose precision by choosing this format
+        self.write('{:g}{}'.format(float(node.value),
+                                   suffixes.get(node.type, '')))
 
     def visit_CharacterLiteral(self, node: tree.CharacterLiteral):
-        self.write("'", node.value, "'")
+        if node.value.isprintable():
+            self.write("'{}'".format(node.value))
+        else:
+            c = ord(node.value)
+            if c < 9:
+                self.write("'\\{:o}'".format(c))
+            else:
+                self.write("'\\0x{:02X}'".format(c))
 
     def visit_StringLiteral(self, node: tree.StringLiteral):
         self.write(node.value)
+
+    def visit_CXXNullPtrLiteralExpr(self, node: tree.CXXNullPtrLiteralExpr):
+        self.write("nullptr")
+
+    def visit_UnaryExprOrTypeTraitExpr(self, node: tree.UnaryExprOrTypeTraitExpr):
+        self.write(node.name, "(")
+        self.visit(node.type if node.type is not None else node.expr)
+        self.write(")")
 
     def visit_BinaryOperator(self, node: tree.BinaryOperator):
         self.write(node.subnodes[0])
@@ -531,6 +555,10 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write(node.subnodes[0], node.opcode)
         else:
             self.write(node.opcode, node.subnodes[0])
+
+    def visit_ConditionalOperator(self, node: tree.ConditionalOperator):
+        self.write(node.subnodes[0], "?", node.subnodes[1], ":",
+                   node.subnodes[2])
 
     def visit_ArraySubscriptExpr(self, node: tree.ArraySubscriptExpr):
         self.write(node.subnodes[0], "[", node.subnodes[1], "]")
@@ -569,12 +597,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         if node.subnodes is not None:
             for statement in node.subnodes:
                 self.write(statement)
-                if isinstance(statement, (tree.UnaryOperator,
-                                          tree.BinaryOperator,
-                                          tree.ArraySubscriptExpr,
-                                          tree.ExprWithCleanups,
-                                          tree.CXXOperatorCallExpr,
-                                          tree.CXXMemberCallExpr)):
+                if isinstance(statement, tree.Expression):
                     self.write(";\n")
         self.write("}")
         self.newline(extra=1)

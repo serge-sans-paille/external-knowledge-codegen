@@ -630,6 +630,9 @@ class Parser(object):
     def parse_CompoundStmt(self, node) -> tree.CompoundStmt:
         assert node['kind'] == "CompoundStmt"
         subnodes = self.parse_subnodes(node)
+        for i, subnode in enumerate(subnodes):
+            if isinstance(subnode, tree.Expression):
+                subnodes[i] = tree.ExprStmt(subnodes=[subnode])
         return tree.CompoundStmt(subnodes=subnodes)
 
     @parse_debug
@@ -722,22 +725,24 @@ class Parser(object):
     def parse_IntegerLiteral(self, node) -> tree.IntegerLiteral:
         assert node['kind'] == "IntegerLiteral"
         value = node['value']
+        ty = node['type']['qualType']
         subnodes = self.parse_subnodes(node)
-        return tree.IntegerLiteral(value=value, subnodes=subnodes)
+        return tree.IntegerLiteral(type=ty, value=value, subnodes=subnodes)
 
     @parse_debug
     def parse_FloatingLiteral(self, node) -> tree.FloatingLiteral:
         assert node['kind'] == "FloatingLiteral"
         value = node['value']
+        ty = node['type']['qualType']
         subnodes = self.parse_subnodes(node)
-        return tree.FloatingLiteral(value=value, subnodes=subnodes)
+        return tree.FloatingLiteral(type=ty, value=value, subnodes=subnodes)
 
     @parse_debug
     def parse_CharacterLiteral(self, node) -> tree.CharacterLiteral:
         assert node['kind'] == "CharacterLiteral"
-        value = chr(node['value'])
+        value = node['value']
         subnodes = self.parse_subnodes(node)
-        return tree.CharacterLiteral(value=value, subnodes=subnodes)
+        return tree.CharacterLiteral(value=chr(value), subnodes=subnodes)
 
     @parse_debug
     def parse_StringLiteral(self, node) -> tree.StringLiteral:
@@ -745,6 +750,11 @@ class Parser(object):
         value = node['value']
         subnodes = self.parse_subnodes(node)
         return tree.StringLiteral(value=value, subnodes=subnodes)
+
+    @parse_debug
+    def parse_CXXNullPtrLiteralExpr(self, node) -> tree.CXXNullPtrLiteralExpr:
+        assert node['kind'] == "CXXNullPtrLiteralExpr"
+        return tree.CXXNullPtrLiteralExpr()
 
     @parse_debug
     def parse_NamespaceDecl(self, node) -> tree.NamespaceDecl:
@@ -903,6 +913,12 @@ class Parser(object):
         return tree.UnaryOperator(opcode=opcode, postfix=postfix, subnodes=subnodes)
 
     @parse_debug
+    def parse_ConditionalOperator(self, node) -> tree.ConditionalOperator:
+        assert node['kind'] == "ConditionalOperator"
+        subnodes = self.parse_subnodes(node)
+        return tree.ConditionalOperator(subnodes=subnodes)
+
+    @parse_debug
     def parse_ArraySubscriptExpr(self, node) -> tree.ArraySubscriptExpr:
         assert node['kind'] == "ArraySubscriptExpr"
         subnodes = self.parse_subnodes(node)
@@ -913,6 +929,18 @@ class Parser(object):
         assert node['kind'] == "ParenExpr"
         subnodes = self.parse_subnodes(node)
         return tree.ParenExpr(subnodes=subnodes)
+
+    @parse_debug
+    def parse_UnaryExprOrTypeTraitExpr(self, node) -> tree.UnaryExprOrTypeTraitExpr:
+        assert node['kind'] == "UnaryExprOrTypeTraitExpr"
+        name = node['name']
+        if 'argType' in node:
+            expr = None
+            ty = self.parse_QualType(node['argType'])
+        else:
+            expr = self.parse_subnodes(node)[0]
+            ty = None
+        return tree.UnaryExprOrTypeTraitExpr(name=name, expr=expr, type=ty)
 
     @parse_debug
     def parse_ClassTemplateDecl(self, node) -> tree.ClassTemplateDecl:
