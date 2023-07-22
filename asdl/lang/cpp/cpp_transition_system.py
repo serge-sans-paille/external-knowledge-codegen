@@ -63,7 +63,7 @@ class CppTransitionSystem(TransitionSystem):
 
             for tok in tokens:
                 assert(not isinstance(tok, tree.Node))
-                assert(type(tok) == str)
+                assert type(tok) == str, tok
                 actions.append(GenTokenAction(tok))
         else:
             pass

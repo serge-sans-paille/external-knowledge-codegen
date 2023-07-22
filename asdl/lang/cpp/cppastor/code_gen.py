@@ -491,21 +491,29 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_FunctionDecl(self, node: tree.FunctionDecl):
         parameters = []
         statements = []
-        for c in node.subnodes:
-            if c.__class__.__name__ == "ParmVarDecl":
+        for c in node.subnodes or []:
+            if isinstance(c, tree.ParmVarDecl):
                 parameters.append(c)
             else:
                 statements.append(c)
+
         self.write(node.return_type, " ")
         self.write(node.name)
+
         self.write("(")
         if parameters:
             self.comma_list(parameters)
+        if node.variadic:
+            if parameters:
+                self.write(", ")
+            self.write("...")
         self.write(")")
-        if len(statements) > 0:
+
+        if statements:
             for c in statements:
                 self.write(c)
         else:
+            # forward declaration
             self.write(";")
         self.newline(extra=1)
 

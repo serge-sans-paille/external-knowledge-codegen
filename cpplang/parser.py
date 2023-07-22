@@ -590,8 +590,10 @@ class Parser(object):
         assert node['kind'] == "FunctionDecl"
         name = node['name']
         return_type = node['type']['qualType'].split("(")[0]
+        variadic = "..." if node['type']['qualType'].endswith('...)') else None
         subnodes = self.parse_subnodes(node)
-        return tree.FunctionDecl(name=name, return_type=return_type, subnodes=subnodes)
+        return tree.FunctionDecl(name=name, return_type=return_type,
+                                 variadic=variadic, subnodes=subnodes)
 
     @parse_debug
     def parse_TypedefDecl(self, node) -> tree.TypedefDecl:
