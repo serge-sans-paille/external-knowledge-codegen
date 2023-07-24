@@ -210,7 +210,7 @@ class CXXMethodDecl(Declaration):
 
 
 class FunctionDecl(Declaration):
-    attrs = ("return_type", "name",)
+    attrs = ("return_type", "name", "variadic",)
 
 
 class ClassTemplateDecl(Declaration):

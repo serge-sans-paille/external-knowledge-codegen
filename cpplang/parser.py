@@ -162,6 +162,7 @@ class Parser(object):
         self.tu = json.loads(stdout_data.decode())
         self.stack = []
         self.debug = False
+        self.anonymous_types = {}
         self.source_code = preprocess_stdout_data.decode()
 
 # ------------------------------------------------------------------------------
@@ -405,7 +406,16 @@ class Parser(object):
         assert node['kind'] == "CXXRecordDecl"
         if 'isImplicit' in node and node['isImplicit']:
             return None
-        name = node['name']
+        name = node.get('name')
+        if name is None:
+            loc = node['loc']
+            where = '(unnamed struct at {}:{}:{})'.format(
+                    loc.get('file', '<stdin>'),
+                    loc.get('presumedLine', loc['line']),
+                    loc['col'])
+            name = '$_{}'.format(len(self.anonymous_types))
+            self.anonymous_types[where] = name
+
         kind = node['tagUsed']
         complete_definition = ('complete_definition'
                                if ('completeDefinition' in node
@@ -417,15 +427,29 @@ class Parser(object):
             p = r"^[^:]*:([^{]*){"
             temp = re.search(p, s).group(1)
             bases = temp.replace("\\n", "")
-            #if "InvalidConfiguration" in name:
-                #breakpoint()
-
-            #for base in node['bases']:
-                #if base['writtenAccess'] != 'none':
-                    #bases.append(f"{base['writtenAccess']} {base['type']['qualType']}")
-                #else:
-                    #bases.append(f"{base['type']['qualType']}")
         subnodes = self.parse_subnodes(node)
+
+        # specific support for anonymous record through indirect field
+        indirect_field_names = {n['name'] for n in node['inner']
+                                if n['kind'] == 'IndirectFieldDecl'}
+        anonymous_records = [n for n in node['inner']
+                             if n['kind'] == 'CXXRecordDecl'
+                             if 'name' not in n]
+
+        for subnode in subnodes:
+            if not isinstance(subnode, tree.CXXRecordDecl):
+                continue
+            if subnode.name not in self.anonymous_types.values():
+                continue
+            field_names = {field.name for field in subnode.subnodes
+                           if isinstance(field, tree.FieldDecl)}
+
+            # Force the record name to empty to correctly represent indirect
+            # fields.
+            if field_names.issubset(indirect_field_names):
+                subnode.name = ""
+
+
         return tree.CXXRecordDecl(name=name, kind=kind, bases=bases,
                                   complete_definition=complete_definition,
                                   subnodes=subnodes)
@@ -590,8 +614,10 @@ class Parser(object):
         assert node['kind'] == "FunctionDecl"
         name = node['name']
         return_type = node['type']['qualType'].split("(")[0]
+        variadic = "..." if node['type']['qualType'].endswith('...)') else None
         subnodes = self.parse_subnodes(node)
-        return tree.FunctionDecl(name=name, return_type=return_type, subnodes=subnodes)
+        return tree.FunctionDecl(name=name, return_type=return_type,
+                                 variadic=variadic, subnodes=subnodes)
 
     @parse_debug
     def parse_TypedefDecl(self, node) -> tree.TypedefDecl:
@@ -783,10 +809,17 @@ class Parser(object):
         subnodes = self.parse_subnodes(node)
         return tree.DeclStmt(subnodes=subnodes)
 
+    def mangle_anonymous_type(self, qual_type):
+        if qual_type.startswith('struct (unnamed struct'):
+            return self.anonymous_types[qual_type[7:]]
+        else:
+            return qual_type
 
     @parse_debug
     def parse_QualType(self, node) -> tree.QualType:
-        return tree.QualType(subnodes=[], type=node['qualType'])
+        qual_type = node['qualType']
+        return tree.QualType(subnodes=[],
+                             type=self.mangle_anonymous_type(qual_type))
 
     @parse_debug
     def parse_VarDecl(self, node) -> tree.VarDecl:
@@ -887,14 +920,11 @@ class Parser(object):
     def parse_FieldDecl(self, node) -> tree.FieldDecl:
         assert node['kind'] == "FieldDecl"
         name = node['name']
-        splitted_type = self.source_code[node['range']['begin']['offset']:node['range']['end']['offset']].strip().split(" ")
-        var_type, array_decl = splitted_type if len(splitted_type) == 2 else (splitted_type[0], "")
-        #var_type = node['type']['qualType']
+        var_type = self.parse_QualType(node['type'])
         if 'hasInClassInitializer' in node:
             subnodes = self.parse_subnodes(node)
         else:
             subnodes = []
-        # breakpoint()
         return tree.FieldDecl(name=name, type=var_type, subnodes=subnodes)
 
     @parse_debug

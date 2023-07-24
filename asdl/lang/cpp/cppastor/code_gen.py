@@ -281,8 +281,8 @@ class SourceGenerator(ExplicitNodeVisitor):
                 #self.write(type)
 
     def visit_CXXRecordDecl(self, node: tree.CXXRecordDecl):
-        assert node.name is not None
-        self.write(node.kind, " ", node.name)
+        self.write(node.kind, " ")
+        self.write(node.name)
         if node.bases:
             self.write(" : ", node.bases)
         if node.subnodes is not None:
@@ -418,7 +418,6 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_VarDecl(self, node: tree.VarDecl):
         if len(node.storage_class) > 0:
             self.write(node.storage_class, " ")
-        # breakpoint()
         if node.implicit == "implicit" and node.referenced == "referenced":
             self.write(node.subnodes[0])
         else:
@@ -438,7 +437,7 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_FieldDecl(self, node: tree.FieldDecl):
         self.write(node.type, " ", node.name)
-        if node.subnodes is not None and len(node.subnodes) > 0:
+        if node.subnodes:
             self.write(" = ", node.subnodes[0], ";")
         else:
             self.write(";")
@@ -491,21 +490,29 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_FunctionDecl(self, node: tree.FunctionDecl):
         parameters = []
         statements = []
-        for c in node.subnodes:
-            if c.__class__.__name__ == "ParmVarDecl":
+        for c in node.subnodes or []:
+            if isinstance(c, tree.ParmVarDecl):
                 parameters.append(c)
             else:
                 statements.append(c)
+
         self.write(node.return_type, " ")
         self.write(node.name)
+
         self.write("(")
         if parameters:
             self.comma_list(parameters)
+        if node.variadic:
+            if parameters:
+                self.write(", ")
+            self.write("...")
         self.write(")")
-        if len(statements) > 0:
+
+        if statements:
             for c in statements:
                 self.write(c)
         else:
+            # forward declaration
             self.write(";")
         self.newline(extra=1)
 
