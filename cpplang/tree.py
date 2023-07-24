@@ -296,7 +296,7 @@ class TypeDeclarationStmt(Statement):
 
 
 class IfStmt(Statement):
-    attrs = ()
+    attrs = ("cond",)
 
 
 class ForStmt(Statement):

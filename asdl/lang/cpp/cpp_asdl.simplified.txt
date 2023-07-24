@@ -29,7 +29,7 @@ statement = AccessSpecDecl(identifier access_spec)
       | FullComment(string comment)
       | FunctionDecl(string? documentation, identifier name, identifier return_type, statement* subnodes, string? variadic)
       | FunctionTemplateDecl(statement* subnodes)
-      | IfStmt(statement* subnodes)
+      | IfStmt(expression cond, statement* subnodes)
       | NamespaceDecl(identifier name, statement* subnodes)
       | NonTypeTemplateParmDecl(identifier name, identifier type, statement* subnodes)
       | NullStmt
