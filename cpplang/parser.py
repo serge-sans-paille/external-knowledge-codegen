@@ -411,7 +411,7 @@ class Parser(object):
             loc = node['loc']
             where = '(unnamed struct at {}:{}:{})'.format(
                     loc.get('file', '<stdin>'),
-                    loc['presumedLine'],
+                    loc.get('presumedLine', loc['line']),
                     loc['col'])
             name = '$_{}'.format(len(self.anonymous_types))
             self.anonymous_types[where] = name
@@ -428,6 +428,28 @@ class Parser(object):
             temp = re.search(p, s).group(1)
             bases = temp.replace("\\n", "")
         subnodes = self.parse_subnodes(node)
+
+        # specific support for anonymous record through indirect field
+        indirect_field_names = {n['name'] for n in node['inner']
+                                if n['kind'] == 'IndirectFieldDecl'}
+        anonymous_records = [n for n in node['inner']
+                             if n['kind'] == 'CXXRecordDecl'
+                             if 'name' not in n]
+
+        for subnode in subnodes:
+            if not isinstance(subnode, tree.CXXRecordDecl):
+                continue
+            if subnode.name not in self.anonymous_types.values():
+                continue
+            field_names = {field.name for field in subnode.subnodes
+                           if isinstance(field, tree.FieldDecl)}
+
+            # Force the record name to empty to correctly represent indirect
+            # fields.
+            if field_names.issubset(indirect_field_names):
+                subnode.name = ""
+
+
         return tree.CXXRecordDecl(name=name, kind=kind, bases=bases,
                                   complete_definition=complete_definition,
                                   subnodes=subnodes)
