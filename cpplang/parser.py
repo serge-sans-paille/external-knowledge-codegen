@@ -681,7 +681,15 @@ class Parser(object):
     def parse_WhileStmt(self, node) -> tree.WhileStmt:
         assert node['kind'] == "WhileStmt"
         subnodes = self.parse_subnodes(node)
-        return tree.WhileStmt(subnodes=subnodes)
+        return tree.WhileStmt(cond=subnodes[0],
+                              subnodes=self.as_statements(subnodes[1:]))
+
+    @parse_debug
+    def parse_DoStmt(self, node) -> tree.DoStmt:
+        assert node['kind'] == "DoStmt"
+        subnodes = self.parse_subnodes(node)
+        return tree.DoStmt(cond=subnodes[1],
+                           subnodes=self.as_statements(subnodes[0:1]))
 
     @parse_debug
     def parse_ContinueStmt(self, node) -> tree.ContinueStmt:

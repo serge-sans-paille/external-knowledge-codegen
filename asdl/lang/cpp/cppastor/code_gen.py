@@ -736,8 +736,13 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(": ", node.subnodes[0], ")\n")
         self.write(node.subnodes[-1])
 
-    def visit_WhileStmt(self, node: tree.ForStmt):
-        self.write("while (", node.subnodes[0], ")\n", node.subnodes[1])
+    def visit_WhileStmt(self, node: tree.WhileStmt):
+        self.write("while (", node.cond, ")")
+        self.newline()
+        self.write(node.subnodes[0])
+
+    def visit_DoStmt(self, node: tree.DoStmt):
+        self.write("do\n", node.subnodes[0], "while (", node.cond, ");\n")
 
     def visit_ContinueStmt(self, node: tree.ContinueStmt):
         self.write("continue;")

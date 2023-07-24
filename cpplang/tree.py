@@ -287,6 +287,10 @@ class Statement(Node):
     attrs = ("label",)
 
 
+class DoStmt(Statement):
+    attrs = ("cond",)
+
+
 class LocalVariableDeclarationStmt(Statement):
     attrs = ("variable",)
 
@@ -304,19 +308,11 @@ class ForStmt(Statement):
 
 
 class WhileStmt(Statement):
-    attrs = ()
+    attrs = ("cond",)
 
 
 class ContinueStmt(Statement):
     attrs = ()
-
-
-class WhileStmt(Statement):
-    attrs = ("condition", "body")
-
-
-class DoStmt(Statement):
-    attrs = ("condition", "body")
 
 
 class ForStmt(Statement):
