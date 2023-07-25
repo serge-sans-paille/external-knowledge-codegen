@@ -289,11 +289,14 @@ class Parser(object):
         #return (isinstance(self.tokens.look(i), Annotation)
                 #and self.tokens.look(i + 1).value == 'interface')
 
-    def parse_subnodes(self, node):
+    def parse_subnodes(self, node, *, keep_empty=False):
         if 'inner' in node:
             assert len(node['inner']) > 0
             result = [self.parse_node(c) for c in node['inner']]
-            return [c for c in result if c is not None]
+            if keep_empty:
+                return result
+            else:
+                return [c for c in result if c is not None]
         else:
             return []
 
@@ -674,8 +677,13 @@ class Parser(object):
     @parse_debug
     def parse_ForStmt(self, node) -> tree.ForStmt:
         assert node['kind'] == "ForStmt"
-        subnodes = self.parse_subnodes(node)
-        return tree.ForStmt(subnodes=subnodes)
+        subnodes = self.parse_subnodes(node, keep_empty=True)
+        assert subnodes[1] is None, "what is it good for?"
+        return tree.ForStmt(
+                init=subnodes[0],
+                cond=subnodes[2],
+                inc=subnodes[3],
+                subnodes=self.as_statements(subnodes[4:]))
 
     @parse_debug
     def parse_WhileStmt(self, node) -> tree.WhileStmt:

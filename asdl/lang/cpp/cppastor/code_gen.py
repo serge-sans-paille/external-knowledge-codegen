@@ -724,11 +724,11 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(")")
 
     def visit_ForStmt(self, node: tree.ForStmt):
-        self.write("for (", node.subnodes[0])
-        if not self.result[-1].strip().endswith(";"):
-            self.write("; ")
-        self.write(node.subnodes[1], "; ",
-                   node.subnodes[2], ")\n", node.subnodes[3])
+        self.write("for (",
+                   node.init or '', "; ",
+                   node.cond or '', "; ",
+                   node.inc or '', ")\n",
+                   node.subnodes[0])
 
     def visit_CXXForRangeStmt(self, node: tree.CXXForRangeStmt):
         assert len(node.subnodes) == 7
