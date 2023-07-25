@@ -652,20 +652,24 @@ class Parser(object):
         subnodes = self.parse_subnodes(node)
         return tree.ParmVarDecl(name=name, type=var_type, subnodes=subnodes)
 
+    def as_statements(self, subnodes):
+        for i, subnode in enumerate(subnodes):
+            if isinstance(subnode, tree.Expression):
+                subnodes[i] = tree.ExprStmt(subnodes=[subnode])
+        return subnodes
+
     @parse_debug
     def parse_CompoundStmt(self, node) -> tree.CompoundStmt:
         assert node['kind'] == "CompoundStmt"
         subnodes = self.parse_subnodes(node)
-        for i, subnode in enumerate(subnodes):
-            if isinstance(subnode, tree.Expression):
-                subnodes[i] = tree.ExprStmt(subnodes=[subnode])
-        return tree.CompoundStmt(subnodes=subnodes)
+        return tree.CompoundStmt(subnodes=self.as_statements(subnodes))
 
     @parse_debug
     def parse_IfStmt(self, node) -> tree.IfStmt:
         assert node['kind'] == "IfStmt"
         subnodes = self.parse_subnodes(node)
-        return tree.IfStmt(subnodes=subnodes)
+        return tree.IfStmt(cond=subnodes[0],
+                           subnodes=self.as_statements(subnodes[1:]))
 
     @parse_debug
     def parse_ForStmt(self, node) -> tree.ForStmt:
@@ -677,7 +681,15 @@ class Parser(object):
     def parse_WhileStmt(self, node) -> tree.WhileStmt:
         assert node['kind'] == "WhileStmt"
         subnodes = self.parse_subnodes(node)
-        return tree.WhileStmt(subnodes=subnodes)
+        return tree.WhileStmt(cond=subnodes[0],
+                              subnodes=self.as_statements(subnodes[1:]))
+
+    @parse_debug
+    def parse_DoStmt(self, node) -> tree.DoStmt:
+        assert node['kind'] == "DoStmt"
+        subnodes = self.parse_subnodes(node)
+        return tree.DoStmt(cond=subnodes[1],
+                           subnodes=self.as_statements(subnodes[0:1]))
 
     @parse_debug
     def parse_ContinueStmt(self, node) -> tree.ContinueStmt:

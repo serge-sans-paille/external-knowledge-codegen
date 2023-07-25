@@ -586,15 +586,10 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_IfStmt(self, node: tree.IfStmt):
         if node.label:
             self.write(node.label, ": ", "\n")
-        self.write("if (", node.subnodes[0], ")\n")
-        self.write(node.subnodes[1])
-        #if not isinstance(node.subnodes[1], tree.CompoundStmt):
-            #self.write(";\n")
-        if len(node.subnodes) > 2:
-            self.write("else ", node.subnodes[2])
-            if node.subnodes[2].__class__.__name__ not in ["CompoundStmt", "IfStmt"]:
-                self.conditional_write(";")
-                self.newline(extra=1)
+        self.write("if (", node.cond, ")\n")
+        self.write(node.subnodes[0])
+        if len(node.subnodes) > 1:
+            self.write("else ", node.subnodes[1])
 
     # BlockStatement(identifier? label, statement* statements)
     def visit_CompoundStmt(self, node: tree.CompoundStmt):
@@ -741,8 +736,13 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(": ", node.subnodes[0], ")\n")
         self.write(node.subnodes[-1])
 
-    def visit_WhileStmt(self, node: tree.ForStmt):
-        self.write("while (", node.subnodes[0], ")\n", node.subnodes[1])
+    def visit_WhileStmt(self, node: tree.WhileStmt):
+        self.write("while (", node.cond, ")")
+        self.newline()
+        self.write(node.subnodes[0])
+
+    def visit_DoStmt(self, node: tree.DoStmt):
+        self.write("do\n", node.subnodes[0], "while (", node.cond, ");\n")
 
     def visit_ContinueStmt(self, node: tree.ContinueStmt):
         self.write("continue;")
