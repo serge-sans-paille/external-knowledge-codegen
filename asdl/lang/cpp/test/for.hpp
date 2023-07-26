@@ -8,3 +8,11 @@ void for_() {
   for(0;1;2) 3;
   for(0;1;2) {3;4;}
 }
+
+void for_break() {
+  for(;;) break;
+}
+
+void for_continue() {
+  for(;;) continue;
+}
