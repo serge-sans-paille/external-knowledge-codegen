@@ -610,12 +610,10 @@ class SourceGenerator(ExplicitNodeVisitor):
 
 
     def visit_SwitchStmt(self, node: tree.SwitchStmt):
-        if node.label:
-            self.write(node.label, ": ", "\n")
-        self.write("switch (", node.subnodes[0], ")\n", node.subnodes[1])
+        self.write("switch (", node.cond, ")\n", node.subnodes[0])
 
     def visit_CaseStmt(self, node: tree.CaseStmt):
-        self.write("case ", node.subnodes[0], ":\n", node.subnodes[1])
+        self.write("case ", node.pattern, ":\n", node.subnodes[0])
 
     def visit_BreakStmt(self, node: tree.BreakStmt):
         self.write("break;\n")
@@ -729,6 +727,12 @@ class SourceGenerator(ExplicitNodeVisitor):
                    node.cond or '', "; ",
                    node.inc or '', ")\n",
                    node.subnodes[0])
+
+    def visit_LabelStmt(self, node: tree.LabelStmt):
+        self.write(node.name, ":\n", node.subnodes[0])
+
+    def visit_GotoStmt(self, node: tree.GotoStmt):
+        self.write("goto", node.target, ";")
 
     def visit_CXXForRangeStmt(self, node: tree.CXXForRangeStmt):
         assert len(node.subnodes) == 7

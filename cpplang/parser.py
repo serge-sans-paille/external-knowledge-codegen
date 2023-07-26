@@ -163,6 +163,8 @@ class Parser(object):
         self.stack = []
         self.debug = False
         self.anonymous_types = {}
+        self.parsed_gotos = {}
+        self.parsed_labels = {}
         self.source_code = preprocess_stdout_data.decode()
 
 # ------------------------------------------------------------------------------
@@ -615,6 +617,9 @@ class Parser(object):
     @parse_debug
     def parse_FunctionDecl(self, node) -> tree.FunctionDecl:
         assert node['kind'] == "FunctionDecl"
+        self.parsed_gotos.clear()
+        self.parsed_labels.clear()
+
         name = node['name']
         return_type = node['type']['qualType'].split("(")[0]
         variadic = "..." if node['type']['qualType'].endswith('...)') else None
@@ -675,6 +680,30 @@ class Parser(object):
                            subnodes=self.as_statements(subnodes[1:]))
 
     @parse_debug
+    def parse_LabelStmt(self, node) -> tree.LabelStmt:
+        assert node['kind'] == "LabelStmt"
+        name = node['name']
+        decl_id = node['declId']
+        self.parsed_labels[decl_id] = name
+        subnodes = self.parse_subnodes(node)
+        for target_id, goto in self.parsed_gotos.items():
+            if target_id == decl_id:
+                goto.target = name
+        return tree.LabelStmt(name=name,
+                               subnodes=self.as_statements(subnodes))
+
+    @parse_debug
+    def parse_GotoStmt(self, node) -> tree.LabelStmt:
+        assert node['kind'] == "GotoStmt"
+        decl_id = node['targetLabelDeclId']
+        subnodes = self.parse_subnodes(node)
+        target = self.parsed_labels.get(decl_id)
+        tnode = tree.GotoStmt(target=target,
+                              subnodes=self.as_statements(subnodes))
+        self.parsed_gotos[decl_id] = tnode
+        return tnode
+
+    @parse_debug
     def parse_ForStmt(self, node) -> tree.ForStmt:
         assert node['kind'] == "ForStmt"
         subnodes = self.parse_subnodes(node, keep_empty=True)
@@ -718,12 +747,15 @@ class Parser(object):
     def parse_SwitchStmt(self, node) -> tree.SwitchStmt:
         assert node['kind'] == "SwitchStmt"
         subnodes = self.parse_subnodes(node)
-        return tree.SwitchStmt(subnodes=subnodes)
+        cond = subnodes[0]
+        return tree.SwitchStmt(cond=cond,
+                               subnodes=self.as_statements(subnodes[1:]))
 
     def parse_CaseStmt(self, node) -> tree.CaseStmt:
         assert node['kind'] == "CaseStmt"
         subnodes = self.parse_subnodes(node)
-        return tree.CaseStmt(subnodes=subnodes)
+        return tree.CaseStmt(pattern=subnodes[0],
+                             subnodes=self.as_statements(subnodes[1:]))
 
     def parse_BreakStmt(self, node) -> tree.BreakStmt:
         assert node['kind'] == "BreakStmt"
@@ -733,7 +765,7 @@ class Parser(object):
     def parse_DefaultStmt(self, node) -> tree.DefaultStmt:
         assert node['kind'] == "DefaultStmt"
         subnodes = self.parse_subnodes(node)
-        return tree.DefaultStmt(subnodes=subnodes)
+        return tree.DefaultStmt(subnodes=self.as_statements(subnodes))
 
     def parse_CXXThisExpr(self, node) -> tree.CXXThisExpr:
         assert node['kind'] == "CXXThisExpr"

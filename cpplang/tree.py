@@ -319,6 +319,14 @@ class AssertStmt(Statement):
     attrs = ("condition", "value")
 
 
+class LabelStmt(Statement):
+    attrs = ("name",)
+
+
+class GotoStmt(Statement):
+    attrs = ("target",)
+
+
 class BreakStmt(Statement):
     attrs = ("goto",)
 
@@ -340,7 +348,7 @@ class TryStmt(Statement):
 
 
 class SwitchStmt(Statement):
-    attrs = ()
+    attrs = ("cond",)
 
 
 class BreakStmt(Statement):
@@ -428,7 +436,7 @@ class CatchClauseParameter(NonEmptyDeclaration):
 
 
 class CaseStmt(Node):
-    attrs = ()
+    attrs = ("pattern",)
 
 
 class ForControl(Node):
