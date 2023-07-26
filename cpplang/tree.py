@@ -304,7 +304,7 @@ class IfStmt(Statement):
 
 
 class ForStmt(Statement):
-    attrs = ()
+    attrs = ("init", "cond", "inc")
 
 
 class WhileStmt(Statement):
@@ -313,10 +313,6 @@ class WhileStmt(Statement):
 
 class ContinueStmt(Statement):
     attrs = ()
-
-
-class ForStmt(Statement):
-    attrs = ("control", "body")
 
 
 class AssertStmt(Statement):
