@@ -319,6 +319,14 @@ class AssertStmt(Statement):
     attrs = ("condition", "value")
 
 
+class LabelStmt(Statement):
+    attrs = ("name",)
+
+
+class GotoStmt(Statement):
+    attrs = ("target",)
+
+
 class BreakStmt(Statement):
     attrs = ("goto",)
 

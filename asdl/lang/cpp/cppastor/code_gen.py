@@ -730,6 +730,12 @@ class SourceGenerator(ExplicitNodeVisitor):
                    node.inc or '', ")\n",
                    node.subnodes[0])
 
+    def visit_LabelStmt(self, node: tree.LabelStmt):
+        self.write(node.name, ":\n", node.subnodes[0])
+
+    def visit_GotoStmt(self, node: tree.GotoStmt):
+        self.write("goto", node.target, ";")
+
     def visit_CXXForRangeStmt(self, node: tree.CXXForRangeStmt):
         assert len(node.subnodes) == 7
         self.write("for (", node.subnodes[-2])
