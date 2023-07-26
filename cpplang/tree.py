@@ -348,7 +348,7 @@ class TryStmt(Statement):
 
 
 class SwitchStmt(Statement):
-    attrs = ()
+    attrs = ("cond",)
 
 
 class BreakStmt(Statement):
@@ -436,7 +436,7 @@ class CatchClauseParameter(NonEmptyDeclaration):
 
 
 class CaseStmt(Node):
-    attrs = ()
+    attrs = ("pattern",)
 
 
 class ForControl(Node):

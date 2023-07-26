@@ -747,12 +747,15 @@ class Parser(object):
     def parse_SwitchStmt(self, node) -> tree.SwitchStmt:
         assert node['kind'] == "SwitchStmt"
         subnodes = self.parse_subnodes(node)
-        return tree.SwitchStmt(subnodes=subnodes)
+        cond = subnodes[0]
+        return tree.SwitchStmt(cond=cond,
+                               subnodes=self.as_statements(subnodes[1:]))
 
     def parse_CaseStmt(self, node) -> tree.CaseStmt:
         assert node['kind'] == "CaseStmt"
         subnodes = self.parse_subnodes(node)
-        return tree.CaseStmt(subnodes=subnodes)
+        return tree.CaseStmt(pattern=subnodes[0],
+                             subnodes=self.as_statements(subnodes[1:]))
 
     def parse_BreakStmt(self, node) -> tree.BreakStmt:
         assert node['kind'] == "BreakStmt"
@@ -762,7 +765,7 @@ class Parser(object):
     def parse_DefaultStmt(self, node) -> tree.DefaultStmt:
         assert node['kind'] == "DefaultStmt"
         subnodes = self.parse_subnodes(node)
-        return tree.DefaultStmt(subnodes=subnodes)
+        return tree.DefaultStmt(subnodes=self.as_statements(subnodes))
 
     def parse_CXXThisExpr(self, node) -> tree.CXXThisExpr:
         assert node['kind'] == "CXXThisExpr"
