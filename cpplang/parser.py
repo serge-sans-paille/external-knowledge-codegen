@@ -1143,9 +1143,9 @@ class Parser(object):
     @parse_debug
     def parse_EnumDecl(self, node) -> tree.EnumDecl:
         assert node['kind'] == "EnumDecl"
-        name = node['name']
-        body = self.parse_subnodes(node)
-        return tree.EnumDecl(name=name, body=body)
+        name = node.get('name')
+        subnodes = self.parse_subnodes(node)
+        return tree.EnumDecl(name=name, subnodes=subnodes)
 
     @parse_debug
     def parse_ImplicitValueInitExpr(self, node) -> tree.ImplicitValueInitExpr:
