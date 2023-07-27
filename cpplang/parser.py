@@ -467,16 +467,16 @@ class Parser(object):
         name = self.get_node_source_code(node).split("(")[0]
         subnodes = self.parse_subnodes(node)
         noexcept = ""
-        the_type = node['type']['qualType']
+        type_ = node['type']['qualType']
         try:
-            i = the_type.index('noexcept')
-            noexcept = the_type[i:]
+            i = type_.index('noexcept')
+            noexcept = type_[i:]
         except Exception as _:
             pass
         if len(noexcept) == 0:
             try:
-                i = the_type.index('throw')
-                noexcept = the_type[i:]
+                i = type_.index('throw')
+                noexcept = type_[i:]
             except Exception as _:
                 pass
         default = ''
@@ -531,17 +531,17 @@ class Parser(object):
         except Exception as _:
             pass
         noexcept = ""
-        the_type = node['type']['qualType']
+        type_ = node['type']['qualType']
         try:
-            i = the_type.index('noexcept')
+            i = type_.index('noexcept')
             if 'noexcept' in self.get_node_source_code(node):
-                noexcept = the_type[i:]
+                noexcept = type_[i:]
         except Exception as _:
             pass
         if len(noexcept) == 0:
             try:
-                i = the_type.index('throw')
-                noexcept = the_type[i:]
+                i = type_.index('throw')
+                noexcept = type_[i:]
             except Exception as _:
                 pass
         default = ''
@@ -631,8 +631,8 @@ class Parser(object):
     def parse_TypedefDecl(self, node) -> tree.TypedefDecl:
         assert node['kind'] == "TypedefDecl"
         name = node['name']
-        subnodes = self.parse_subnodes(node)
-        return tree.TypedefDecl(name=name, subnodes=subnodes)
+        type_, = self.parse_subnodes(node)
+        return tree.TypedefDecl(name=name, type=type_)
 
     @parse_debug
     def parse_ParmVarDecl(self, node) -> tree.ParmVarDecl:
@@ -659,10 +659,17 @@ class Parser(object):
         subnodes = self.parse_subnodes(node)
         return tree.ParmVarDecl(name=name, type=var_type, subnodes=subnodes)
 
+    def as_statement(self, subnode):
+        if isinstance(subnode, tree.Expression):
+            return tree.ExprStmt(expr=subnode)
+        else:
+            assert isinstance(subnode, tree.Statement), subnode
+            return subnode
+
     def as_statements(self, subnodes):
         for i, subnode in enumerate(subnodes):
             if isinstance(subnode, tree.Expression):
-                subnodes[i] = tree.ExprStmt(subnodes=[subnode])
+                subnodes[i] = self.as_statement(subnode)
         return subnodes
 
     @parse_debug
@@ -674,9 +681,14 @@ class Parser(object):
     @parse_debug
     def parse_IfStmt(self, node) -> tree.IfStmt:
         assert node['kind'] == "IfStmt"
-        subnodes = self.parse_subnodes(node)
-        return tree.IfStmt(cond=subnodes[0],
-                           subnodes=self.as_statements(subnodes[1:]))
+        cond, *subnodes = self.parse_subnodes(node)
+        if len(subnodes) == 1:
+            true_body, false_body = subnodes[0], None
+        else:
+            true_body, false_body = subnodes
+        return tree.IfStmt(cond=cond,
+                           true_body=self.as_statement(true_body),
+                           false_body=false_body and self.as_statement(false_body))
 
     @parse_debug
     def parse_LabelStmt(self, node) -> tree.LabelStmt:
@@ -684,87 +696,82 @@ class Parser(object):
         name = node['name']
         decl_id = node['declId']
         self.parsed_labels[decl_id] = name
-        subnodes = self.parse_subnodes(node)
+        child, = self.parse_subnodes(node)
         for target_id, goto in self.parsed_gotos.items():
             if target_id == decl_id:
                 goto.target = name
         return tree.LabelStmt(name=name,
-                               subnodes=self.as_statements(subnodes))
+                              stmt=self.as_statement(child))
 
     @parse_debug
     def parse_GotoStmt(self, node) -> tree.LabelStmt:
         assert node['kind'] == "GotoStmt"
         decl_id = node['targetLabelDeclId']
-        subnodes = self.parse_subnodes(node)
         target = self.parsed_labels.get(decl_id)
-        tnode = tree.GotoStmt(target=target,
-                              subnodes=self.as_statements(subnodes))
+        tnode = tree.GotoStmt(target=target)
         self.parsed_gotos[decl_id] = tnode
         return tnode
 
     @parse_debug
     def parse_ForStmt(self, node) -> tree.ForStmt:
         assert node['kind'] == "ForStmt"
-        subnodes = self.parse_subnodes(node, keep_empty=True)
-        assert subnodes[1] is None, "what is it good for?"
+        init, _, cond, inc, body = self.parse_subnodes(node, keep_empty=True)
+        assert _ is None, "what is it good for?"
         return tree.ForStmt(
-                init=subnodes[0],
-                cond=subnodes[2],
-                inc=subnodes[3],
-                subnodes=self.as_statements(subnodes[4:]))
+                init=init,
+                cond=cond,
+                inc=inc,
+                body=self.as_statement(body))
 
     @parse_debug
     def parse_WhileStmt(self, node) -> tree.WhileStmt:
         assert node['kind'] == "WhileStmt"
-        subnodes = self.parse_subnodes(node)
-        return tree.WhileStmt(cond=subnodes[0],
-                              subnodes=self.as_statements(subnodes[1:]))
+        cond, body = self.parse_subnodes(node)
+        return tree.WhileStmt(cond=cond,
+                              body=self.as_statement(body))
 
     @parse_debug
     def parse_DoStmt(self, node) -> tree.DoStmt:
         assert node['kind'] == "DoStmt"
-        subnodes = self.parse_subnodes(node)
-        return tree.DoStmt(cond=subnodes[1],
-                           subnodes=self.as_statements(subnodes[0:1]))
+        body, cond = self.parse_subnodes(node)
+        return tree.DoStmt(cond=cond,
+                           body=self.as_statement(body))
 
     @parse_debug
     def parse_ContinueStmt(self, node) -> tree.ContinueStmt:
         assert node['kind'] == "ContinueStmt"
-        subnodes = self.parse_subnodes(node)
-        return tree.ContinueStmt(subnodes=subnodes)
+        return tree.ContinueStmt()
 
     @parse_debug
     def parse_ReturnStmt(self, node) -> tree.ReturnStmt:
         assert node['kind'] == "ReturnStmt"
         subnodes = self.parse_subnodes(node)
         assert len(subnodes) <= 1
-        if len(subnodes) == 0:
-            return tree.ReturnStmt()
+        if len(subnodes) == 1:
+            return tree.ReturnStmt(value=subnodes[0])
         else:
-            return tree.ReturnStmt(subnodes=subnodes)
+            return tree.ReturnStmt()
 
     def parse_SwitchStmt(self, node) -> tree.SwitchStmt:
         assert node['kind'] == "SwitchStmt"
-        subnodes = self.parse_subnodes(node)
-        cond = subnodes[0]
+        cond, body = self.parse_subnodes(node)
         return tree.SwitchStmt(cond=cond,
-                               subnodes=self.as_statements(subnodes[1:]))
+                               body=self.as_statement(body))
 
     def parse_CaseStmt(self, node) -> tree.CaseStmt:
         assert node['kind'] == "CaseStmt"
-        subnodes = self.parse_subnodes(node)
-        return tree.CaseStmt(pattern=subnodes[0],
-                             subnodes=self.as_statements(subnodes[1:]))
+        pattern, child = self.parse_subnodes(node)
+        return tree.CaseStmt(pattern=pattern,
+                             stmt=self.as_statement(child))
 
     def parse_BreakStmt(self, node) -> tree.BreakStmt:
         assert node['kind'] == "BreakStmt"
-        subnodes = []
-        return tree.BreakStmt(subnodes=subnodes)
+        return tree.BreakStmt()
 
     def parse_DefaultStmt(self, node) -> tree.DefaultStmt:
         assert node['kind'] == "DefaultStmt"
-        subnodes = self.parse_subnodes(node)
-        return tree.DefaultStmt(subnodes=self.as_statements(subnodes))
+        child, = self.parse_subnodes(node)
+        return tree.DefaultStmt(stmt=self.as_statement(child))
 
     def parse_CXXThisExpr(self, node) -> tree.CXXThisExpr:
         assert node['kind'] == "CXXThisExpr"
@@ -777,14 +784,14 @@ class Parser(object):
         assert node['kind'] == "MemberExpr"
         name = node['name']
         op = "->" if 'isArrow' in node and node['isArrow'] else "."
-        subnodes = self.parse_subnodes(node)
-        return tree.MemberExpr(name=name, op=op, subnodes=subnodes)
+        expr, = self.parse_subnodes(node)
+        return tree.MemberExpr(name=name, op=op, expr=expr)
 
     def parse_ConstantExpr(self, node) -> tree.ConstantExpr:
         assert node['kind'] == "ConstantExpr"
         value = node['value']
-        subnodes = self.parse_subnodes(node)
-        return tree.ConstantExpr(value=value, subnodes=subnodes)
+        expr, = self.parse_subnodes(node)
+        return tree.ConstantExpr(value=value, expr=expr)
 
     @parse_debug
     def parse_DeclRefExpr(self, node) -> tree.DeclRefExpr:
@@ -946,9 +953,9 @@ class Parser(object):
             #breakpoint()
             #return None
 
-        the_type = node['type']['qualType']
+        type_ = node['type']['qualType']
         subnodes = self.parse_subnodes(node)
-        return tree.CXXConstructExpr(type=the_type, subnodes=subnodes)
+        return tree.CXXConstructExpr(type=type_, subnodes=subnodes)
 
     @parse_debug
     def parse_MaterializeTemporaryExpr(self, node) -> tree.MaterializeTemporaryExpr:
@@ -966,9 +973,9 @@ class Parser(object):
     @parse_debug
     def parse_ImplicitCastExpr(self, node) -> tree.ImplicitCastExpr:
         assert node['kind'] == "ImplicitCastExpr"
-        the_type = self.parse_type(node['type'])
-        subnodes = self.parse_subnodes(node)
-        return tree.ImplicitCastExpr(type=the_type, subnodes=subnodes)
+        type_ = self.parse_type(node['type'])
+        expr, = self.parse_subnodes(node)
+        return tree.ImplicitCastExpr(type=type_, expr=expr)
 
     @parse_debug
     def parse_CXXDefaultArgExpr(self, node) -> None:
@@ -981,43 +988,44 @@ class Parser(object):
         name = node['name']
         var_type = self.parse_type(node['type'])
         if 'hasInClassInitializer' in node:
-            subnodes = self.parse_subnodes(node)
+            init, = self.parse_subnodes(node)
         else:
-            subnodes = []
-        return tree.FieldDecl(name=name, type=var_type, subnodes=subnodes)
+            init = None
+        return tree.FieldDecl(name=name, type=var_type, init=init)
 
     @parse_debug
     def parse_BinaryOperator(self, node) -> tree.BinaryOperator:
         assert node['kind'] == "BinaryOperator"
         opcode = node['opcode']
-        subnodes = self.parse_subnodes(node)
-        return tree.BinaryOperator(opcode=opcode, subnodes=subnodes)
+        left, right = self.parse_subnodes(node)
+        return tree.BinaryOperator(opcode=opcode, left=left, right=right)
 
     @parse_debug
     def parse_UnaryOperator(self, node) -> tree.UnaryOperator:
         assert node['kind'] == "UnaryOperator"
         opcode = node['opcode']
-        subnodes = self.parse_subnodes(node)
+        expr, = self.parse_subnodes(node)
         postfix = str(node['isPostfix'])
-        return tree.UnaryOperator(opcode=opcode, postfix=postfix, subnodes=subnodes)
+        return tree.UnaryOperator(opcode=opcode, expr=expr, postfix=postfix)
 
     @parse_debug
     def parse_ConditionalOperator(self, node) -> tree.ConditionalOperator:
         assert node['kind'] == "ConditionalOperator"
-        subnodes = self.parse_subnodes(node)
-        return tree.ConditionalOperator(subnodes=subnodes)
+        cond, true_expr, false_expr = self.parse_subnodes(node)
+        return tree.ConditionalOperator(cond=cond, true_expr=true_expr,
+                                        false_expr=false_expr)
 
     @parse_debug
     def parse_ArraySubscriptExpr(self, node) -> tree.ArraySubscriptExpr:
         assert node['kind'] == "ArraySubscriptExpr"
-        subnodes = self.parse_subnodes(node)
-        return tree.ArraySubscriptExpr(subnodes=subnodes)
+        base, index = self.parse_subnodes(node)
+        return tree.ArraySubscriptExpr(base=base, index=index)
 
     @parse_debug
     def parse_ParenExpr(self, node) -> tree.ParenExpr:
         assert node['kind'] == "ParenExpr"
-        subnodes = self.parse_subnodes(node)
-        return tree.ParenExpr(subnodes=subnodes)
+        expr, = self.parse_subnodes(node)
+        return tree.ParenExpr(expr=expr)
 
     @parse_debug
     def parse_UnaryExprOrTypeTraitExpr(self, node) -> tree.UnaryExprOrTypeTraitExpr:
@@ -1054,9 +1062,9 @@ class Parser(object):
     def parse_NonTypeTemplateParmDecl(self, node) -> tree.NonTypeTemplateParmDecl:
         assert node['kind'] == "NonTypeTemplateParmDecl"
         name = node['name']
-        the_type = node['type']['qualType']
+        type_ = node['type']['qualType']
         subnodes = self.parse_subnodes(node)
-        return tree.NonTypeTemplateParmDecl(name=name, type=the_type, subnodes=subnodes)
+        return tree.NonTypeTemplateParmDecl(name=name, type=type_, subnodes=subnodes)
 
     @parse_debug
     def parse_FullComment(self, node) -> tree.FullComment:
@@ -1100,23 +1108,23 @@ class Parser(object):
     @parse_debug
     def parse_CXXTemporaryObjectExpr(self, node) -> tree.CXXTemporaryObjectExpr:
         assert node['kind'] == "CXXTemporaryObjectExpr"
-        the_type = node['type']['qualType']
+        type_ = node['type']['qualType']
         subnodes = self.parse_subnodes(node)
         # assert len(subnodes) > 0
-        return tree.CXXTemporaryObjectExpr(type=the_type, subnodes=subnodes)
+        return tree.CXXTemporaryObjectExpr(type=type_, subnodes=subnodes)
 
     @parse_debug
     def parse_CXXFunctionalCastExpr(self, node) -> tree.CXXFunctionalCastExpr:
         assert node['kind'] == "CXXFunctionalCastExpr"
-        the_type = self.get_node_source_code(node).split("(")[0]
-        #the_type = node['type']['qualType']
-        #the_type = node['conversionFunc']['name']
-        if the_type == 'Lima::Common::XMLConfigurationFiles::ModuleConfigurationStructure':
+        type_ = self.get_node_source_code(node).split("(")[0]
+        #type_ = node['type']['qualType']
+        #type_ = node['conversionFunc']['name']
+        if type_ == 'Lima::Common::XMLConfigurationFiles::ModuleConfigurationStructure':
             breakpoint()
-        elif the_type == 'basic_string':
+        elif type_ == 'basic_string':
             breakpoint()
         subnodes = self.parse_subnodes(node)
-        return tree.CXXFunctionalCastExpr(type=the_type, subnodes=subnodes)
+        return tree.CXXFunctionalCastExpr(type=type_, subnodes=subnodes)
 
     @parse_debug
     def parse_NullStmt(self, node) -> tree.NullStmt:
@@ -1128,15 +1136,16 @@ class Parser(object):
     def parse_EnumConstantDecl(self, node) -> tree.EnumConstantDecl:
         assert node['kind'] == "EnumConstantDecl"
         name = node['name']
-        subnodes = self.parse_subnodes(node)
-        return tree.EnumConstantDecl(name=name, subnodes=subnodes)
+        children = self.parse_subnodes(node)
+        init = None if not children else children[0]
+        return tree.EnumConstantDecl(name=name, init=init)
 
     @parse_debug
     def parse_EnumDecl(self, node) -> tree.EnumDecl:
         assert node['kind'] == "EnumDecl"
         name = node['name']
-        subnodes = self.parse_subnodes(node)
-        return tree.EnumDecl(name=name, subnodes=subnodes)
+        body = self.parse_subnodes(node)
+        return tree.EnumDecl(name=name, body=body)
 
     @parse_debug
     def parse_ImplicitValueInitExpr(self, node) -> tree.ImplicitValueInitExpr:
@@ -1159,15 +1168,15 @@ class Parser(object):
     @parse_debug
     def parse_CStyleCastExpr(self, node) -> tree.CStyleCastExpr:
         assert node['kind'] == "CStyleCastExpr"
-        the_type = self.parse_type(node['type'])
-        subnodes = self.parse_subnodes(node)
-        return tree.CStyleCastExpr(type=the_type, subnodes=subnodes)
+        type_ = self.parse_type(node['type'])
+        expr, = self.parse_subnodes(node)
+        return tree.CStyleCastExpr(type=type_, expr=expr)
 
     @parse_debug
     def parse_FriendDecl(self, node) -> tree.FriendDecl:
         assert node['kind'] == "FriendDecl"
-        the_type = node['type']['qualType']
-        return tree.FriendDecl(type=the_type)
+        type_ = node['type']['qualType']
+        return tree.FriendDecl(type=type_)
 
     @parse_debug
     def parse_CXXStdInitializerListExpr(self, node) -> tree.CXXStdInitializerListExpr:
@@ -1194,8 +1203,8 @@ class Parser(object):
     @parse_debug
     def parse_PointerType(self, node) -> tree.PointerType:
         assert node['kind'] == "PointerType"
-        subnodes = self.parse_subnodes(node)
-        return tree.PointerType(subnodes=subnodes)
+        type_, = self.parse_subnodes(node)
+        return tree.PointerType(type=type_)
 
 
 def parse(tokens, debug=False, filepath=None):

@@ -413,7 +413,7 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_ImplicitCastExpr(self, node: tree.ImplicitCastExpr):
         # The cast is implicit, no need to pretty-print it.
-        self.write(node.subnodes[0])
+        self.write(node.expr)
 
     def visit_VarDecl(self, node: tree.VarDecl):
         if len(node.storage_class) > 0:
@@ -433,25 +433,24 @@ class SourceGenerator(ExplicitNodeVisitor):
                 self.conditional_write(";")
 
     def visit_ExprStmt(self, node: tree.ExprStmt):
-        self.write(node.subnodes[0], ";")
+        self.write(node.expr, ";")
 
     def visit_FieldDecl(self, node: tree.FieldDecl):
         self.write(node.type, " ", node.name)
-        if node.subnodes:
-            self.write(" = ", node.subnodes[0], ";")
-        else:
-            self.write(";")
+        if node.init:
+            self.write(" = ", node.init)
+        self.write(";")
         self.newline(extra=1)
 
     def visit_TypedefDecl(self, node: tree.TypedefDecl):
-        self.write("typedef ", node.subnodes[0], " ", node.name, ";")
+        self.write("typedef ", node.type, " ", node.name, ";")
         self.newline(extra=1)
 
     def visit_BuiltinType(self, node: tree.BuiltinType):
         self.write(node.name)
 
     def visit_PointerType(self, node: tree.PointerType):
-        self.write(node.subnodes[0], "*")
+        self.write(node.type, "*")
 
     def visit_TypeRef(self, node: tree.TypeRef):
         self.write(node.name)
@@ -568,22 +567,22 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(")")
 
     def visit_BinaryOperator(self, node: tree.BinaryOperator):
-        self.write(node.subnodes[0])
+        self.write(node.left)
         self.write(" ", node.opcode, " ")
-        self.write(node.subnodes[1])
+        self.write(node.right)
 
     def visit_UnaryOperator(self, node: tree.UnaryOperator):
         if node.postfix == "True":
-            self.write(node.subnodes[0], node.opcode)
+            self.write(node.expr, node.opcode)
         else:
-            self.write(node.opcode, node.subnodes[0])
+            self.write(node.opcode, node.expr)
 
     def visit_ConditionalOperator(self, node: tree.ConditionalOperator):
-        self.write(node.subnodes[0], "?", node.subnodes[1], ":",
-                   node.subnodes[2])
+        self.write(node.cond, "?", node.true_expr, ":",
+                   node.false_expr)
 
     def visit_ArraySubscriptExpr(self, node: tree.ArraySubscriptExpr):
-        self.write(node.subnodes[0], "[", node.subnodes[1], "]")
+        self.write(node.base, "[", node.index, "]")
 
     def visit_DeclStmt(self, node: tree.DeclStmt):
         if node.subnodes:
@@ -591,9 +590,7 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     # ReturnStmt(identifier* label, expression expression)
     def visit_ReturnStmt(self, node: tree.ReturnStmt):
-        if node.label:
-            self.write(node.label, ": ", "\n")
-        self.write("return ", node.subnodes[0], ";\n")
+        self.write("return ", node.value, ";\n")
 
     def visit_NullStmt(self, node: tree.NullStmt):
         self.write(";")
@@ -602,9 +599,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         if node.label:
             self.write(node.label, ": ", "\n")
         self.write("if (", node.cond, ")\n")
-        self.write(node.subnodes[0])
-        if len(node.subnodes) > 1:
-            self.write("else ", node.subnodes[1])
+        self.write(node.true_body)
+        if node.false_body is not None:
+            self.write("else ", node.false_body)
 
     # BlockStatement(identifier? label, statement* statements)
     def visit_CompoundStmt(self, node: tree.CompoundStmt):
@@ -621,37 +618,26 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     # prefix_operators, "postfix_operators", "qualifier", "selectors
     def visit_ParenExpr(self, node: tree.ParenExpr):
-        self.write("(", node.subnodes[0], ")")
+        self.write("(", node.expr, ")")
 
 
     def visit_SwitchStmt(self, node: tree.SwitchStmt):
-        self.write("switch (", node.cond, ")\n", node.subnodes[0])
+        self.write("switch (", node.cond, ")\n", node.body)
 
     def visit_CaseStmt(self, node: tree.CaseStmt):
-        self.write("case ", node.pattern, ":\n", node.subnodes[0])
+        self.write("case ", node.pattern, ":\n", node.stmt)
 
     def visit_BreakStmt(self, node: tree.BreakStmt):
         self.write("break;\n")
 
     def visit_MemberExpr(self, node: tree.MemberExpr):
-        if 'addSearchPathes' in node.name:
-            breakpoint()
-        if (node.subnodes is not None and len(node.subnodes) > 0
-                and node.subnodes[0].__class__.__name__ in ['CallExpr',
-                                                            'DeclRefExpr',
-                                                            'ImplicitCastExpr',
-                                                            'MaterializeTemporaryExpr',
-                                                            'MemberExpr']):
-            #if node.op == "->":
-                #breakpoint()
-            self.write(node.subnodes[0], node.op)
-        self.write(node.name)
+        self.write(node.expr, node.op, node.name)
 
     def visit_ConstantExpr(self, node: tree.ConstantExpr):
         self.write(node.value)
 
     def visit_DefaultStmt(self, node: tree.DefaultStmt):
-        self.write("default:\n", node.subnodes[0])
+        self.write("default:\n", node.stmt)
 
     def visit_ClassTemplateDecl(self, node: tree.ClassTemplateDecl):
         parameters = []
@@ -741,10 +727,10 @@ class SourceGenerator(ExplicitNodeVisitor):
                    node.init or '', "; ",
                    node.cond or '', "; ",
                    node.inc or '', ")\n",
-                   node.subnodes[0])
+                   node.body)
 
     def visit_LabelStmt(self, node: tree.LabelStmt):
-        self.write(node.name, ":\n", node.subnodes[0])
+        self.write(node.name, ":\n", node.stmt)
 
     def visit_GotoStmt(self, node: tree.GotoStmt):
         self.write("goto", node.target, ";")
@@ -758,23 +744,24 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_WhileStmt(self, node: tree.WhileStmt):
         self.write("while (", node.cond, ")")
         self.newline()
-        self.write(node.subnodes[0])
+        self.write(node.body)
 
     def visit_DoStmt(self, node: tree.DoStmt):
-        self.write("do\n", node.subnodes[0], "while (", node.cond, ");\n")
+        self.write("do\n", node.body, "while (", node.cond, ");\n")
 
     def visit_ContinueStmt(self, node: tree.ContinueStmt):
         self.write("continue;")
         self.newline(extra=1)
 
     def visit_EnumConstantDecl(self, node: tree.EnumConstantDecl):
-        self.write(node.name)
-        if node.subnodes is not None and len(node.subnodes) > 0:
-            self.write(" = ", node.subnodes[0])
+        if node.init is None:
+            self.write(node.name)
+        else:
+            self.write(node.name, " = ", node.init)
 
     def visit_EnumDecl(self, node: tree.EnumDecl):
         self.write("enum ", node.name, " {\n")
-        self.comma_list(node.subnodes)
+        self.comma_list(node.body)
         self.write("};")
         self.newline(extra=1)
 
@@ -788,7 +775,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(";")
 
     def visit_CStyleCastExpr(self, node: tree.CStyleCastExpr):
-        self.write("(", node.type, ")", node.subnodes[0])
+        self.write("(", node.type, ")", node.expr)
 
     def visit_CXXThisExpr(self, node: tree.CXXThisExpr):
         self.write("this")

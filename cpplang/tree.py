@@ -148,7 +148,7 @@ class BuiltinType(Node):
     attrs = ("name",)
 
 class PointerType(Node):
-    attrs = ()
+    attrs = ("type",)
 
 class QualType(Node):
     attrs = ("qualifiers",)
@@ -240,7 +240,7 @@ class ParmVarDecl(Node):
 
 
 class FieldDecl(Node):
-    attrs = ("type", "name", "dimensions",)
+    attrs = ("type", "name", "init",)
 
 
 # ------------------------------------------------------------------------------
@@ -290,7 +290,7 @@ class Statement(Node):
 
 
 class DoStmt(Statement):
-    attrs = ("cond",)
+    attrs = ("cond", "body",)
 
 
 class LocalVariableDeclarationStmt(Statement):
@@ -302,15 +302,15 @@ class TypeDeclarationStmt(Statement):
 
 
 class IfStmt(Statement):
-    attrs = ("cond",)
+    attrs = ("cond", "true_body", "false_body")
 
 
 class ForStmt(Statement):
-    attrs = ("init", "cond", "inc")
+    attrs = ("init", "cond", "inc", "body")
 
 
 class WhileStmt(Statement):
-    attrs = ("cond",)
+    attrs = ("cond", "body",)
 
 
 class ContinueStmt(Statement):
@@ -322,15 +322,11 @@ class AssertStmt(Statement):
 
 
 class LabelStmt(Statement):
-    attrs = ("name",)
+    attrs = ("name", "stmt",)
 
 
 class GotoStmt(Statement):
     attrs = ("target",)
-
-
-class BreakStmt(Statement):
-    attrs = ("goto",)
 
 
 class ContinueStmt(Statement):
@@ -350,7 +346,7 @@ class TryStmt(Statement):
 
 
 class SwitchStmt(Statement):
-    attrs = ("cond",)
+    attrs = ("cond", "body",)
 
 
 class BreakStmt(Statement):
@@ -358,7 +354,7 @@ class BreakStmt(Statement):
 
 
 class DefaultStmt(Statement):
-    attrs = ()
+    attrs = ("stmt",)
 
 
 class BlockStmt(Statement):
@@ -371,7 +367,7 @@ class CompoundStmt(Statement):
 
 
 class ReturnStmt(Statement):
-    attrs = ()
+    attrs = ("value",)
 
 
 class DeclRefExpr(Node):
@@ -397,7 +393,7 @@ class VarDecl(Node):
 
 
 class TypedefDecl(Node):
-    attrs = ("name",)
+    attrs = ("name", "type")
 
 
 class TypeRef(Node):
@@ -437,8 +433,8 @@ class CatchClauseParameter(NonEmptyDeclaration):
 # ------------------------------------------------------------------------------
 
 
-class CaseStmt(Node):
-    attrs = ("pattern",)
+class CaseStmt(Statement):
+    attrs = ("pattern", "stmt",)
 
 
 class ForControl(Node):
@@ -450,7 +446,7 @@ class EnhancedForControl(Node):
 
 
 class ExprStmt(Node):
-    attrs = ()
+    attrs = ("expr",)
 
 # ------------------------------------------------------------------------------
 
@@ -481,7 +477,7 @@ class Primary(Expression):
 
 
 class ParenExpr(Primary):
-    attrs = ()
+    attrs = ("expr",)
 
 
 class Assignment(Primary):
@@ -489,19 +485,19 @@ class Assignment(Primary):
 
 
 class BinaryOperator(Expression):
-    attrs = ("opcode",)
+    attrs = ("opcode", "left", "right",)
 
 
 class UnaryOperator(Expression):
-    attrs = ("opcode", "postfix",)
+    attrs = ("opcode", "expr", "postfix",)
 
 
 class ConditionalOperator(Expression):
-    attrs = ()
+    attrs = ("cond", "true_expr", "false_expr")
 
 
 class ArraySubscriptExpr(Expression):
-    attrs = ()
+    attrs = ("base", "index",)
 
 
 class MethodReference(Primary):
@@ -533,7 +529,7 @@ class UnaryExprOrTypeTraitExpr(Expression):
 
 
 class ImplicitCastExpr(Expression):
-    attrs = ("type",)
+    attrs = ("type", "expr",)
 
 # ------------------------------------------------------------------------------
 
@@ -571,11 +567,11 @@ class CXXThisExpr(Primary):
 
 
 class MemberExpr(Primary):
-    attrs = ("name", "op",)
+    attrs = ("name", "op", "expr")
 
 
 class ConstantExpr(Primary):
-    attrs = ("value",)
+    attrs = ("value", "expr",)
 
 
 class CXXMemberCallExpr(Primary):
@@ -602,7 +598,7 @@ class CXXFunctionalCastExpr(Node):
     attrs = ("type",)
 
 
-class NullStmt(Node):
+class NullStmt(Statement):
     attrs = ()
 
 
@@ -691,11 +687,11 @@ class CXXConversionDecl(Node):
 
 
 class EnumConstantDecl(Node):
-    attrs = ("name", )
+    attrs = ("name", "init",)
 
 
 class EnumDecl(Node):
-    attrs = ("name",)
+    attrs = ("name", "body",)
 
 
 class AnnotationMethod(NonEmptyDeclaration):
@@ -707,7 +703,7 @@ class EmptyDecl(Node):
 
 
 class CStyleCastExpr(Node):
-    attrs = ("type",)
+    attrs = ("type", "expr",)
 
 
 class FriendDecl(Node):
