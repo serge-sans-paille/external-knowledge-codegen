@@ -30,3 +30,29 @@ struct nested_with_indirect_field {
     int indirect;
   };
 };
+
+
+void init() {
+  empty e0;
+  empty e1 = {};
+
+  some s0;
+  some s1 = { 1 };
+
+  nested n0 = { 3 };
+
+  list l0 = { 4, nullptr };
+
+  nested_with_indirect_field nif0 = { 4, { 5 } };
+}
+
+void field() {
+  list l0 = { 4, nullptr };
+
+  l0.val;
+  l0.val = 1;
+
+  l0.next = &l0;
+
+  l0.next->next = nullptr;
+}
