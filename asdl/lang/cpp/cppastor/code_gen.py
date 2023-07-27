@@ -590,7 +590,7 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     # ReturnStmt(identifier* label, expression expression)
     def visit_ReturnStmt(self, node: tree.ReturnStmt):
-        self.write("return ", node.value, ";\n")
+        self.write("return ", node.value or "", ";\n")
 
     def visit_NullStmt(self, node: tree.NullStmt):
         self.write(";")

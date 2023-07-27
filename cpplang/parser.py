@@ -747,10 +747,8 @@ class Parser(object):
         assert node['kind'] == "ReturnStmt"
         subnodes = self.parse_subnodes(node)
         assert len(subnodes) <= 1
-        if len(subnodes) == 1:
-            return tree.ReturnStmt(value=subnodes[0])
-        else:
-            return tree.ReturnStmt()
+        value = subnodes[0] if len(subnodes) == 1 else None
+        return tree.ReturnStmt(value=value)
 
     def parse_SwitchStmt(self, node) -> tree.SwitchStmt:
         assert node['kind'] == "SwitchStmt"
