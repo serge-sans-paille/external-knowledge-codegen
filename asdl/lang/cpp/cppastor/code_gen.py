@@ -444,14 +444,29 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.newline(extra=1)
 
     def visit_TypedefDecl(self, node: tree.TypedefDecl):
-        self.write("typedef ", node.type, " ", node.name, ";")
+        self.write("typedef ", node.subnodes[0], " ", node.name, ";")
         self.newline(extra=1)
+
+    def visit_BuiltinType(self, node: tree.BuiltinType):
+        self.write(node.name)
+
+    def visit_PointerType(self, node: tree.PointerType):
+        self.write(node.subnodes[0], "*")
 
     def visit_TypeRef(self, node: tree.TypeRef):
         self.write(node.name)
 
     def visit_QualType(self, node: tree.QualType):
-        self.write(node.type)
+        # west const
+        if isinstance(node.subnodes[0], tree.BuiltinType):
+            if node.qualifiers:
+                self.write(node.qualifiers, " ")
+            self.write(node.subnodes[0])
+        # east const
+        else:
+            self.write(node.subnodes[0])
+            if node.qualifiers:
+                self.write(" ", node.qualifiers)
 
     def visit_CXXMethodDecl(self, node: tree.CXXMethodDecl):
         parameters = []

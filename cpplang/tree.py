@@ -144,12 +144,14 @@ class Operator(Node):
 class Type(Node):
     attrs = ("name", "dimensions",)
 
+class BuiltinType(Node):
+    attrs = ("name",)
 
-class BasicType(Type):
+class PointerType(Node):
     attrs = ()
 
 class QualType(Node):
-    attrs = ("type",)
+    attrs = ("qualifiers",)
 
 class DiamondType(Type):
     attrs = ("sub_type",)
@@ -395,7 +397,7 @@ class VarDecl(Node):
 
 
 class TypedefDecl(Node):
-    attrs = ("name", "type",)
+    attrs = ("name",)
 
 
 class TypeRef(Node):

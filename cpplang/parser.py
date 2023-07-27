@@ -631,9 +631,8 @@ class Parser(object):
     def parse_TypedefDecl(self, node) -> tree.TypedefDecl:
         assert node['kind'] == "TypedefDecl"
         name = node['name']
-        type = node['type']['qualType']
-        # subnodes = self.parse_subnodes(node)
-        return tree.TypedefDecl(name=name, type=type)
+        subnodes = self.parse_subnodes(node)
+        return tree.TypedefDecl(name=name, subnodes=subnodes)
 
     @parse_debug
     def parse_ParmVarDecl(self, node) -> tree.ParmVarDecl:
@@ -869,9 +868,16 @@ class Parser(object):
 
     @parse_debug
     def parse_QualType(self, node) -> tree.QualType:
+        assert node['kind'] == "QualType"
+        subnodes = self.parse_subnodes(node)
+        qualifiers = node['qualifiers']
+        return tree.QualType(qualifiers=qualifiers, subnodes=subnodes)
+
+    # FXIME: this should disappear in favor of better type
+    def parse_type(self, node) -> tree.QualType:
         qual_type = node['qualType']
-        return tree.QualType(subnodes=[],
-                             type=self.mangle_anonymous_type(qual_type))
+        return tree.QualType(qualifiers=None,
+                             subnodes=[tree.BuiltinType(name=self.mangle_anonymous_type(qual_type))])
 
     @parse_debug
     def parse_VarDecl(self, node) -> tree.VarDecl:
@@ -881,12 +887,13 @@ class Parser(object):
         referenced = 'referenced' if 'isReferenced' in node and node['isReferenced'] else ''
         storage_class = node['storageClass'] if "storageClass" in node else ""
 
-        qual_type = self.parse_QualType(node['type'])
+        qual_type = self.parse_type(node['type'])
 
-        # FIXME: this looks messy
-        array_start = qual_type.type.find('[')
+        # FIXME: this is messy
+        qual_type_name = qual_type.subnodes[0].name
+        array_start = qual_type_name.find('[')
         if array_start >= 0:
-            qual_type.type, array_decl = qual_type.type[:array_start], qual_type.type[array_start:]
+            qual_type.subnodes[0].name, array_decl = qual_type_name[:array_start], qual_type_name[array_start:]
         else:
             array_decl = ''
 
@@ -959,7 +966,7 @@ class Parser(object):
     @parse_debug
     def parse_ImplicitCastExpr(self, node) -> tree.ImplicitCastExpr:
         assert node['kind'] == "ImplicitCastExpr"
-        the_type = self.parse_QualType(node['type'])
+        the_type = self.parse_type(node['type'])
         subnodes = self.parse_subnodes(node)
         return tree.ImplicitCastExpr(type=the_type, subnodes=subnodes)
 
@@ -972,7 +979,7 @@ class Parser(object):
     def parse_FieldDecl(self, node) -> tree.FieldDecl:
         assert node['kind'] == "FieldDecl"
         name = node['name']
-        var_type = self.parse_QualType(node['type'])
+        var_type = self.parse_type(node['type'])
         if 'hasInClassInitializer' in node:
             subnodes = self.parse_subnodes(node)
         else:
@@ -1018,7 +1025,7 @@ class Parser(object):
         name = node['name']
         if 'argType' in node:
             expr = None
-            ty = self.parse_QualType(node['argType'])
+            ty = self.parse_type(node['argType'])
         else:
             expr = self.parse_subnodes(node)[0]
             ty = None
@@ -1152,7 +1159,7 @@ class Parser(object):
     @parse_debug
     def parse_CStyleCastExpr(self, node) -> tree.CStyleCastExpr:
         assert node['kind'] == "CStyleCastExpr"
-        the_type = self.parse_QualType(node['type'])
+        the_type = self.parse_type(node['type'])
         subnodes = self.parse_subnodes(node)
         return tree.CStyleCastExpr(type=the_type, subnodes=subnodes)
 
@@ -1178,6 +1185,17 @@ class Parser(object):
         assert node['kind'] == "CXXForRangeStmt"
         subnodes = self.parse_subnodes(node)
         return tree.CXXForRangeStmt(subnodes=subnodes)
+
+    @parse_debug
+    def parse_BuiltinType(self, node) -> tree.BuiltinType:
+        assert node['kind'] == "BuiltinType"
+        return tree.BuiltinType(name=node['type']['qualType'])
+
+    @parse_debug
+    def parse_PointerType(self, node) -> tree.PointerType:
+        assert node['kind'] == "PointerType"
+        subnodes = self.parse_subnodes(node)
+        return tree.PointerType(subnodes=subnodes)
 
 
 def parse(tokens, debug=False, filepath=None):
