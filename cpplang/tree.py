@@ -691,7 +691,7 @@ class EnumConstantDecl(Node):
 
 
 class EnumDecl(Node):
-    attrs = ("name", "body",)
+    attrs = ("name",)
 
 
 class AnnotationMethod(NonEmptyDeclaration):

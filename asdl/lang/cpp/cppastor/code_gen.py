@@ -590,7 +590,7 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     # ReturnStmt(identifier* label, expression expression)
     def visit_ReturnStmt(self, node: tree.ReturnStmt):
-        self.write("return ", node.value, ";\n")
+        self.write("return ", node.value or "", ";\n")
 
     def visit_NullStmt(self, node: tree.NullStmt):
         self.write(";")
@@ -760,8 +760,8 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write(node.name, " = ", node.init)
 
     def visit_EnumDecl(self, node: tree.EnumDecl):
-        self.write("enum ", node.name, " {\n")
-        self.comma_list(node.body)
+        self.write("enum ", node.name or "", " {\n")
+        self.comma_list(node.subnodes)
         self.write("};")
         self.newline(extra=1)
 

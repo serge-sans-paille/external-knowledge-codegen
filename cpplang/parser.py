@@ -747,10 +747,8 @@ class Parser(object):
         assert node['kind'] == "ReturnStmt"
         subnodes = self.parse_subnodes(node)
         assert len(subnodes) <= 1
-        if len(subnodes) == 1:
-            return tree.ReturnStmt(value=subnodes[0])
-        else:
-            return tree.ReturnStmt()
+        value = subnodes[0] if len(subnodes) == 1 else None
+        return tree.ReturnStmt(value=value)
 
     def parse_SwitchStmt(self, node) -> tree.SwitchStmt:
         assert node['kind'] == "SwitchStmt"
@@ -1143,9 +1141,9 @@ class Parser(object):
     @parse_debug
     def parse_EnumDecl(self, node) -> tree.EnumDecl:
         assert node['kind'] == "EnumDecl"
-        name = node['name']
-        body = self.parse_subnodes(node)
-        return tree.EnumDecl(name=name, body=body)
+        name = node.get('name')
+        subnodes = self.parse_subnodes(node)
+        return tree.EnumDecl(name=name, subnodes=subnodes)
 
     @parse_debug
     def parse_ImplicitValueInitExpr(self, node) -> tree.ImplicitValueInitExpr:

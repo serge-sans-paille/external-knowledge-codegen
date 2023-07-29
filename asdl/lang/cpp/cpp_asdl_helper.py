@@ -58,14 +58,14 @@ def cpp_ast_to_asdl_ast(cpp_ast_node, grammar):
         else:
             if grammar.is_composite_type(field.type):
                 has_value = False
-                for val in cpp_ast_node.subnodes:
+                for val in cpp_ast_node.subnodes or []:
                     child_node = cpp_ast_to_asdl_ast(val, grammar)
                     asdl_field.add_value(child_node)
                     has_value = True
                 if not has_value:
                     asdl_field.init_empty()
             else:
-                for val in cpp_ast_node.subnodes:
+                for val in cpp_ast_node.subnodes or []:
                     asdl_field.add_value(str(val))
         #else:
             #pass
