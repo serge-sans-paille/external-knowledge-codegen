@@ -15,14 +15,7 @@ from . import tree
 ENABLE_DEBUG_SUPPORT = True
 
 preprocess_command = [
-    shutil.which("clang"), "-x", "c++", "-std=c++17", "-fPIC",
-    "-I/usr/include/x86_64-linux-gnu/qt5",
-    "-I/usr/include/x86_64-linux-gnu/qt5/QtCore",
-    "-I/home/gael/Projets/Lima/lima/lima_common/src/",
-    "-I/home/gael/Projets/Lima/lima/lima_common/src/common",
-    "-I/home/gael/Projets/Lima/lima/lima_common/src/common/AbstractFactoryPattern",
-    "-I/home/gael/Projets/Lima/lima/lima_common/src/common/QsLog",
-    "-I/home/gael/Projets/Lima/lima/lima_common/src/common/XMLConfigurationFiles",
+    shutil.which("clang"), "-x", "c++", "-std=c++17",
     "-E", "-"]
 
 def parse_debug(method):
@@ -130,14 +123,7 @@ class Parser(object):
         #           file=sys.stderr)
         preprocess_stderr_data = preprocess.stderr
         process_command = [
-            shutil.which("clang"), "-x", "c++", "-std=c++17", "-fPIC",
-            "-I/usr/include/x86_64-linux-gnu/qt5",
-            "-I/usr/include/x86_64-linux-gnu/qt5/QtCore",
-            "-I/home/gael/Projets/Lima/lima/lima_common/src/",
-            "-I/home/gael/Projets/Lima/lima/lima_common/src/common",
-            "-I/home/gael/Projets/Lima/lima/lima_common/src/common/AbstractFactoryPattern",
-            "-I/home/gael/Projets/Lima/lima/lima_common/src/common/QsLog",
-            "-I/home/gael/Projets/Lima/lima/lima_common/src/common/XMLConfigurationFiles",
+            shutil.which("clang"), "-x", "c++", "-std=c++17",
             "-Xclang", "-ast-dump=json",
             "-fsyntax-only", "-"]
         # if ENABLE_DEBUG_SUPPORT:
@@ -458,6 +444,11 @@ class Parser(object):
         return tree.CXXRecordDecl(name=name, kind=kind, bases=bases,
                                   complete_definition=complete_definition,
                                   subnodes=subnodes)
+
+    @parse_debug
+    def parse_RecordDecl(self, node) -> tree.RecordDecl:
+        print(node)
+        breakpoint()
 
     @parse_debug
     def parse_CXXConstructorDecl(self, node) -> tree.CXXConstructorDecl:
@@ -884,6 +875,34 @@ class Parser(object):
         return tree.QualType(qualifiers=None,
                              subnodes=[tree.BuiltinType(name=self.mangle_anonymous_type(qual_type))])
 
+    def reparse_type(self, node):
+        qual_type = self.mangle_anonymous_type(node['qualType'])
+        raw = qual_type
+
+        # forward declare any type involved in the type expression
+        types = set(re.findall(r"[_a-zA-Z]\w+", raw))
+        for ty in ("int", "short", "long", "bool", "char", "float", "double",
+                   "unsigned", "signed", "const", "volatile", "void",
+                   "class", "struct"):
+            types.discard(ty)
+
+        # FIXME: instead of create arbitrary record, we could register existing
+        # type decl.
+        fake_source = "".join("struct {} {{}};\n".format(ty) for ty in types)
+        fake_source += "using __fake_typealias = {};".format(raw)
+
+        process_command = [
+            shutil.which("clang"), "-x", "c++", "-std=c++17", "-fPIC",
+            "-Xclang", "-ast-dump=json",
+            "-fsyntax-only", "-"]
+        json_dump = subprocess.check_output(process_command,
+                                                input=fake_source.encode())
+        translation_unit = json.loads(json_dump.decode())
+        typedef = translation_unit["inner"][-1]
+
+        type_, = self.parse_subnodes(typedef)
+        return type_
+
     @parse_debug
     def parse_VarDecl(self, node) -> tree.VarDecl:
         assert node['kind'] == "VarDecl"
@@ -892,15 +911,7 @@ class Parser(object):
         referenced = 'referenced' if 'isReferenced' in node and node['isReferenced'] else ''
         storage_class = node['storageClass'] if "storageClass" in node else ""
 
-        qual_type = self.parse_type(node['type'])
-
-        # FIXME: this is messy
-        qual_type_name = qual_type.subnodes[0].name
-        array_start = qual_type_name.find('[')
-        if array_start >= 0:
-            qual_type.subnodes[0].name, array_decl = qual_type_name[:array_start], qual_type_name[array_start:]
-        else:
-            array_decl = ''
+        type_ = self.reparse_type(node['type'])
 
         if 'init' in node:
             subnodes = self.parse_subnodes(node)
@@ -911,8 +922,7 @@ class Parser(object):
 
         return tree.VarDecl(name=name,
                             storage_class=storage_class,
-                            type=qual_type,
-                            array=array_decl,
+                            type=type_,
                             init=init,
                             implicit=implicit,
                             referenced=referenced,
@@ -971,7 +981,7 @@ class Parser(object):
     @parse_debug
     def parse_ImplicitCastExpr(self, node) -> tree.ImplicitCastExpr:
         assert node['kind'] == "ImplicitCastExpr"
-        type_ = self.parse_type(node['type'])
+        type_ = self.reparse_type(node['type'])
         expr, = self.parse_subnodes(node)
         return tree.ImplicitCastExpr(type=type_, expr=expr)
 
@@ -984,7 +994,7 @@ class Parser(object):
     def parse_FieldDecl(self, node) -> tree.FieldDecl:
         assert node['kind'] == "FieldDecl"
         name = node['name']
-        var_type = self.parse_type(node['type'])
+        var_type = self.reparse_type(node['type']) #name, node['range'])
         if 'hasInClassInitializer' in node:
             init, = self.parse_subnodes(node)
         else:
@@ -1031,7 +1041,7 @@ class Parser(object):
         name = node['name']
         if 'argType' in node:
             expr = None
-            ty = self.parse_type(node['argType'])
+            ty = self.reparse_type(node['argType'])
         else:
             expr = self.parse_subnodes(node)[0]
             ty = None
@@ -1166,7 +1176,7 @@ class Parser(object):
     @parse_debug
     def parse_CStyleCastExpr(self, node) -> tree.CStyleCastExpr:
         assert node['kind'] == "CStyleCastExpr"
-        type_ = self.parse_type(node['type'])
+        type_ = self.reparse_type(node['type'])
         expr, = self.parse_subnodes(node)
         return tree.CStyleCastExpr(type=type_, expr=expr)
 
@@ -1206,6 +1216,13 @@ class Parser(object):
         return tree.ConstantArrayType(type=type_, size=size)
 
     @parse_debug
+    def parse_ElaboratedType(self, node) -> tree.ElaboratedType:
+        assert node['kind'] == "ElaboratedType"
+        type_, = self.parse_subnodes(node)
+        qualifiers = node.get('qualifiers')
+        return tree.ElaboratedType(qualifiers=qualifiers, type=type_)
+
+    @parse_debug
     def parse_FunctionProtoType(self, node) -> tree.FunctionProtoType:
         assert node['kind'] == "FunctionProtoType"
         subnodes = self.parse_subnodes(node)
@@ -1222,6 +1239,12 @@ class Parser(object):
         assert node['kind'] == "PointerType"
         type_, = self.parse_subnodes(node)
         return tree.PointerType(type=type_)
+
+    @parse_debug
+    def parse_RecordType(self, node) -> tree.RecordType:
+        assert node['kind'] == "RecordType"
+        return tree.RecordType(name=node['type']['qualType'])
+
 
 
 def parse(tokens, debug=False, filepath=None):

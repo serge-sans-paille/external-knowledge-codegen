@@ -17,6 +17,11 @@ struct list {
   struct list * next;
 };
 
+struct const_list {
+  int val;
+  struct const_list * const next;
+};
+
 // This is correctly modeled, but using a generated name
 // struct { int x; } anonymous;
 
