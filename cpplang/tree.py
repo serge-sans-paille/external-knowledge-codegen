@@ -79,6 +79,10 @@ class CXXRecordDecl(TypeDeclaration):
     attrs = ("kind", "bases", "complete_definition",)
 
 
+class RecordDecl(TypeDeclaration):
+    attrs = ()
+
+
 class CXXConstructorDecl(Node):
     attrs = ("name", "noexcept", "default",)
 
@@ -150,6 +154,9 @@ class BuiltinType(Node):
 class ConstantArrayType(Node):
     attrs = ("type", "size", )
 
+class ElaboratedType(Node):
+    attrs = ("type", "qualifiers", )
+
 class FunctionProtoType(Node):
     attrs = ()
 
@@ -161,6 +168,9 @@ class PointerType(Node):
 
 class QualType(Node):
     attrs = ("qualifiers",)
+
+class RecordType(Node):
+    attrs = ("name",)
 
 class DiamondType(Type):
     attrs = ("sub_type",)
@@ -238,10 +248,6 @@ class TemplateTypeParmDecl(Declaration):
 
 class NonTypeTemplateParmDecl(Declaration):
     attrs = ("name", "type")
-
-
-class ParmVarDecl(Node):
-    attrs = ("type", "name", "dimensions",)
 
 
 class ParmVarDecl(Node):
@@ -398,7 +404,7 @@ class DeclStmt(Node):
 
 
 class VarDecl(Node):
-    attrs = ("name", "type", "array", "storage_class", "init", "implicit", "referenced")
+    attrs = ("name", "type", "storage_class", "init", "implicit", "referenced")
 
 
 class TypedefDecl(Node):

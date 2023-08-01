@@ -421,7 +421,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         if node.implicit == "implicit" and node.referenced == "referenced":
             self.write(node.subnodes[0])
         else:
-            self.write(node.type, " ", node.name, node.array)
+            self.write(self.visit_type_helper(node.name, node.type))
             if node.subnodes is not None and len(node.subnodes) > 0:
                 if node.init == 'call':
                     self.write("(", node.subnodes[0], ")")
@@ -442,51 +442,63 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(";")
         self.newline(extra=1)
 
-    def visit_typedef_helper(self, current_expr, current_type):
+    def visit_type_helper(self, current_expr, current_type):
         if isinstance(current_type, tree.BuiltinType):
             return "{} {}".format(current_type.name, current_expr)
         if isinstance(current_type, tree.FunctionProtoType):
-            argument_types = ', '.join(self.visit_typedef_helper("", ty)
+            argument_types = ', '.join(self.visit_type_helper("", ty)
                                        for ty in current_type.subnodes[1:])
-            return self.visit_typedef_helper("{}({})".format(current_expr,
+            return self.visit_type_helper("{}({})".format(current_expr,
                                                              argument_types),
                                              current_type.subnodes[0])
         if isinstance(current_type, tree.ParenType):
-            return self.visit_typedef_helper("({})".format(current_expr),
+            return self.visit_type_helper("({})".format(current_expr),
                                              current_type.type)
         if isinstance(current_type, tree.PointerType):
-            return self.visit_typedef_helper("*{}".format(current_expr),
+            return self.visit_type_helper("*{}".format(current_expr),
                                              current_type.type)
         if isinstance(current_type, tree.QualType):
             qualified_type = current_type.subnodes[0]
             if current_type.qualifiers is None:
-                return self.visit_typedef_helper(current_expr, qualified_type)
+                return self.visit_type_helper(current_expr, qualified_type)
 
             # west const
             if isinstance(qualified_type, tree.BuiltinType):
                 return "{} {}".format(current_type.qualifiers,
-                                      self.visit_typedef_helper(current_expr,
+                                      self.visit_type_helper(current_expr,
                                                                 qualified_type))
             # east const
             else:
-                return self.visit_typedef_helper(
+                return self.visit_type_helper(
                         "{} {}".format(current_type.qualifiers,
                                        current_expr),
                         qualified_type)
 
+        if isinstance(current_type, tree.RecordType):
+            return "{} {}".format(current_type.name, current_expr)
+
         if isinstance(current_type, tree.ConstantArrayType):
-            return self.visit_typedef_helper("{} [{}]".format(current_expr,
+            return self.visit_type_helper("{} [{}]".format(current_expr,
                                                               current_type.size),
                                              current_type.type)
         raise NotImplementedError(current_type)
 
     def visit_TypedefDecl(self, node: tree.TypedefDecl):
-        expr = self.visit_typedef_helper(node.name, node.type)
+        expr = self.visit_type_helper(node.name, node.type)
         self.write("typedef ", expr, ";")
         self.newline(extra=1)
 
     def visit_BuiltinType(self, node: tree.BuiltinType):
         self.write(node.name)
+
+    def visit_ElaboratedType(self, node: tree.BuiltinType):
+        if node.qualifiers:
+            raise NotImplementedError()
+
+        # FIXME: we probably don't want to support this.
+        if isinstance(node.type, tree.RecordType):
+            self.write("struct ")
+        self.write(node.type)
 
     def visit_FunctionProtoType(self, node: tree.FunctionProtoType):
         self.write(node.subnodes[0], "(")
@@ -498,6 +510,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_PointerType(self, node: tree.PointerType):
         self.write(node.type, "*")
+
+    def visit_RecordType(self, node: tree.RecordType):
+        self.write(node.name)
 
     def visit_ConstantArrayType(self, node: tree.ConstantArrayType):
         self.write(node.type, "[", node.size, "]")

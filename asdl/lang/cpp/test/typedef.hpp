@@ -14,3 +14,6 @@ typedef int (*pointer_to_array)[6];
 typedef int (*function_pointer)(float);
 typedef int (function_proto)(float, bool);
 typedef int (*(array_of_functions[8]))(float, bool);
+
+struct foo {};
+typedef foo record;
