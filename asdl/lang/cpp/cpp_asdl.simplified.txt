@@ -79,7 +79,10 @@ expression =  ArraySubscriptExpr(expression base, expression index)
       | UnaryOperator(constant opcode, constant postfix, expression expr)
 
 type = BuiltinType(identifier name)
-      | PointerType(type type)
-      | QualType(identifier? qualifiers, type* subnodes)
+     | ConstantArrayType(type type, constant size)
+     | FunctionProtoType(type* subnodes)
+     | ParenType(type type)
+     | PointerType(type type)
+     | QualType(identifier? qualifiers, type* subnodes)
 
 enum_field = EnumConstantDecl(identifier name, expression? init)

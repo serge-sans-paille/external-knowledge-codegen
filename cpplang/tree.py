@@ -147,6 +147,15 @@ class Type(Node):
 class BuiltinType(Node):
     attrs = ("name",)
 
+class ConstantArrayType(Node):
+    attrs = ("type", "size", )
+
+class FunctionProtoType(Node):
+    attrs = ()
+
+class ParenType(Node):
+    attrs = ("type",)
+
 class PointerType(Node):
     attrs = ("type",)
 

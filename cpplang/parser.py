@@ -1199,6 +1199,25 @@ class Parser(object):
         return tree.BuiltinType(name=node['type']['qualType'])
 
     @parse_debug
+    def parse_ConstantArrayType(self, node) -> tree.ConstantArrayType:
+        assert node['kind'] == "ConstantArrayType"
+        size = str(node['size'])
+        type_, = self.parse_subnodes(node)
+        return tree.ConstantArrayType(type=type_, size=size)
+
+    @parse_debug
+    def parse_FunctionProtoType(self, node) -> tree.FunctionProtoType:
+        assert node['kind'] == "FunctionProtoType"
+        subnodes = self.parse_subnodes(node)
+        return tree.FunctionProtoType(subnodes=subnodes)
+
+    @parse_debug
+    def parse_ParenType(self, node) -> tree.ParenType:
+        assert node['kind'] == "ParenType"
+        type_, = self.parse_subnodes(node)
+        return tree.ParenType(type=type_)
+
+    @parse_debug
     def parse_PointerType(self, node) -> tree.PointerType:
         assert node['kind'] == "PointerType"
         type_, = self.parse_subnodes(node)
