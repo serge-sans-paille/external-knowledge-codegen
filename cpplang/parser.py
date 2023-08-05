@@ -3,20 +3,43 @@ import re
 import shutil
 import subprocess
 import sys
+import os
 from typing import (List, Set, Tuple)
+
+
 
 from . import util
 from . import tree
-#from .tokenizer import (
-    #EndOfInput, Keyword, Modifier, BasicType, Identifier,
-    #Annotation, Literal, Operator, CppToken,
-    #)
 
 ENABLE_DEBUG_SUPPORT = True
 
 preprocess_command = [
     shutil.which("clang"), "-x", "c++", "-std=c++17",
     "-E", "-"]
+
+module_dir = os.path.dirname(__file__)
+plugin_path = os.path.join(module_dir, "JSONTypeDumper.so")
+
+def rebuild_clang_plugin():
+    plugin_src = os.path.join(module_dir, "JSONDumpTypes.cpp")
+
+    src_mtime = os.path.getmtime(plugin_src)
+    try:
+        dst_mtime = os.path.getmtime(dst_file)
+    except:
+        dst_mtime = 0
+    if src_mtime > dst_mtime:
+        raw_llvm_compile_flags = subprocess.check_output(
+                [shutil.which("llvm-config"), '--cxxflags', '--ldflags'])
+        llvm_compile_flags = raw_llvm_compile_flags.split()
+        subprocess.check_call([
+            shutil.which("clang"),
+            plugin_src,
+            "-O2", "-fPIC",
+            "-shared",
+            "-o", plugin_path] + llvm_compile_flags)
+
+rebuild_clang_plugin()
 
 def parse_debug(method):
     global ENABLE_DEBUG_SUPPORT
@@ -124,7 +147,7 @@ class Parser(object):
         preprocess_stderr_data = preprocess.stderr
         process_command = [
             shutil.which("clang"), "-x", "c++", "-std=c++17",
-            "-Xclang", "-ast-dump=json",
+            "-fplugin={}".format(plugin_path),
             "-fsyntax-only", "-"]
         # if ENABLE_DEBUG_SUPPORT:
         #     print(f"process_command:\n{' '.join(process_command)}\n\n", file=sys.stderr)
@@ -146,6 +169,7 @@ class Parser(object):
         stderr_data = p.stdout
         # print(stderr_data.decode(), file=sys.stderr)
         self.tu = json.loads(stdout_data.decode())
+        #self.type_informations = parse_type_informations(preprocess_stdout_data)
         self.stack = []
         self.debug = False
         self.anonymous_types = {}
@@ -163,7 +187,9 @@ class Parser(object):
 # ---- Parsing entry point ----
 
     def parse(self) -> tree.TranslationUnit:
-        return self.parse_TranslationUnit(self.tu)
+        self.type_informations = {}
+        self.parse_type_summary(self.tu["TypeSummary"])
+        return self.parse_TranslationUnit(self.tu["Content"])
 
 # ------------------------------------------------------------------------------
 # ---- Helper methods ----
@@ -385,6 +411,14 @@ class Parser(object):
 # ------------------------------------------------------------------------------
 # -- Top level units --
 
+    def parse_type_summary(self, node):
+        for child in node:
+            if 'node_inner' in child:
+                inner_child, = child['node_inner']
+                self.type_informations[child['node_id']] = inner_child
+            if 'inner' in child:
+                self.parse_type_summary(child['inner'])
+
     @parse_debug
     def parse_TranslationUnit(self, node) -> tree.TranslationUnit:
         assert node['kind'] == "TranslationUnitDecl"
@@ -448,7 +482,6 @@ class Parser(object):
     @parse_debug
     def parse_RecordDecl(self, node) -> tree.RecordDecl:
         print(node)
-        breakpoint()
 
     @parse_debug
     def parse_CXXConstructorDecl(self, node) -> tree.CXXConstructorDecl:
@@ -911,7 +944,7 @@ class Parser(object):
         referenced = 'referenced' if 'isReferenced' in node and node['isReferenced'] else ''
         storage_class = node['storageClass'] if "storageClass" in node else ""
 
-        type_ = self.reparse_type(node['type'])
+        type_ = self.parse_node(self.type_informations[node['id']])
 
         if 'init' in node:
             subnodes = self.parse_subnodes(node)
@@ -981,7 +1014,8 @@ class Parser(object):
     @parse_debug
     def parse_ImplicitCastExpr(self, node) -> tree.ImplicitCastExpr:
         assert node['kind'] == "ImplicitCastExpr"
-        type_ = self.reparse_type(node['type'])
+        #type_ = self.reparse_type(node['type'])
+        type_ = self.parse_node(self.type_informations[node['id']])
         expr, = self.parse_subnodes(node)
         return tree.ImplicitCastExpr(type=type_, expr=expr)
 
@@ -994,7 +1028,8 @@ class Parser(object):
     def parse_FieldDecl(self, node) -> tree.FieldDecl:
         assert node['kind'] == "FieldDecl"
         name = node['name']
-        var_type = self.reparse_type(node['type']) #name, node['range'])
+        #var_type = self.reparse_type(node['type']) #name, node['range'])
+        var_type = self.parse_node(self.type_informations[node['id']])
         if 'hasInClassInitializer' in node:
             init, = self.parse_subnodes(node)
         else:
@@ -1041,11 +1076,11 @@ class Parser(object):
         name = node['name']
         if 'argType' in node:
             expr = None
-            ty = self.reparse_type(node['argType'])
+            type_ = self.parse_node(self.type_informations[node['id']])
         else:
             expr = self.parse_subnodes(node)[0]
-            ty = None
-        return tree.UnaryExprOrTypeTraitExpr(name=name, expr=expr, type=ty)
+            type_ = None
+        return tree.UnaryExprOrTypeTraitExpr(name=name, expr=expr, type=type_)
 
     @parse_debug
     def parse_ClassTemplateDecl(self, node) -> tree.ClassTemplateDecl:
@@ -1176,7 +1211,8 @@ class Parser(object):
     @parse_debug
     def parse_CStyleCastExpr(self, node) -> tree.CStyleCastExpr:
         assert node['kind'] == "CStyleCastExpr"
-        type_ = self.reparse_type(node['type'])
+        #type_ = self.reparse_type(node['type'])
+        type_ = self.parse_node(self.type_informations[node['id']])
         expr, = self.parse_subnodes(node)
         return tree.CStyleCastExpr(type=type_, expr=expr)
 
@@ -1243,8 +1279,24 @@ class Parser(object):
     @parse_debug
     def parse_RecordType(self, node) -> tree.RecordType:
         assert node['kind'] == "RecordType"
-        return tree.RecordType(name=node['type']['qualType'])
+        return tree.RecordType(name=node['decl']['name'])
 
+    @parse_debug
+    def parse_EnumType(self, node) -> tree.EnumType:
+        assert node['kind'] == "EnumType"
+        return tree.EnumType(name=node['decl']['name'])
+
+    @parse_debug
+    def parse_LValueReferenceType(self, node) -> tree.LValueReferenceType:
+        assert node['kind'] == "LValueReferenceType"
+        type_, = self.parse_subnodes(node)
+        return tree.LValueReferenceType(type=type_)
+
+    @parse_debug
+    def parse_RValueReferenceType(self, node) -> tree.RValueReferenceType:
+        assert node['kind'] == "RValueReferenceType"
+        type_, = self.parse_subnodes(node)
+        return tree.RValueReferenceType(type=type_)
 
 
 def parse(tokens, debug=False, filepath=None):

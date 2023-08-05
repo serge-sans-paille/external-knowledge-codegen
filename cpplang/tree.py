@@ -160,6 +160,12 @@ class ElaboratedType(Node):
 class FunctionProtoType(Node):
     attrs = ()
 
+class LValueReferenceType(Node):
+    attrs = ("type",)
+
+class RValueReferenceType(Node):
+    attrs = ("type",)
+
 class ParenType(Node):
     attrs = ("type",)
 
@@ -170,6 +176,9 @@ class QualType(Node):
     attrs = ("qualifiers",)
 
 class RecordType(Node):
+    attrs = ("name",)
+
+class EnumType(Node):
     attrs = ("name",)
 
 class DiamondType(Type):
