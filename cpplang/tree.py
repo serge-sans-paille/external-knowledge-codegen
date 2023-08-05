@@ -166,6 +166,9 @@ class LValueReferenceType(Node):
 class RValueReferenceType(Node):
     attrs = ("type",)
 
+class IncompleteArrayType(Node):
+    attrs = ("type",)
+
 class ParenType(Node):
     attrs = ("type",)
 

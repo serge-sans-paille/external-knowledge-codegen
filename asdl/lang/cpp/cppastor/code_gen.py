@@ -436,7 +436,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.expr, ";")
 
     def visit_FieldDecl(self, node: tree.FieldDecl):
-        self.write(node.type, " ", node.name)
+        self.write(self.visit_type_helper(node.name, node.type))
         if node.init:
             self.write(" = ", node.init)
         self.write(";")
@@ -445,6 +445,11 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_type_helper(self, current_expr, current_type):
         if isinstance(current_type, tree.BuiltinType):
             return "{} {}".format(current_type.name, current_expr)
+        if isinstance(current_type, tree.ElaboratedType):
+            if isinstance(current_type.type, tree.RecordType):
+                return"struct " + self.visit_type_helper(current_expr, current_type.type)
+            else:
+                return self.visit_type_helper(current_expr, current_type.type)
         if isinstance(current_type, tree.FunctionProtoType):
             argument_types = ', '.join(self.visit_type_helper("", ty)
                                        for ty in current_type.subnodes[1:])
@@ -481,6 +486,9 @@ class SourceGenerator(ExplicitNodeVisitor):
             return self.visit_type_helper("{} [{}]".format(current_expr,
                                                               current_type.size),
                                              current_type.type)
+        if isinstance(current_type, tree.IncompleteArrayType):
+            return self.visit_type_helper("{} []".format(current_expr),
+                                          current_type.type)
         raise NotImplementedError(current_type)
 
     def visit_TypedefDecl(self, node: tree.TypedefDecl):
@@ -525,6 +533,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_ConstantArrayType(self, node: tree.ConstantArrayType):
         self.write(node.type, "[", node.size, "]")
+
+    def visit_IncompleteArrayType(self, node: tree.IncompleteArrayType):
+        self.write(node.type, "[]")
 
     def visit_TypeRef(self, node: tree.TypeRef):
         self.write(node.name)

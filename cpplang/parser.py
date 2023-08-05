@@ -1232,6 +1232,12 @@ class Parser(object):
         return tree.FunctionProtoType(subnodes=subnodes)
 
     @parse_debug
+    def parse_IncompleteArrayType(self, node) -> tree.IncompleteArrayType:
+        assert node['kind'] == "IncompleteArrayType"
+        type_, = self.parse_subnodes(node)
+        return tree.IncompleteArrayType(type=type_)
+
+    @parse_debug
     def parse_ParenType(self, node) -> tree.ParenType:
         assert node['kind'] == "ParenType"
         type_, = self.parse_subnodes(node)
