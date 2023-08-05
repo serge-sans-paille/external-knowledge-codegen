@@ -514,6 +514,15 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_RecordType(self, node: tree.RecordType):
         self.write(node.name)
 
+    def visit_EnumType(self, node: tree.EnumType):
+        self.write(node.name)
+
+    def visit_LValueReferenceType(self, node: tree.LValueReferenceType):
+        self.write(node.type)
+
+    def visit_RValueReferenceType(self, node: tree.RValueReferenceType):
+        self.write(node.type)
+
     def visit_ConstantArrayType(self, node: tree.ConstantArrayType):
         self.write(node.type, "[", node.size, "]")
 
