@@ -17,3 +17,9 @@ void bar(const int x, float *y) {
 
 void variadic(int x, ...) {
 }
+
+void fn_ptr(int (*x)(float)) {
+}
+
+void array_param(int x[2], int y[]) {
+}

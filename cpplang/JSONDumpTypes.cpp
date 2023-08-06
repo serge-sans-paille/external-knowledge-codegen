@@ -79,6 +79,11 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
   else if(auto * EnumTy = dyn_cast<EnumType>(Ty)) {
     Ret["decl"] = llvm::json::Object({{"name", EnumTy->getDecl()->getName()}});
   }
+  else if(auto * DecayedTy = dyn_cast<DecayedType>(Ty)) {
+    llvm::json::Array Inner;
+    Inner.push_back(fullType(Ctx, DecayedTy->getOriginalType()));
+    Ret["inner"] = llvm::json::Value(std::move(Inner));
+  }
   else if(auto * IncompleteArrayTy = dyn_cast<IncompleteArrayType>(Ty)) {
     llvm::json::Array Inner;
     Inner.push_back(fullType(Ctx, IncompleteArrayTy->getElementType()));

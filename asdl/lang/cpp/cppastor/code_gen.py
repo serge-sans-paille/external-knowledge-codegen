@@ -381,7 +381,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.access_spec, ":", "\n")
 
     def visit_ParmVarDecl(self, node: tree.ParmVarDecl):
-        self.write(node.type, " ", node.name)
+        self.write(self.visit_type_helper(node.name or "", node.type))
         if node.subnodes is not None and len(node.subnodes) > 0:
             self.write(" = ", node.subnodes[0])
 
@@ -459,6 +459,8 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(current_type, tree.ParenType):
             return self.visit_type_helper("({})".format(current_expr),
                                              current_type.type)
+        if isinstance(current_type, tree.DecayedType):
+            return self.visit_type_helper(current_expr, current_type.type)
         if isinstance(current_type, tree.PointerType):
             return self.visit_type_helper("*{}".format(current_expr),
                                              current_type.type)
@@ -536,6 +538,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_IncompleteArrayType(self, node: tree.IncompleteArrayType):
         self.write(node.type, "[]")
+
+    def visit_DecayedType(self, node: tree.DecayedType):
+        self.write(node.type)
 
     def visit_TypeRef(self, node: tree.TypeRef):
         self.write(node.name)

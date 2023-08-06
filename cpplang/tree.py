@@ -154,6 +154,9 @@ class BuiltinType(Node):
 class ConstantArrayType(Node):
     attrs = ("type", "size", )
 
+class DecayedType(Node):
+    attrs = ("type",)
+
 class ElaboratedType(Node):
     attrs = ("type", "qualifiers", )
 
@@ -263,7 +266,7 @@ class NonTypeTemplateParmDecl(Declaration):
 
 
 class ParmVarDecl(Node):
-    attrs = ("type", "name", "dimensions",)
+    attrs = ("type", "name",)
 
 
 class FieldDecl(Node):

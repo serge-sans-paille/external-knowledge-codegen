@@ -665,25 +665,8 @@ class Parser(object):
     @parse_debug
     def parse_ParmVarDecl(self, node) -> tree.ParmVarDecl:
         assert node['kind'] == "ParmVarDecl"
-        name = node['name'] if 'name' in node else ''
-        if len(name) == 0:
-            #breakpoint()
-            var_type = self.source_code[
-                node['range']['begin']['offset']:
-                    (node['range']['end']['offset']
-                     + node['range']['end']['tokLen'])].strip()
-        else:
-            var_type = self.source_code[node['range']['begin']['offset']:node['range']['end']['offset']].strip()
-            try:
-                i = var_type.index(f"{name} =")
-                var_type = var_type[:i]
-            except Exception as _:
-                try:
-                    i = var_type.index(f"{name}=")
-                    var_type = var_type[:i]
-                except Exception as _:
-                    pass
-                pass
+        name = node.get('name')
+        var_type = self.parse_node(self.type_informations[node['id']])
         subnodes = self.parse_subnodes(node)
         return tree.ParmVarDecl(name=name, type=var_type, subnodes=subnodes)
 
@@ -1227,6 +1210,12 @@ class Parser(object):
         type_, = self.parse_subnodes(node)
         qualifiers = node.get('qualifiers')
         return tree.ElaboratedType(qualifiers=qualifiers, type=type_)
+
+    @parse_debug
+    def parse_DecayedType(self, node) -> tree.DecayedType:
+        assert node['kind'] == "DecayedType"
+        type_, = self.parse_subnodes(node)
+        return tree.DecayedType(type=type_)
 
     @parse_debug
     def parse_FunctionProtoType(self, node) -> tree.FunctionProtoType:
