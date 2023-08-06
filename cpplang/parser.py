@@ -646,11 +646,14 @@ class Parser(object):
         self.parsed_labels.clear()
 
         name = node['name']
-        return_type = node['type']['qualType'].split("(")[0]
+        return_type = self.parse_node(self.type_informations[node['id']]).subnodes[0]
         variadic = "..." if node['type']['qualType'].endswith('...)') else None
+        inline = "inline" if node.get('inline') else None
+        storage = node.get('storageClass')
         subnodes = self.parse_subnodes(node)
         return tree.FunctionDecl(name=name, return_type=return_type,
-                                 variadic=variadic, subnodes=subnodes)
+                                 variadic=variadic, subnodes=subnodes,
+                                 inline=inline, storage=storage)
 
     @parse_debug
     def parse_TypedefDecl(self, node) -> tree.TypedefDecl:

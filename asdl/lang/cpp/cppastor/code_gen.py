@@ -595,6 +595,12 @@ class SourceGenerator(ExplicitNodeVisitor):
             else:
                 statements.append(c)
 
+        if node.storage:
+            self.write(node.storage, " ")
+
+        if node.inline:
+            self.write("inline ")
+
         self.write(node.return_type, " ")
         self.write(node.name)
 
