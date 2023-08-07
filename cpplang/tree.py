@@ -419,7 +419,7 @@ class DeclStmt(Node):
 
 
 class VarDecl(Node):
-    attrs = ("name", "type", "storage_class", "init", "implicit", "referenced")
+    attrs = ("name", "type", "storage_class", "init_mode", "implicit", "referenced")
 
 
 class TypedefDecl(Node):

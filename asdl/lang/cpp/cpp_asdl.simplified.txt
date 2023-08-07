@@ -43,7 +43,7 @@ statement = AccessSpecDecl(identifier access_spec)
       | TypeRef(identifier name)
       | TypedefDecl(identifier name, type type)
       | UsingDirectiveDecl(identifier name)
-      | VarDecl(identifier name, type type, identifier storage_class, identifier init, constant implicit, constant referenced, expression* subnodes)
+      | VarDecl(identifier name, type type, constant? storage_class, constant init_mode, constant? implicit, constant? referenced, expression* subnodes)
       | WhileStmt(expression cond, statement body)
 
 expression =  ArraySubscriptExpr(expression base, expression index)

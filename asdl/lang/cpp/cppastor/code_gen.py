@@ -416,14 +416,14 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.expr)
 
     def visit_VarDecl(self, node: tree.VarDecl):
-        if len(node.storage_class) > 0:
+        if node.storage_class:
             self.write(node.storage_class, " ")
-        if node.implicit == "implicit" and node.referenced == "referenced":
+        if node.implicit and node.referenced:
             self.write(node.subnodes[0])
         else:
             self.write(self.visit_type_helper(node.name, node.type))
-            if node.subnodes is not None and len(node.subnodes) > 0:
-                if node.init == 'call':
+            if node.init_mode:
+                if node.init_mode == 'call':
                     self.write("(", node.subnodes[0], ")")
                     self.conditional_write(";")
                 else:
@@ -681,8 +681,8 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.base, "[", node.index, "]")
 
     def visit_DeclStmt(self, node: tree.DeclStmt):
-        if node.subnodes:
-            self.write(node.subnodes[0])
+        for decl in node.subnodes:
+            self.write(decl)
 
     # ReturnStmt(identifier* label, expression expression)
     def visit_ReturnStmt(self, node: tree.ReturnStmt):

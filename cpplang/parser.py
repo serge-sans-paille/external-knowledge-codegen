@@ -893,23 +893,23 @@ class Parser(object):
     def parse_VarDecl(self, node) -> tree.VarDecl:
         assert node['kind'] == "VarDecl"
         name = node['name']
-        implicit = 'implicit' if 'isImplicit' in node and node['isImplicit'] else ''
-        referenced = 'referenced' if 'isReferenced' in node and node['isReferenced'] else ''
-        storage_class = node['storageClass'] if "storageClass" in node else ""
+        implicit = node.get('isImplicit')
+        referenced = node.get('isReferenced')
+        storage_class = node.get('storageClass')
 
         type_ = self.parse_node(self.type_informations[node['id']])
 
         if 'init' in node:
             subnodes = self.parse_subnodes(node)
-            init = node['init']
+            init_mode = node['init']
         else:
             subnodes = []
-            init = ''
+            init_mode = ''
 
         return tree.VarDecl(name=name,
                             storage_class=storage_class,
                             type=type_,
-                            init=init,
+                            init_mode=init_mode,
                             implicit=implicit,
                             referenced=referenced,
                             subnodes=subnodes)
