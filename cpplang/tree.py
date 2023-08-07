@@ -316,7 +316,7 @@ class InferredFormalParameter(Node):
 
 
 class Statement(Node):
-    attrs = ("label",)
+    attrs = ()
 
 
 class DoStmt(Statement):

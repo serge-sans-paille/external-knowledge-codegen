@@ -684,7 +684,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         for decl in node.subnodes:
             self.write(decl)
 
-    # ReturnStmt(identifier* label, expression expression)
+    # ReturnStmt(expression? expression)
     def visit_ReturnStmt(self, node: tree.ReturnStmt):
         self.write("return ", node.value or "", ";\n")
 
@@ -692,17 +692,13 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(";")
 
     def visit_IfStmt(self, node: tree.IfStmt):
-        if node.label:
-            self.write(node.label, ": ", "\n")
         self.write("if (", node.cond, ")\n")
         self.write(node.true_body)
         if node.false_body is not None:
             self.write("else ", node.false_body)
 
-    # BlockStatement(identifier? label, statement* statements)
+    # BlockStatement(statement* statements)
     def visit_CompoundStmt(self, node: tree.CompoundStmt):
-        if node.label:
-            self.write(node.label, ": ", "\n")
         self.write("{", "\n")
         if node.subnodes is not None:
             for statement in node.subnodes:
