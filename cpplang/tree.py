@@ -83,7 +83,7 @@ class RecordDecl(TypeDeclaration):
     attrs = ()
 
 
-class CXXConstructorDecl(Node):
+class CXXConstructorDecl(Declaration):
     attrs = ("name", "noexcept", "default",)
 
 
@@ -91,11 +91,11 @@ class CXXCtorInitializer(Node):
     attrs = ("name",)
 
 
-class CXXDestructorDecl(Node):
+class CXXDestructorDecl(Declaration):
     attrs = ("name", "virtual", "default", "noexcept",)
 
 
-class AccessSpecDecl(Node):
+class AccessSpecDecl(Declaration):
     attrs = ("access_spec",)
 
 
@@ -246,7 +246,7 @@ class CXXMethodDecl(Declaration):
 
 
 class FunctionDecl(Declaration):
-    attrs = ("return_type", "name", "storage", "variadic", "inline")
+    attrs = ("name", "return_type", "storage", "variadic", "inline", "body")
 
 
 class ClassTemplateDecl(Declaration):
@@ -265,11 +265,11 @@ class NonTypeTemplateParmDecl(Declaration):
     attrs = ("name", "type")
 
 
-class ParmVarDecl(Node):
-    attrs = ("type", "name",)
+class ParmVarDecl(Declaration):
+    attrs = ("type", "name", "default")
 
 
-class FieldDecl(Node):
+class FieldDecl(Declaration):
     attrs = ("type", "name", "init",)
 
 
@@ -301,7 +301,7 @@ class LocalVariableDeclaration(VariableDeclaration):
     attrs = ()
 
 
-class VariableDeclarator(Node):
+class VariableDeclarator(Declaration):
     attrs = ("name", "dimensions", "initializer")
 
 
@@ -332,7 +332,7 @@ class TypeDeclarationStmt(Statement):
 
 
 class IfStmt(Statement):
-    attrs = ("cond", "true_body", "false_body")
+    attrs = ("cond", "var", "true_body", "false_body")
 
 
 class ForStmt(Statement):
@@ -340,7 +340,7 @@ class ForStmt(Statement):
 
 
 class WhileStmt(Statement):
-    attrs = ("cond", "body",)
+    attrs = ("cond", "var", "body",)
 
 
 class ContinueStmt(Statement):
@@ -400,29 +400,25 @@ class ReturnStmt(Statement):
     attrs = ("value",)
 
 
-class DeclRefExpr(Node):
-    attrs = ("name", "kind",)
-
-
-class NamespaceDecl(Node):
+class NamespaceDecl(Declaration):
     attrs = ("name",)
 #class Namespace(Node):
     #attrs = ("name",)
 
 
-class UsingDirectiveDecl(Node):
+class UsingDirectiveDecl(Declaration):
     attrs = ("name",)
 
 
-class DeclStmt(Node):
+class DeclStmt(Statement):
     attrs = ()
 
 
-class VarDecl(Node):
+class VarDecl(Declaration):
     attrs = ("name", "type", "storage_class", "init_mode", "implicit", "referenced")
 
 
-class TypedefDecl(Node):
+class TypedefDecl(Declaration):
     attrs = ("name", "type")
 
 
@@ -483,6 +479,10 @@ class ExprStmt(Node):
 
 class Expression(Node):
     attrs = ()
+
+
+class DeclRefExpr(Expression):
+    attrs = ("name", "kind",)
 
 
 class ElementValueArrayInitializer(Expression):
@@ -713,17 +713,17 @@ class ImplicitValueInitExpr(Node):
     attrs = ()
 
 
-class CXXConversionDecl(Node):
+class CXXConversionDecl(Declaration):
     attrs = ("name",)
 
 # ------------------------------------------------------------------------------
 
 
-class EnumConstantDecl(Node):
+class EnumConstantDecl(Declaration):
     attrs = ("name", "init",)
 
 
-class EnumDecl(Node):
+class EnumDecl(Declaration):
     attrs = ("name",)
 
 
@@ -731,7 +731,7 @@ class AnnotationMethod(NonEmptyDeclaration):
     attrs = ("name", "return_type", "dimensions", "default")
 
 
-class EmptyDecl(Node):
+class EmptyDecl(Declaration):
     attrs = ()
 
 
@@ -739,7 +739,7 @@ class CStyleCastExpr(Node):
     attrs = ("type", "expr",)
 
 
-class FriendDecl(Node):
+class FriendDecl(Declaration):
     attrs = ("type",)
 
 

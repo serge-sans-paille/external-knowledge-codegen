@@ -7,6 +7,9 @@ void while_() {
     1;
     2;
   }
+
+  while(int i = 1) {
+  }
 }
 
 void do_while() {
