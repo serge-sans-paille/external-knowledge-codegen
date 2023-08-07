@@ -663,9 +663,14 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(")")
 
     def visit_BinaryOperator(self, node: tree.BinaryOperator):
-        self.write(node.left)
+        self.write(node.lhs)
         self.write(" ", node.opcode, " ")
-        self.write(node.right)
+        self.write(node.rhs)
+
+    def visit_CompoundAssignOperator(self, node: tree.CompoundAssignOperator):
+        self.write(node.lhs)
+        self.write(" ", node.opcode, " ")
+        self.write(node.rhs)
 
     def visit_UnaryOperator(self, node: tree.UnaryOperator):
         if node.postfix == "True":

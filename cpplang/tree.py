@@ -515,7 +515,10 @@ class Assignment(Primary):
 
 
 class BinaryOperator(Expression):
-    attrs = ("opcode", "left", "right",)
+    attrs = ("opcode", "lhs", "rhs",)
+
+class CompoundAssignOperator(Expression):
+    attrs = ("opcode", "lhs", "rhs",)
 
 
 class UnaryOperator(Expression):

@@ -993,8 +993,15 @@ class Parser(object):
     def parse_BinaryOperator(self, node) -> tree.BinaryOperator:
         assert node['kind'] == "BinaryOperator"
         opcode = node['opcode']
-        left, right = self.parse_subnodes(node)
-        return tree.BinaryOperator(opcode=opcode, left=left, right=right)
+        lhs, rhs = self.parse_subnodes(node)
+        return tree.BinaryOperator(opcode=opcode, lhs=lhs, rhs=rhs)
+
+    @parse_debug
+    def parse_CompoundAssignOperator(self, node) -> tree.CompoundAssignOperator:
+        assert node['kind'] == "CompoundAssignOperator"
+        opcode = node['opcode']
+        lhs, rhs = self.parse_subnodes(node)
+        return tree.CompoundAssignOperator(opcode=opcode, lhs=lhs, rhs=rhs)
 
     @parse_debug
     def parse_UnaryOperator(self, node) -> tree.UnaryOperator:

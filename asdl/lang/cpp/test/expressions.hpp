@@ -7,4 +7,5 @@ void foo() {
   alignof(int);
   alignof(1);
   alignof(1 + 3);
+  (1 + 2) * 3;
 }
