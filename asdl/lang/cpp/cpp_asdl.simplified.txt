@@ -36,6 +36,7 @@ statement = BreakStmt
           | ExprWithCleanups(statement* subnodes)
           | ForStmt(expression? init, expression? cond, expression? inc, statement body)
           | FullComment(string comment)
+          | GCCAsmStmt(constant string, constrained_expression* output_operands, constrained_expression* input_operands, constant* clobbers, constant* labels)
           | GotoStmt(identifier target)
           | IfStmt(expression? cond, declaration? var, statement true_body, statement? false_body)
           | LabelStmt(identifier name, statement stmt)
@@ -97,3 +98,5 @@ type = BuiltinType(identifier name)
      | RecordType(identifier name)
 
 enum_field = EnumConstantDecl(identifier name, expression? init)
+
+constrained_expression = ConstrainedExpression(expression expr, constant constraint)

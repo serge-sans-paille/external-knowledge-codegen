@@ -349,6 +349,30 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_ExprStmt(self, node: tree.ExprStmt):
         self.write(node.expr, ";")
 
+    def visit_ConstrainedExpression(self, node: tree.ConstrainedExpression):
+        self.write('"', node.constraint, '"', "(", node.expr, ")")
+
+    def visit_GCCAsmStmt(self, node: tree.GCCAsmStmt):
+        def escape(s):
+            return s.replace('\n', r'\n').replace('\t', r'\t')
+        command = "asm goto" if node.labels else "asm"
+        self.write(command + "(", '"', escape(node.string), '"')
+        if node.output_operands or node.input_operands or node.clobbers or node.labels:
+            self.write(":")
+            self.comma_list(node.output_operands)
+
+        if node.input_operands or node.clobbers or node.labels:
+            self.write(":")
+            self.comma_list(node.input_operands)
+
+        if node.clobbers or node.labels :
+            self.write(": ")
+            self.comma_list(map('"{}"'.format, node.clobbers))
+        if node.labels:
+            self.write(": ")
+            self.comma_list(node.labels)
+        self.write(");")
+
     def visit_FieldDecl(self, node: tree.FieldDecl):
         self.write(self.visit_type_helper(node.name, node.type))
         if node.init:

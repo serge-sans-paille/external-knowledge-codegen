@@ -170,7 +170,8 @@ class Parser(object):
         stderr_data = p.stdout
         # print(stderr_data.decode(), file=sys.stderr)
         self.tu = json.loads(stdout_data.decode())
-        #self.type_informations = parse_type_informations(preprocess_stdout_data)
+        self.type_informations = {}
+        self.asm_informations = {}
         self.stack = []
         self.debug = False
         self.anonymous_types = {}
@@ -188,7 +189,6 @@ class Parser(object):
 # ---- Parsing entry point ----
 
     def parse(self) -> tree.TranslationUnit:
-        self.type_informations = {}
         self.parse_type_summary(self.tu["TypeSummary"])
         return self.parse_TranslationUnit(self.tu["Content"])
 
@@ -419,6 +419,31 @@ class Parser(object):
                 self.type_informations[child['node_id']] = inner_child
             if 'inner' in child:
                 self.parse_type_summary(child['inner'])
+            if 'asm_string' in child:
+                asm_infos = {'asm_string': child['asm_string']}
+
+                self.asm_informations[child['node_id']] = asm_infos
+
+                if "output_constraints" in child:
+                    output_constraints = {n['id']: n['constraint'] for n in
+                                        child['output_constraints']}
+                else:
+                    output_constraints = {}
+
+                if "input_constraints" in child:
+                    input_constraints = {n['id']: n['constraint'] for n in
+                                         child['input_constraints']}
+                else:
+                    input_constraints = {}
+
+                asm_infos['output_constraints'] = output_constraints
+                asm_infos['input_constraints'] = input_constraints
+
+                asm_infos['clobbers'] = [x['clobber'] for x in
+                                         child.get('clobbers', [])]
+                asm_infos['labels'] = [x['label'] for x in child.get('labels',
+                                                                     [])]
+
 
     @parse_debug
     def parse_TranslationUnit(self, node) -> tree.TranslationUnit:
@@ -663,6 +688,44 @@ class Parser(object):
                                  variadic=variadic, subnodes=args,
                                  inline=inline, storage=storage,
                                  body=body)
+
+    @parse_debug
+    def parse_GCCAsmStmt(self, node) -> tree.GCCAsmStmt:
+        assert node['kind'] == "GCCAsmStmt"
+        exprs = self.parse_subnodes(node)
+        asm_infos = self.asm_informations[node['id']]
+
+        asm_string = asm_infos['asm_string']
+        input_constraints, input_exprs = [], []
+        input_constraints_mapping = asm_infos.get('input_constraints', {})
+        output_constraints, output_exprs = [], []
+        output_constraints_mapping = asm_infos.get('output_constraints', {})
+        for expr, subnode in zip(exprs, node.get('inner', ())):
+            subnode_id = subnode['id']
+            input_constraint = input_constraints_mapping.get(subnode_id, '')
+            if input_constraint:
+                input_constraints.append(input_constraint)
+                input_exprs.append(expr)
+            output_constraint = output_constraints_mapping.get(subnode_id, '')
+            if output_constraint:
+                output_constraints.append(output_constraint)
+                output_exprs.append(expr)
+
+        clobbers = asm_infos.get('clobbers', [])
+        labels = asm_infos.get('labels', [])
+        return tree.GCCAsmStmt(string=asm_string,
+                               clobbers=clobbers,
+                               labels=labels,
+                               input_operands=[
+                                   tree.ConstrainedExpression(expr=input_expr,
+                                                              constraint=input_constraint)
+                                   for input_expr, input_constraint in
+                                   zip(input_exprs, input_constraints)],
+                               output_operands=[
+                                   tree.ConstrainedExpression(expr=output_expr,
+                                                              constraint=output_constraint)
+                                   for output_expr, output_constraint in
+                                   zip(output_exprs, output_constraints)])
 
     @parse_debug
     def parse_TypedefDecl(self, node) -> tree.TypedefDecl:
