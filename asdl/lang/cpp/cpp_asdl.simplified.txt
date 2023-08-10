@@ -34,18 +34,18 @@ statement = BreakStmt
           | DoStmt(expression cond, statement body)
           | ExprStmt(expression expr)
           | ExprWithCleanups(statement* subnodes)
-          | ForStmt(expression? init, expression? cond, expression? inc, statement body)
+          | ForStmt(declaration_or_expression? init, declaration_or_expression? cond, expression? inc, statement body)
           | FullComment(string comment)
           | GCCAsmStmt(constant string, constrained_expression* output_operands, constrained_expression* input_operands, constant* clobbers, constant* labels)
           | GotoStmt(identifier target)
-          | IfStmt(expression? cond, declaration? var, statement true_body, statement? false_body)
+          | IfStmt(declaration_or_expression cond, statement true_body, statement? false_body)
           | LabelStmt(identifier name, statement stmt)
           | NullStmt
           | OverrideAttr
           | ReturnStmt(expression? value)
           | SwitchStmt(expression cond, statement body)
           | TypeRef(identifier name)
-          | WhileStmt(expression? cond, declaration? var, statement body)
+          | WhileStmt(declaration_or_expression cond, statement body)
 
 expression = ArraySubscriptExpr(expression base, expression index)
            | BinaryOperator(constant opcode, expression lhs, expression rhs)
@@ -81,6 +81,8 @@ expression = ArraySubscriptExpr(expression base, expression index)
            | UnaryOperator(constant opcode, constant postfix, expression expr)
 
 parameter = ParmVarDecl(type type, identifier? name, expression? default)
+
+declaration_or_expression = DeclOrExpr(declaration* decl, expression? expr)
 
 
 type = BuiltinType(identifier name)
