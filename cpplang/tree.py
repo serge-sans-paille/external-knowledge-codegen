@@ -5,7 +5,7 @@ from .ast import Node
 
 
 class TranslationUnit(Node):
-    attrs = ()
+    attrs = ("stmts",)
 
 
 class Import(Node):
@@ -76,7 +76,7 @@ class PackageDeclaration(NonEmptyDeclaration):
 
 
 class CXXRecordDecl(TypeDeclaration):
-    attrs = ("kind", "bases", "complete_definition",)
+    attrs = ("kind", "bases", "complete_definition", "subnodes",)
 
 
 class RecordDecl(TypeDeclaration):
@@ -84,15 +84,15 @@ class RecordDecl(TypeDeclaration):
 
 
 class CXXConstructorDecl(Declaration):
-    attrs = ("name", "noexcept", "default",)
+    attrs = ("name", "noexcept", "default", "subnodes",)
 
 
 class CXXCtorInitializer(Node):
-    attrs = ("name",)
+    attrs = ("name", "subnodes",)
 
 
 class CXXDestructorDecl(Declaration):
-    attrs = ("name", "virtual", "default", "noexcept",)
+    attrs = ("name", "virtual", "default", "noexcept", "subnodes",)
 
 
 class AccessSpecDecl(Declaration):
@@ -161,7 +161,7 @@ class ElaboratedType(Node):
     attrs = ("type", "qualifiers", )
 
 class FunctionProtoType(Node):
-    attrs = ()
+    attrs = ("return_type", "parameter_types",)
 
 class LValueReferenceType(Node):
     attrs = ("type",)
@@ -179,7 +179,7 @@ class PointerType(Node):
     attrs = ("type",)
 
 class QualType(Node):
-    attrs = ("qualifiers",)
+    attrs = ("qualifiers", "type",)
 
 class RecordType(Node):
     attrs = ("name",)
@@ -232,7 +232,7 @@ class ElementArrayValue(Node):
 
 
 class InitListExpr(Node):
-    attrs = ()
+    attrs = ("values",)
 
 # ------------------------------------------------------------------------------
 
@@ -242,27 +242,27 @@ class Member(NonEmptyDeclaration):
 
 
 class CXXMethodDecl(Declaration):
-    attrs = ("virtual", "return_type", "name", "noexcept", "const", "default",)
+    attrs = ("virtual", "return_type", "name", "noexcept", "const", "default", "subnodes",)
 
 
 class FunctionDecl(Declaration):
-    attrs = ("name", "return_type", "storage", "variadic", "inline", "body")
+    attrs = ("name", "return_type", "storage", "variadic", "inline", "body", "parameters")
 
 
 class ClassTemplateDecl(Declaration):
-    attrs = ()
+    attrs = ("subnodes",)
 
 
 class FunctionTemplateDecl(Declaration):
-    attrs = ()
+    attrs = ("subnodes",)
 
 
 class TemplateTypeParmDecl(Declaration):
-    attrs = ("name",)
+    attrs = ("name", "subnodes",)
 
 
 class NonTypeTemplateParmDecl(Declaration):
-    attrs = ("name", "type")
+    attrs = ("name", "type", "subnodes",)
 
 
 class ParmVarDecl(Declaration):
@@ -393,7 +393,7 @@ class BlockStmt(Statement):
 
 # statemenents are the subnodes (from Node)
 class CompoundStmt(Statement):
-    attrs = ()
+    attrs = ("stmts",)
 
 
 class ReturnStmt(Statement):
@@ -401,9 +401,7 @@ class ReturnStmt(Statement):
 
 
 class NamespaceDecl(Declaration):
-    attrs = ("name",)
-#class Namespace(Node):
-    #attrs = ("name",)
+    attrs = ("name", "subnodes",)
 
 
 class UsingDirectiveDecl(Declaration):
@@ -411,11 +409,11 @@ class UsingDirectiveDecl(Declaration):
 
 
 class DeclStmt(Statement):
-    attrs = ()
+    attrs = ("decls",)
 
 
 class VarDecl(Declaration):
-    attrs = ("name", "type", "storage_class", "init_mode", "implicit", "referenced")
+    attrs = ("name", "type", "storage_class", "init_mode", "implicit", "referenced", "init")
 
 
 class TypedefDecl(Declaration):
@@ -438,13 +436,13 @@ class GCCAsmStmt(Statement):
     attrs = ("string", "output_operands", "input_operands", "clobbers", "labels",)
 
 class ExprWithCleanups(Node):
-    attrs = ()
+    attrs = ("subnodes",)
 
 class ConstrainedExpression(Node):
     attrs = ("expr", "constraint")
 
 class CXXForRangeStmt(Node):
-    attrs = ()
+    attrs = ("subnodes",)
 
 
 # ------------------------------------------------------------------------------
@@ -547,19 +545,19 @@ class LambdaExpression(Primary):
 
 
 class CXXConstructExpr(Expression):
-    attrs = ("type",)
+    attrs = ("type", "subnodes",)
 
 
 class MaterializeTemporaryExpr(Expression):
-    attrs = ()
+    attrs = ("expr",)
 
 
 class CXXBindTemporaryExpr(Expression):
-    attrs = ()
+    attrs = ("subnodes",)
 
 
 class CXXNewExpr(Expression):
-    attrs = ()
+    attrs = ("subnodes",)
 
 
 class UnaryExprOrTypeTraitExpr(Expression):
@@ -601,7 +599,7 @@ class CXXNullPtrLiteralExpr(Literal):
 
 
 class CXXThisExpr(Primary):
-    attrs = ()
+    attrs = ("subnodes",)
 
 
 class MemberExpr(Primary):
@@ -613,11 +611,11 @@ class ConstantExpr(Primary):
 
 
 class CXXMemberCallExpr(Primary):
-    attrs = ()
+    attrs = ("subnodes",)
 
 
 class CallExpr(Primary):
-    attrs = ()
+    attrs = ("callee", "args",)
 
 
 class CXXOperatorCallExpr(Primary):
@@ -629,11 +627,11 @@ class CXXBoolLiteralExpr(Primary):
 
 
 class CXXTemporaryObjectExpr(Node):
-    attrs = ("type",)
+    attrs = ("type", "subnodes",)
 
 
 class CXXFunctionalCastExpr(Node):
-    attrs = ("type",)
+    attrs = ("type", "subnodes",)
 
 
 class NullStmt(Statement):
@@ -719,7 +717,7 @@ class ImplicitValueInitExpr(Node):
 
 
 class CXXConversionDecl(Declaration):
-    attrs = ("name",)
+    attrs = ("name", "subnodes",)
 
 # ------------------------------------------------------------------------------
 
@@ -729,7 +727,7 @@ class EnumConstantDecl(Declaration):
 
 
 class EnumDecl(Declaration):
-    attrs = ("name",)
+    attrs = ("name", "fields",)
 
 
 class AnnotationMethod(NonEmptyDeclaration):
@@ -749,5 +747,5 @@ class FriendDecl(Declaration):
 
 
 class CXXStdInitializerListExpr(Node):
-    attrs = ()
+    attrs = ("subnodes",)
 
