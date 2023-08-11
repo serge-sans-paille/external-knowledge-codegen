@@ -159,7 +159,61 @@ public:
 {}
 
   void Visit(const Attr *A) {}
-  void Visit(const Stmt *S) { if(S) InnerStmtVisitor::Visit(S);}
+  void Visit(const Stmt *S) {
+    if(!S) return;
+    if (const auto * GAS = dyn_cast<GCCAsmStmt>(S)) {
+      JOS.attribute("node_id", createPointerRepresentation(S));
+      if(const auto * SL =  GAS->getAsmString()) {
+        JOS.attribute("asm_string", SL->getString());
+
+        if(unsigned numOutputs = GAS->getNumOutputs()) {
+          JOS.attributeArray("output_constraints", [GAS,numOutputs,this] {
+              for(unsigned i = 0; i != numOutputs; ++i) {
+                llvm::json::Object Val{
+                  {"id", createPointerRepresentation(GAS->getOutputExpr(i))},
+                  {"constraint", GAS->getOutputConstraint(i)},
+                };
+                JOS.value(std::move(Val));
+              }
+          });
+        }
+        if(unsigned numInputs = GAS->getNumInputs()) {
+          JOS.attributeArray("input_constraints", [GAS,numInputs,this] {
+              for(unsigned i = 0; i != numInputs; ++i) {
+                llvm::json::Object Val{
+                  {"id", createPointerRepresentation(GAS->getInputExpr(i))},
+                  {"constraint", GAS->getInputConstraint(i)},
+                };
+                JOS.value(std::move(Val));
+              }
+          });
+        }
+        if(unsigned numClobbers = GAS->getNumClobbers()) {
+          JOS.attributeArray("clobbers", [GAS,numClobbers,this] {
+              for(unsigned i = 0; i != numClobbers; ++i) {
+                llvm::json::Object Val{
+                  {"clobber", GAS->getClobber(i)},
+                };
+                JOS.value(std::move(Val));
+              }
+          });
+        }
+        if(unsigned numLabels = GAS->getNumLabels()) {
+          JOS.attributeArray("labels", [GAS,numLabels,this] {
+              for(unsigned i = 0; i != numLabels; ++i) {
+                llvm::json::Object Val{
+                  {"label", GAS->getLabelName(i)},
+                };
+                JOS.value(std::move(Val));
+              }
+          });
+        }
+      }
+    }
+
+    InnerStmtVisitor::Visit(S);
+  }
+
   void Visit(const Type *T);
   void Visit(QualType T);
   void VisitExpr(const Expr *E) {
@@ -201,6 +255,9 @@ public:
         JOS.attributeEnd();
     }
     InnerDeclVisitor::Visit(D);
+  }
+
+  void Visit(const GCCAsmStmt * S) {
   }
 
   void Visit(const comments::Comment *C, const comments::FullComment *FC) {}

@@ -434,9 +434,14 @@ class ExpressionStmt(Statement):
     attrs = ("expression",)
 
 
+class GCCAsmStmt(Statement):
+    attrs = ("string", "output_operands", "input_operands", "clobbers", "labels",)
+
 class ExprWithCleanups(Node):
     attrs = ()
 
+class ConstrainedExpression(Node):
+    attrs = ("expr", "constraint")
 
 class CXXForRangeStmt(Node):
     attrs = ()
