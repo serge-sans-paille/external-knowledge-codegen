@@ -887,16 +887,19 @@ class Parser(object):
 
     def parse_CXXThisExpr(self, node) -> tree.CXXThisExpr:
         assert node['kind'] == "CXXThisExpr"
-        if 'implicit' in node and node['implicit']:
+        if node.get('implicit'):
             return None
-        subnodes = self.parse_subnodes(node)
-        return tree.CXXThisExpr(subnodes=subnodes)
+        return tree.CXXThisExpr()
 
     def parse_MemberExpr(self, node) -> tree.MemberExpr:
         assert node['kind'] == "MemberExpr"
         name = node['name']
-        op = "->" if 'isArrow' in node and node['isArrow'] else "."
-        expr, = self.parse_subnodes(node)
+        op = "->" if node.get('isArrow') else "."
+        inner_nodes = self.parse_subnodes(node)
+        if inner_nodes:
+            expr, = inner_nodes
+        else:
+            expr = None
         return tree.MemberExpr(name=name, op=op, expr=expr)
 
     def parse_ConstantExpr(self, node) -> tree.ConstantExpr:

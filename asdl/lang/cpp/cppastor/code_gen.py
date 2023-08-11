@@ -639,7 +639,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("break;\n")
 
     def visit_MemberExpr(self, node: tree.MemberExpr):
-        self.write(node.expr, node.op, node.name)
+        if node.expr:
+            self.write(node.expr, node.op, node.name)
+        else:
+            self.write(node.name)
 
     def visit_ConstantExpr(self, node: tree.ConstantExpr):
         self.write(node.value)
