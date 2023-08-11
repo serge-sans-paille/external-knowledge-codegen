@@ -23,3 +23,6 @@ void fn_ptr(int (*x)(float)) {
 
 void array_param(int x[2], int y[]) {
 }
+
+void default_param(int x = 0) {
+}

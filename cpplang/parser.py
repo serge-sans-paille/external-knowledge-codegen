@@ -739,9 +739,9 @@ class Parser(object):
         assert node['kind'] == "ParmVarDecl"
         name = node.get('name')
         var_type = self.parse_node(self.type_informations[node['id']])
-        subnodes = self.parse_subnodes(node)
+        default, = self.parse_subnodes(node) or (None,)
         return tree.ParmVarDecl(name=name, type=var_type,
-                                default=subnodes or None)
+                                default=default)
 
     def as_statement(self, subnode):
         if isinstance(subnode, tree.Expression):
