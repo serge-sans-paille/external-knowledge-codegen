@@ -608,10 +608,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(";")
 
     def visit_IfStmt(self, node: tree.IfStmt):
-        if node.cond:
-            self.write("if (", node.cond, ")\n")
-        elif node.var:
-            self.write("if (", node.var, ")\n")
+        self.write("if (", node.cond, ")\n")
         self.write(node.true_body)
         if node.false_body is not None:
             self.write("else ", node.false_body)
@@ -732,6 +729,13 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.comma_list(node.subnodes)
         self.write(")")
 
+    def visit_DeclOrExpr(self, node: tree.DeclOrExpr):
+        if node.decl:
+            # FIXME: handle multiple declarations
+            self.write(node.decl[0])
+        else:
+            self.write(node.expr)
+
     def visit_ForStmt(self, node: tree.ForStmt):
         self.write("for (",
                    node.init or '', "; ",
@@ -752,10 +756,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.subnodes[-1])
 
     def visit_WhileStmt(self, node: tree.WhileStmt):
-        if node.cond:
-            self.write("while (", node.cond, ")")
-        elif node.var:
-            self.write("while (", node.var, ")")
+        self.write("while (", node.cond, ")")
         self.newline()
         self.write(node.body)
 

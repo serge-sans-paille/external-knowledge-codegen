@@ -332,7 +332,7 @@ class TypeDeclarationStmt(Statement):
 
 
 class IfStmt(Statement):
-    attrs = ("cond", "var", "true_body", "false_body")
+    attrs = ("cond", "true_body", "false_body")
 
 
 class ForStmt(Statement):
@@ -340,7 +340,7 @@ class ForStmt(Statement):
 
 
 class WhileStmt(Statement):
-    attrs = ("cond", "var", "body",)
+    attrs = ("cond", "body",)
 
 
 class ContinueStmt(Statement):
@@ -443,6 +443,9 @@ class ConstrainedExpression(Node):
 
 class CXXForRangeStmt(Node):
     attrs = ("subnodes",)
+
+class DeclOrExpr(Node):
+    attrs = ("decl", "expr",)
 
 
 # ------------------------------------------------------------------------------

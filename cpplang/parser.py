@@ -771,18 +771,16 @@ class Parser(object):
             assert isinstance(cond, tree.DeclStmt)
             if len(cond.decls) != 1:
                 raise NotImplementedError()
-            var = cond.decls[0]
-            cond = None
+            cond = tree.DeclOrExpr(decl=cond.decls, expr=None)
             subnodes = subnodes[1:]  # pop the implicit condition evaluation
         else:
-            var = None
+            cond = tree.DeclOrExpr(decl=None, expr=cond)
 
         if len(subnodes) == 1:
             true_body, false_body = subnodes[0], None
         else:
             true_body, false_body = subnodes
         return tree.IfStmt(cond=cond,
-                           var=var,
                            true_body=self.as_statement(true_body),
                            false_body=false_body and self.as_statement(false_body))
 
@@ -811,8 +809,20 @@ class Parser(object):
     @parse_debug
     def parse_ForStmt(self, node) -> tree.ForStmt:
         assert node['kind'] == "ForStmt"
-        init, _, cond, inc, body = self.parse_subnodes(node, keep_empty=True)
-        assert _ is None, "what is it good for?"
+        init, cond_decl, cond, inc, body = self.parse_subnodes(node, keep_empty=True)
+
+        if isinstance(init, tree.Expression):
+            init = tree.DeclOrExpr(expr=init, decl=None)
+        elif isinstance(init, tree.DeclStmt):
+            init = tree.DeclOrExpr(expr=None, decl=init.decls)
+
+        if cond_decl:
+            assert isinstance(cond_decl, tree.DeclStmt)
+            cond = tree.DeclOrExpr(expr=None, decl=cond_decl.decls)
+        elif cond:
+            assert isinstance(cond, tree.Expression)
+            cond = tree.DeclOrExpr(expr=cond, decl=None)
+
         return tree.ForStmt(
                 init=init,
                 cond=cond,
@@ -827,13 +837,11 @@ class Parser(object):
             assert isinstance(var, tree.DeclStmt), var
             if len(var.decls) != 1:
                 raise NotImplementedError()
-            var = var.decls[0]
-            cond = None  # pop the implicit condition evaluation
+            cond = tree.DeclOrExpr(decl=var.decls, expr=None)
         else:
             cond, body = self.parse_subnodes(node)
-            var = None
+            cond =  tree.DeclOrExpr(decl=None, expr=cond)
         return tree.WhileStmt(cond=cond,
-                              var=var,
                               body=self.as_statement(body))
 
     @parse_debug
