@@ -33,3 +33,7 @@ void if_else() {
   else
     3;
 }
+
+void decl_in_if() {
+  if(int i = 0) i;
+}

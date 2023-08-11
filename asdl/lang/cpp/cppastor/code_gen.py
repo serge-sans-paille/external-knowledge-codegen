@@ -86,53 +86,6 @@ def precedence_setter(AST=Node, get_op_precedence=get_op_precedence,
 set_precedence = precedence_setter()
 
 
-#class Delimit(object):
-    #"""A context manager that can add enclosing
-       #delimiters around the output of a
-       #SourceGenerator method.  By default, the
-       #parentheses are added, but the enclosed code
-       #may set discard=True to get rid of them.
-    #"""
-
-    #discard = False
-
-    #def __init__(self, tree, *args):
-        #""" use write instead of using result directly
-            #for initial data, because it may flush
-            #preceding data into result.
-        #"""
-        #delimiters = "()"
-        #node = None
-        #op = None
-        #for arg in args:
-            #if isinstance(arg, Node):
-                #if node is None:
-                    #node = arg
-                #else:
-                    #op = arg
-            #else:
-                #delimiters = arg
-        #tree.write(delimiters[0])
-        #result = self.result = tree.result
-        #self.index = len(result)
-        #self.closing = delimiters[1]
-        #if node is not None:
-            #self.p = p = get_op_precedence(op or node)
-            #self.pp = pp = tree.get__pp(node)
-            #self.discard = p >= pp
-
-    #def __enter__(self):
-        #return self
-
-    #def __exit__(self, *exc_info):
-        #result = self.result
-        #start = self.index - 1
-        #if self.discard:
-            #result[start] = ""
-        #else:
-            #result.append(self.closing)
-
-
 class SourceGenerator(ExplicitNodeVisitor):
     """This visitor is able to transform a well formed syntax tree into Python
     sourcecode.
@@ -201,9 +154,6 @@ class SourceGenerator(ExplicitNodeVisitor):
         setattr(self, name, getter)
         return getter
 
-    #def delimit(self, *args):
-        #return Delimit(self, *args)
-
     def conditional_write(self, *stuff):
         if stuff[-1] is not None:
             self.write(*stuff)
@@ -216,40 +166,9 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write(f"// line: {node.lineno}")
             self.new_lines = 1
 
-    def visit_arguments(self, node):
-        want_comma = []
-
-        def write_comma():
-            if want_comma:
-                self.write(", ")
-            else:
-                want_comma.append(True)
-
-        def loop_args(args, defaults):
-            set_precedence(Precedence.Comma, defaults)
-            padding = [None] * (len(args) - len(defaults))
-            for arg, default in zip(args, padding + defaults):
-                self.write(write_comma, arg)
-                self.conditional_write("=", default)
-
-        loop_args(node.args, node.defaults)
-        self.conditional_write(write_comma, "*", node.vararg)
-
-        kwonlyargs = self.get_kwonlyargs(node)
-        if kwonlyargs:
-            if node.vararg is None:
-                self.write(write_comma, "*")
-            loop_args(kwonlyargs, node.kw_defaults)
-        self.conditional_write(write_comma, "**", node.kwarg)
-
     def statement(self, node, *params, **kw):
         self.newline(node)
         self.write(*params)
-
-    def decorators(self, node, extra):
-        self.newline(extra=extra)
-        for decorator in node.decorator_list:
-            self.statement(decorator, "@", decorator)
 
     def comma_list(self, items, trailing=False):
         # set_precedence(Precedence.Comma, *items)
@@ -382,12 +301,11 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_ParmVarDecl(self, node: tree.ParmVarDecl):
         self.write(self.visit_type_helper(node.name or "", node.type))
-        if node.subnodes is not None and len(node.subnodes) > 0:
-            self.write(" = ", node.subnodes[0])
+        if node.default:
+            self.write(" = ", node.default)
 
     def visit_ExprWithCleanups(self, node: tree.ExprWithCleanups):
         self.write(node.subnodes[0])
-        #breakpoint()
         #if len(self.stack) > 1 and self.stack[-2] == 'CompoundStmt':
             #self.write(";")
 
@@ -425,12 +343,8 @@ class SourceGenerator(ExplicitNodeVisitor):
             if node.init_mode:
                 if node.init_mode == 'call':
                     self.write("(", node.subnodes[0], ")")
-                    self.conditional_write(";")
                 else:
                     self.write(" = ", node.subnodes[0])
-                    self.conditional_write(";")
-            else:
-                self.conditional_write(";")
 
     def visit_ExprStmt(self, node: tree.ExprStmt):
         self.write(node.expr, ";")
@@ -496,7 +410,6 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_TypedefDecl(self, node: tree.TypedefDecl):
         expr = self.visit_type_helper(node.name, node.type)
         self.write("typedef ", expr, ";")
-        self.newline(extra=1)
 
     def visit_BuiltinType(self, node: tree.BuiltinType):
         self.write(node.name)
@@ -592,14 +505,6 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.newline(extra=1)
 
     def visit_FunctionDecl(self, node: tree.FunctionDecl):
-        parameters = []
-        statements = []
-        for c in node.subnodes or []:
-            if isinstance(c, tree.ParmVarDecl):
-                parameters.append(c)
-            else:
-                statements.append(c)
-
         if node.storage:
             self.write(node.storage, " ")
 
@@ -610,17 +515,16 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.name)
 
         self.write("(")
-        if parameters:
-            self.comma_list(parameters)
+        if node.subnodes:
+            self.comma_list(node.subnodes)
         if node.variadic:
-            if parameters:
+            if node.subnodes:
                 self.write(", ")
             self.write("...")
         self.write(")")
 
-        if statements:
-            for c in statements:
-                self.write(c)
+        if node.body:
+            self.write(node.body)
         else:
             # forward declaration
             self.write(";")
@@ -633,13 +537,13 @@ class SourceGenerator(ExplicitNodeVisitor):
                 'unsigned long': 'ul',
                 'long long': 'll',
                 'unsigned long long': 'ull'}
-        self.write(node.value + suffixes.get(node.type, ''))
+        self.write(node.value + suffixes.get(node.type.name, ''))
 
     def visit_FloatingLiteral(self, node: tree.FloatingLiteral):
         suffixes = {'float': 'f', 'long double': 'l'}
         # FIXME: we may loose precision by choosing this format
         self.write('{:g}{}'.format(float(node.value),
-                                   suffixes.get(node.type, '')))
+                                   suffixes.get(node.type.name, '')))
 
     def visit_CharacterLiteral(self, node: tree.CharacterLiteral):
         if node.value.isprintable():
@@ -686,8 +590,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.base, "[", node.index, "]")
 
     def visit_DeclStmt(self, node: tree.DeclStmt):
+        # FIXME: could be improved to support multiple decl in one statement
         for decl in node.subnodes:
-            self.write(decl)
+            self.write(decl, ";" if isinstance(decl, tree.VarDecl) else "")
 
     # ReturnStmt(expression? expression)
     def visit_ReturnStmt(self, node: tree.ReturnStmt):
@@ -697,7 +602,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(";")
 
     def visit_IfStmt(self, node: tree.IfStmt):
-        self.write("if (", node.cond, ")\n")
+        if node.cond:
+            self.write("if (", node.cond, ")\n")
+        elif node.var:
+            self.write("if (", node.var, ")\n")
         self.write(node.true_body)
         if node.false_body is not None:
             self.write("else ", node.false_body)
@@ -839,7 +747,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.subnodes[-1])
 
     def visit_WhileStmt(self, node: tree.WhileStmt):
-        self.write("while (", node.cond, ")")
+        if node.cond:
+            self.write("while (", node.cond, ")")
+        elif node.var:
+            self.write("while (", node.var, ")")
         self.newline()
         self.write(node.body)
 
