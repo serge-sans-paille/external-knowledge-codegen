@@ -16,6 +16,10 @@ class OverrideAttr(Node):
     attrs = ()
 
 
+class AlignedAttr(Node):
+    attrs = ("size",)
+
+
 class Documented(Node):
     attrs = ("documentation",)
 
@@ -413,7 +417,8 @@ class DeclStmt(Statement):
 
 
 class VarDecl(Declaration):
-    attrs = ("name", "type", "storage_class", "init_mode", "implicit", "referenced", "init")
+    attrs = ("name", "type", "storage_class", "init_mode", "implicit",
+             "referenced", "init", "attributes")
 
 
 class TypedefDecl(Declaration):

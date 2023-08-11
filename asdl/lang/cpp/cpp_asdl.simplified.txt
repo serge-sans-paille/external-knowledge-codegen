@@ -21,7 +21,7 @@ declaration = AccessSpecDecl(identifier access_spec)
             | TemplateTypeParmDecl(identifier name, statement* subnodes)
             | TypedefDecl(identifier name, type type)
             | UsingDirectiveDecl(identifier name)
-            | VarDecl(identifier name, type type, constant? storage_class, constant init_mode, constant? implicit, constant? referenced, expression? init)
+            | VarDecl(identifier name, type type, constant? storage_class, constant init_mode, constant? implicit, constant? referenced, expression? init, attribute* attributes)
 
 statement = BreakStmt
           | CXXCtorInitializer(identifier name, statement* subnodes)
@@ -102,3 +102,5 @@ type = BuiltinType(identifier name)
 enum_field = EnumConstantDecl(identifier name, expression? init)
 
 constrained_expression = ConstrainedExpression(expression expr, constant constraint)
+
+attribute = AlignedAttr(expression? size)

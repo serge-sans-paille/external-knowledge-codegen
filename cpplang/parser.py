@@ -996,12 +996,16 @@ class Parser(object):
 
         type_ = self.parse_node(self.type_informations[node['id']])
 
+        inner_nodes = self.parse_subnodes(node)
+
         if 'init' in node:
-            init, = self.parse_subnodes(node)
+            init = inner_nodes.pop()
             init_mode = node['init']
         else:
             init = None
             init_mode = ''
+
+        attributes = inner_nodes
 
         return tree.VarDecl(name=name,
                             storage_class=storage_class,
@@ -1009,7 +1013,18 @@ class Parser(object):
                             init_mode=init_mode,
                             implicit=implicit,
                             referenced=referenced,
-                            init=init)
+                            init=init,
+                            attributes=attributes)
+
+    @parse_debug
+    def parse_AlignedAttr(self, node) -> tree.AlignedAttr:
+        assert node['kind'] == "AlignedAttr"
+        inner_nodes = self.parse_subnodes(node)
+        if not inner_nodes:
+            size = None
+        else:
+            size, = inner_nodes
+        return tree.AlignedAttr(size=size)
 
     @parse_debug
     def parse_InitListExpr(self, node) -> tree.InitListExpr:

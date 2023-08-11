@@ -314,9 +314,20 @@ class SourceGenerator(ExplicitNodeVisitor):
         # The cast is implicit, no need to pretty-print it.
         self.write(node.expr)
 
+    def visit_AlignedAttr(self, node: tree.AlignedAttr):
+        self.write("__attribute__((aligned")
+        if node.size is not None:
+            self.write("(", node.size, ")")
+        self.write("))")
+
     def visit_VarDecl(self, node: tree.VarDecl):
         if node.storage_class:
             self.write(node.storage_class, " ")
+
+        if node.attributes:
+            for attribute in node.attributes:
+                self.write(attribute, " ")
+
         if node.implicit and node.referenced:
             self.write(node.subnodes[0])
         else:
