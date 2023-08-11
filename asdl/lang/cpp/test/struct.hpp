@@ -61,3 +61,15 @@ void field() {
 
   l0.next->next = nullptr;
 }
+
+struct complex_fields {
+  float (*((*a) [3]))(bool);
+  float b [1];
+  char data[];
+};
+
+struct struct_hack {
+  float a;
+  float b [1];
+  char data[];
+};

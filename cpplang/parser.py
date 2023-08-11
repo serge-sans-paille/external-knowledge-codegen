@@ -25,10 +25,11 @@ def rebuild_clang_plugin():
 
     src_mtime = os.path.getmtime(plugin_src)
     try:
-        dst_mtime = os.path.getmtime(dst_file)
+        plugin_mtime = os.path.getmtime(plugin_path)
     except:
-        dst_mtime = 0
-    if src_mtime > dst_mtime:
+        plugin_mtime = 0
+
+    if src_mtime > plugin_mtime:
         raw_llvm_compile_flags = subprocess.check_output(
                 [shutil.which("llvm-config"), '--cxxflags', '--ldflags'])
         llvm_compile_flags = raw_llvm_compile_flags.split()
@@ -645,11 +646,14 @@ class Parser(object):
         self.parsed_labels.clear()
 
         name = node['name']
-        return_type = node['type']['qualType'].split("(")[0]
+        return_type = self.parse_node(self.type_informations[node['id']]).subnodes[0]
         variadic = "..." if node['type']['qualType'].endswith('...)') else None
+        inline = "inline" if node.get('inline') else None
+        storage = node.get('storageClass')
         subnodes = self.parse_subnodes(node)
         return tree.FunctionDecl(name=name, return_type=return_type,
-                                 variadic=variadic, subnodes=subnodes)
+                                 variadic=variadic, subnodes=subnodes,
+                                 inline=inline, storage=storage)
 
     @parse_debug
     def parse_TypedefDecl(self, node) -> tree.TypedefDecl:
@@ -901,40 +905,6 @@ class Parser(object):
         subnodes = self.parse_subnodes(node)
         qualifiers = node['qualifiers']
         return tree.QualType(qualifiers=qualifiers, subnodes=subnodes)
-
-    # FXIME: this should disappear in favor of better type
-    def parse_type(self, node) -> tree.QualType:
-        qual_type = node['qualType']
-        return tree.QualType(qualifiers=None,
-                             subnodes=[tree.BuiltinType(name=self.mangle_anonymous_type(qual_type))])
-
-    def reparse_type(self, node):
-        qual_type = self.mangle_anonymous_type(node['qualType'])
-        raw = qual_type
-
-        # forward declare any type involved in the type expression
-        types = set(re.findall(r"[_a-zA-Z]\w+", raw))
-        for ty in ("int", "short", "long", "bool", "char", "float", "double",
-                   "unsigned", "signed", "const", "volatile", "void",
-                   "class", "struct"):
-            types.discard(ty)
-
-        # FIXME: instead of create arbitrary record, we could register existing
-        # type decl.
-        fake_source = "".join("struct {} {{}};\n".format(ty) for ty in types)
-        fake_source += "using __fake_typealias = {};".format(raw)
-
-        process_command = [
-            shutil.which("clang"), "-x", "c++", "-std=c++17", "-fPIC",
-            "-Xclang", "-ast-dump=json",
-            "-fsyntax-only", "-"]
-        json_dump = subprocess.check_output(process_command,
-                                                input=fake_source.encode())
-        translation_unit = json.loads(json_dump.decode())
-        typedef = translation_unit["inner"][-1]
-
-        type_, = self.parse_subnodes(typedef)
-        return type_
 
     @parse_debug
     def parse_VarDecl(self, node) -> tree.VarDecl:
@@ -1263,6 +1233,12 @@ class Parser(object):
         assert node['kind'] == "FunctionProtoType"
         subnodes = self.parse_subnodes(node)
         return tree.FunctionProtoType(subnodes=subnodes)
+
+    @parse_debug
+    def parse_IncompleteArrayType(self, node) -> tree.IncompleteArrayType:
+        assert node['kind'] == "IncompleteArrayType"
+        type_, = self.parse_subnodes(node)
+        return tree.IncompleteArrayType(type=type_)
 
     @parse_debug
     def parse_ParenType(self, node) -> tree.ParenType:

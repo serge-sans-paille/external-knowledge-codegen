@@ -166,6 +166,9 @@ class LValueReferenceType(Node):
 class RValueReferenceType(Node):
     attrs = ("type",)
 
+class IncompleteArrayType(Node):
+    attrs = ("type",)
+
 class ParenType(Node):
     attrs = ("type",)
 
@@ -240,7 +243,7 @@ class CXXMethodDecl(Declaration):
 
 
 class FunctionDecl(Declaration):
-    attrs = ("return_type", "name", "variadic",)
+    attrs = ("return_type", "name", "storage", "variadic", "inline")
 
 
 class ClassTemplateDecl(Declaration):
