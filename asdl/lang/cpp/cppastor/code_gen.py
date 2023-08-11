@@ -807,6 +807,15 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("}")
 
     def visit_CXXNewExpr(self, node: tree.CXXNewExpr):
-        if node.subnodes is not None and len(node.subnodes) > 0:
-            self.write("new ", node.subnodes[0])
+        markers = "[]" if node.is_array else "()"
+        self.write("new ", node.type, markers[0])
+        if node.is_array:
+            size, *initializers = node.args
+            self.write(size, markers[1])
+            if initializers:
+                initializer, = initializers
+                self.write(initializer)
+        else:
+            self.comma_list(node.args)
+            self.write(markers[1])
 

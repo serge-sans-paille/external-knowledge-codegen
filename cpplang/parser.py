@@ -1286,7 +1286,11 @@ class Parser(object):
     @parse_debug
     def parse_CXXNewExpr(self, node) -> tree.CXXNewExpr:
         assert node['kind'] == "CXXNewExpr"
-        subnodes = self.parse_subnodes(node)
+        args = self.parse_subnodes(node)
+        type_ = self.parse_node(self.type_informations[node['id']])
+        assert isinstance(type_, tree.PointerType)
+        is_array = "array" if node.get("isArray") else None
+        return tree.CXXNewExpr(type=type_.type, args=args, is_array=is_array)
 
     @parse_debug
     def parse_CXXForRangeStmt(self, node) -> tree.CXXForRangeStmt:
