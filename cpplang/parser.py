@@ -665,25 +665,8 @@ class Parser(object):
     @parse_debug
     def parse_ParmVarDecl(self, node) -> tree.ParmVarDecl:
         assert node['kind'] == "ParmVarDecl"
-        name = node['name'] if 'name' in node else ''
-        if len(name) == 0:
-            #breakpoint()
-            var_type = self.source_code[
-                node['range']['begin']['offset']:
-                    (node['range']['end']['offset']
-                     + node['range']['end']['tokLen'])].strip()
-        else:
-            var_type = self.source_code[node['range']['begin']['offset']:node['range']['end']['offset']].strip()
-            try:
-                i = var_type.index(f"{name} =")
-                var_type = var_type[:i]
-            except Exception as _:
-                try:
-                    i = var_type.index(f"{name}=")
-                    var_type = var_type[:i]
-                except Exception as _:
-                    pass
-                pass
+        name = node.get('name')
+        var_type = self.parse_node(self.type_informations[node['id']])
         subnodes = self.parse_subnodes(node)
         return tree.ParmVarDecl(name=name, type=var_type, subnodes=subnodes)
 
@@ -910,23 +893,23 @@ class Parser(object):
     def parse_VarDecl(self, node) -> tree.VarDecl:
         assert node['kind'] == "VarDecl"
         name = node['name']
-        implicit = 'implicit' if 'isImplicit' in node and node['isImplicit'] else ''
-        referenced = 'referenced' if 'isReferenced' in node and node['isReferenced'] else ''
-        storage_class = node['storageClass'] if "storageClass" in node else ""
+        implicit = node.get('isImplicit')
+        referenced = node.get('isReferenced')
+        storage_class = node.get('storageClass')
 
         type_ = self.parse_node(self.type_informations[node['id']])
 
         if 'init' in node:
             subnodes = self.parse_subnodes(node)
-            init = node['init']
+            init_mode = node['init']
         else:
             subnodes = []
-            init = ''
+            init_mode = ''
 
         return tree.VarDecl(name=name,
                             storage_class=storage_class,
                             type=type_,
-                            init=init,
+                            init_mode=init_mode,
                             implicit=implicit,
                             referenced=referenced,
                             subnodes=subnodes)
@@ -1010,8 +993,15 @@ class Parser(object):
     def parse_BinaryOperator(self, node) -> tree.BinaryOperator:
         assert node['kind'] == "BinaryOperator"
         opcode = node['opcode']
-        left, right = self.parse_subnodes(node)
-        return tree.BinaryOperator(opcode=opcode, left=left, right=right)
+        lhs, rhs = self.parse_subnodes(node)
+        return tree.BinaryOperator(opcode=opcode, lhs=lhs, rhs=rhs)
+
+    @parse_debug
+    def parse_CompoundAssignOperator(self, node) -> tree.CompoundAssignOperator:
+        assert node['kind'] == "CompoundAssignOperator"
+        opcode = node['opcode']
+        lhs, rhs = self.parse_subnodes(node)
+        return tree.CompoundAssignOperator(opcode=opcode, lhs=lhs, rhs=rhs)
 
     @parse_debug
     def parse_UnaryOperator(self, node) -> tree.UnaryOperator:
@@ -1227,6 +1217,12 @@ class Parser(object):
         type_, = self.parse_subnodes(node)
         qualifiers = node.get('qualifiers')
         return tree.ElaboratedType(qualifiers=qualifiers, type=type_)
+
+    @parse_debug
+    def parse_DecayedType(self, node) -> tree.DecayedType:
+        assert node['kind'] == "DecayedType"
+        type_, = self.parse_subnodes(node)
+        return tree.DecayedType(type=type_)
 
     @parse_debug
     def parse_FunctionProtoType(self, node) -> tree.FunctionProtoType:

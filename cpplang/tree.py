@@ -154,6 +154,9 @@ class BuiltinType(Node):
 class ConstantArrayType(Node):
     attrs = ("type", "size", )
 
+class DecayedType(Node):
+    attrs = ("type",)
+
 class ElaboratedType(Node):
     attrs = ("type", "qualifiers", )
 
@@ -263,7 +266,7 @@ class NonTypeTemplateParmDecl(Declaration):
 
 
 class ParmVarDecl(Node):
-    attrs = ("type", "name", "dimensions",)
+    attrs = ("type", "name",)
 
 
 class FieldDecl(Node):
@@ -313,7 +316,7 @@ class InferredFormalParameter(Node):
 
 
 class Statement(Node):
-    attrs = ("label",)
+    attrs = ()
 
 
 class DoStmt(Statement):
@@ -416,7 +419,7 @@ class DeclStmt(Node):
 
 
 class VarDecl(Node):
-    attrs = ("name", "type", "storage_class", "init", "implicit", "referenced")
+    attrs = ("name", "type", "storage_class", "init_mode", "implicit", "referenced")
 
 
 class TypedefDecl(Node):
@@ -512,7 +515,10 @@ class Assignment(Primary):
 
 
 class BinaryOperator(Expression):
-    attrs = ("opcode", "left", "right",)
+    attrs = ("opcode", "lhs", "rhs",)
+
+class CompoundAssignOperator(Expression):
+    attrs = ("opcode", "lhs", "rhs",)
 
 
 class UnaryOperator(Expression):
