@@ -20,7 +20,7 @@ class MetaNode(type):
 
 @six.add_metaclass(MetaNode)
 class Node(object):
-    attrs = ("subnodes",)
+    attrs = ()
 
     def __init__(self, **kwargs):
         values = kwargs.copy()

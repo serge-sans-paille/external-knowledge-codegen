@@ -180,24 +180,15 @@ class SourceGenerator(ExplicitNodeVisitor):
     # Statements
 
     def visit_TranslationUnit(self, node: tree.TranslationUnit):
-        if node.subnodes is not None:
-            for c in node.subnodes:
+        if node.stmts is not None:
+            for c in node.stmts:
                 self.write(c)
 
     def visit_InitListExpr(self, node: tree.InitListExpr):
         self.write("{")
-        self.comma_list(node.subnodes)
+        self.comma_list(node.values)
         self.write("}")
         self.newline(extra=1)
-
-        #if node.package:
-            #self.write(node.package)
-        #if node.imports:
-            #for imp in node.imports:
-                #self.write(imp)
-        #if node.types:
-            #for type in node.types:
-                #self.write(type)
 
     def visit_CXXRecordDecl(self, node: tree.CXXRecordDecl):
         self.write(node.kind, " ")
@@ -223,12 +214,12 @@ class SourceGenerator(ExplicitNodeVisitor):
         parameters = []
         initializers = []
         statements = []
-        if node.subnodes is not None:
-            for c in node.subnodes:
+        if node.stmts is not None:
+            for c in node.stmts:
                 if c.__class__.__name__ == "ParmVarDecl":
                     parameters.append(c)
                 elif c.__class__.__name__ == "CXXCtorInitializer":
-                    if c.subnodes is not None and len(c.subnodes) > 0:
+                    if c.stmts is not None and len(c.stmts) > 0:
                         initializers.append(c)
                 else:
                     statements.append(c)
@@ -306,25 +297,15 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_ExprWithCleanups(self, node: tree.ExprWithCleanups):
         self.write(node.subnodes[0])
-        #if len(self.stack) > 1 and self.stack[-2] == 'CompoundStmt':
-            #self.write(";")
 
     def visit_DeclRefExpr(self, node: tree.DeclRefExpr):
         if node.name.startswith("operator"):
             self.write(node.name.replace("operator", "", 1))
-            return
-        self.write(node.name)
-        if node.kind == "CXXMethodDecl" and node.name not in [
-                '+', '-', '*', '/', '//', '%', '**', '==', '!=', '<', '>', '<=', '>=',
-                'and', 'or', 'not', '&', '|', '^', '~', '<<', '>>', '+=', '-=', '*=',
-                '/=', '//=', '%=', '**=', '&=', '|=', '^=', '<<=', '>>=', 'is',
-                'is not', 'in', 'not in']:
-            self.write("(")
-            self.comma_list(node.subnodes)
-            self.write(")")
+        else:
+            self.write(node.name)
 
     def visit_MaterializeTemporaryExpr(self, node: tree.MaterializeTemporaryExpr):
-        self.write(node.subnodes[0])
+        self.write(node.expr)
 
     def visit_CXXBindTemporaryExpr(self, node: tree.CXXBindTemporaryExpr):
         self.write(node.subnodes[0])
@@ -342,9 +323,9 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write(self.visit_type_helper(node.name, node.type))
             if node.init_mode:
                 if node.init_mode == 'call':
-                    self.write("(", node.subnodes[0], ")")
+                    self.write("(", node.init, ")")
                 else:
-                    self.write(" = ", node.subnodes[0])
+                    self.write(" = ", node.init)
 
     def visit_ExprStmt(self, node: tree.ExprStmt):
         self.write(node.expr, ";")
@@ -389,11 +370,12 @@ class SourceGenerator(ExplicitNodeVisitor):
             else:
                 return self.visit_type_helper(current_expr, current_type.type)
         if isinstance(current_type, tree.FunctionProtoType):
+            parameter_types = current_type.parameter_types or []
             argument_types = ', '.join(self.visit_type_helper("", ty)
-                                       for ty in current_type.subnodes[1:])
-            return self.visit_type_helper("{}({})".format(current_expr,
-                                                             argument_types),
-                                             current_type.subnodes[0])
+                                       for ty in parameter_types)
+            return self.visit_type_helper(
+                    "{}({})".format(current_expr, argument_types),
+                    current_type.return_type)
         if isinstance(current_type, tree.ParenType):
             return self.visit_type_helper("({})".format(current_expr),
                                              current_type.type)
@@ -403,7 +385,7 @@ class SourceGenerator(ExplicitNodeVisitor):
             return self.visit_type_helper("*{}".format(current_expr),
                                              current_type.type)
         if isinstance(current_type, tree.QualType):
-            qualified_type = current_type.subnodes[0]
+            qualified_type = current_type.type
             if current_type.qualifiers is None:
                 return self.visit_type_helper(current_expr, qualified_type)
 
@@ -448,8 +430,8 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.type)
 
     def visit_FunctionProtoType(self, node: tree.FunctionProtoType):
-        self.write(node.subnodes[0], "(")
-        self.comma_list(node.subnodes[1:])
+        self.write(node.return_type, "(")
+        self.comma_list(node.parameter_types)
         self.write(")")
 
     def visit_ParenType(self, node: tree.ParenType):
@@ -484,13 +466,13 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_QualType(self, node: tree.QualType):
         # west const
-        if isinstance(node.subnodes[0], tree.BuiltinType):
+        if isinstance(node.type, tree.BuiltinType):
             if node.qualifiers:
                 self.write(node.qualifiers, " ")
-            self.write(node.subnodes[0])
+            self.write(node.type)
         # east const
         else:
-            self.write(node.subnodes[0])
+            self.write(node.type)
             if node.qualifiers:
                 self.write(" ", node.qualifiers)
 
@@ -539,10 +521,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.name)
 
         self.write("(")
-        if node.subnodes:
-            self.comma_list(node.subnodes)
+        if node.parameters:
+            self.comma_list(node.parameters)
         if node.variadic:
-            if node.subnodes:
+            if node.parameters:
                 self.write(", ")
             self.write("...")
         self.write(")")
@@ -615,7 +597,7 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_DeclStmt(self, node: tree.DeclStmt):
         # FIXME: could be improved to support multiple decl in one statement
-        for decl in node.subnodes:
+        for decl in node.decls:
             self.write(decl, ";" if isinstance(decl, tree.VarDecl) else "")
 
     # ReturnStmt(expression? expression)
@@ -637,8 +619,8 @@ class SourceGenerator(ExplicitNodeVisitor):
     # BlockStatement(statement* statements)
     def visit_CompoundStmt(self, node: tree.CompoundStmt):
         self.write("{", "\n")
-        if node.subnodes is not None:
-            for statement in node.subnodes:
+        if node.stmts is not None:
+            for statement in node.stmts:
                 self.write(statement)
                 if isinstance(statement, tree.Expression):
                     self.write(";\n")
@@ -729,11 +711,10 @@ class SourceGenerator(ExplicitNodeVisitor):
             #self.write(node.subnodes[0])
 
     def visit_CallExpr(self, node: tree.CallExpr):
-        self.write(node.subnodes[0])
-        if len(node.subnodes) > 1:
-            self.write("(")
-            self.comma_list(node.subnodes[1:])
-            self.write(")")
+        self.write(node.callee)
+        self.write("(")
+        self.comma_list(node.args)
+        self.write(")")
 
     def visit_CXXOperatorCallExpr(self, node: tree.CXXOperatorCallExpr):
         self.write(node.left, " ", node.op, " ")
@@ -793,7 +774,7 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_EnumDecl(self, node: tree.EnumDecl):
         self.write("enum ", node.name or "", " {\n")
-        self.comma_list(node.subnodes)
+        self.comma_list(node.fields)
         self.write("};")
         self.newline(extra=1)
 
