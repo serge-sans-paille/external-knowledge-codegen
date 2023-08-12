@@ -177,6 +177,10 @@ public:
       JOS.attribute("node_id", createPointerRepresentation(UA));
       JOS.attribute("deprecation_message", UA->getMessage());
     }
+    else if(const auto * SA = dyn_cast<SectionAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(SA));
+      JOS.attribute("section_name", SA->getName());
+    }
     InnerAttrVisitor::Visit(A);
   }
 

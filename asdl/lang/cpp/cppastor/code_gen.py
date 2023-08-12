@@ -338,6 +338,9 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write("(\"", node.msg, "\")")
         self.write("))")
 
+    def visit_SectionAttr(self, node: tree.SectionAttr):
+        self.write("__attribute__((section(\"", node.section, "\")))")
+
     def visit_VarDecl(self, node: tree.VarDecl):
         if node.storage_class:
             self.write(node.storage_class, " ")

@@ -36,6 +36,10 @@ class UnavailableAttr(Node):
     attrs = ("msg",)
 
 
+class SectionAttr(Node):
+    attrs = ("section",)
+
+
 class Documented(Node):
     attrs = ("documentation",)
 

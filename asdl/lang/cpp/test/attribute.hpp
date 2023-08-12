@@ -14,3 +14,5 @@ __attribute__((deprecated("too old"))) int g_p;
 
 __attribute__((unavailable)) int h;
 __attribute__((unavailable("too old"))) int h_p;
+
+__attribute__ ((section ("INITDATA"))) int i;

@@ -445,7 +445,8 @@ class Parser(object):
                 asm_infos['labels'] = [x['label'] for x in child.get('labels',
                                                                      [])]
 
-            for field in ('aliasee', 'cleanup_function', 'deprecation_message'):
+            for field in ('aliasee', 'cleanup_function', 'deprecation_message',
+                          'section_name'):
                 if field not in child:
                     continue
 
@@ -1056,6 +1057,12 @@ class Parser(object):
         assert node['kind'] == "UnavailableAttr"
         msg = self.attr_informations[node['id']]['deprecation_message'] or None
         return tree.UnavailableAttr(msg=msg)
+
+    @parse_debug
+    def parse_SectionAttr(self, node) -> tree.SectionAttr:
+        assert node['kind'] == "SectionAttr"
+        section = self.attr_informations[node['id']]['section_name']
+        return tree.SectionAttr(section=section)
 
     @parse_debug
     def parse_InitListExpr(self, node) -> tree.InitListExpr:
