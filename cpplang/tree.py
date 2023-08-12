@@ -24,6 +24,10 @@ class AliasAttr(Node):
     attrs = ("aliasee",)
 
 
+class CleanupAttr(Node):
+    attrs = ("func",)
+
+
 class Documented(Node):
     attrs = ("documentation",)
 

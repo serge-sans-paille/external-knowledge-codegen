@@ -165,6 +165,10 @@ public:
       JOS.attribute("node_id", createPointerRepresentation(AA));
       JOS.attribute("aliasee", AA->getAliasee());
     }
+    else if(const auto * CA = dyn_cast<CleanupAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(CA));
+      JOS.attribute("cleanup_function", CA->getFunctionDecl()->getName());
+    }
     InnerAttrVisitor::Visit(A);
   }
 

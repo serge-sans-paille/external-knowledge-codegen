@@ -447,6 +447,9 @@ class Parser(object):
             if 'aliasee' in child:
                 self.attr_informations[child['node_id']] = {'aliasee':
                                                             child['aliasee']}
+            if 'cleanup_function' in child:
+                self.attr_informations[child['node_id']] = {'cleanup_function':
+                                                            child['cleanup_function']}
 
 
     @parse_debug
@@ -1035,6 +1038,12 @@ class Parser(object):
         assert node['kind'] == "AliasAttr"
         aliasee = self.attr_informations[node['id']]['aliasee']
         return tree.AliasAttr(aliasee=aliasee)
+
+    @parse_debug
+    def parse_CleanupAttr(self, node) -> tree.CleanupAttr:
+        assert node['kind'] == "CleanupAttr"
+        func = self.attr_informations[node['id']]['cleanup_function']
+        return tree.CleanupAttr(func=func)
 
     @parse_debug
     def parse_InitListExpr(self, node) -> tree.InitListExpr:
