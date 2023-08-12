@@ -16,3 +16,6 @@ __attribute__((unavailable)) int h;
 __attribute__((unavailable("too old"))) int h_p;
 
 __attribute__ ((section ("INITDATA"))) int i;
+
+__attribute__ ((unused)) int j;
+__attribute__ ((used)) int k;

@@ -40,6 +40,14 @@ class SectionAttr(Node):
     attrs = ("section",)
 
 
+class UsedAttr(Node):
+    attrs = ()
+
+
+class UnusedAttr(Node):
+    attrs = ()
+
+
 class Documented(Node):
     attrs = ("documentation",)
 

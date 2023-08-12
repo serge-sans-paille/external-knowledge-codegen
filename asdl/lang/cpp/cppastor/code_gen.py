@@ -341,6 +341,12 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_SectionAttr(self, node: tree.SectionAttr):
         self.write("__attribute__((section(\"", node.section, "\")))")
 
+    def visit_UnusedAttr(self, node: tree.UnusedAttr):
+        self.write("__attribute__((unused)))")
+
+    def visit_UsedAttr(self, node: tree.UsedAttr):
+        self.write("__attribute__((used)))")
+
     def visit_VarDecl(self, node: tree.VarDecl):
         if node.storage_class:
             self.write(node.storage_class, " ")

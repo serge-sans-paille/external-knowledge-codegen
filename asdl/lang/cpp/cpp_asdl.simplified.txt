@@ -109,3 +109,5 @@ attribute = AlignedAttr(expression? size)
           | DeprecatedAttr(constant? msg)
           | UnavailableAttr(constant? msg)
           | SectionAttr(constant section)
+          | UsedAttr
+          | UnusedAttr

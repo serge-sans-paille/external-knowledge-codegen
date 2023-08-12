@@ -1065,6 +1065,16 @@ class Parser(object):
         return tree.SectionAttr(section=section)
 
     @parse_debug
+    def parse_UnusedAttr(self, node) -> tree.UnusedAttr:
+        assert node['kind'] == "UnusedAttr"
+        return tree.UnusedAttr()
+
+    @parse_debug
+    def parse_UsedAttr(self, node) -> tree.UsedAttr:
+        assert node['kind'] == "UsedAttr"
+        return tree.UsedAttr()
+
+    @parse_debug
     def parse_InitListExpr(self, node) -> tree.InitListExpr:
         assert node['kind'] == "InitListExpr"
         values = self.parse_subnodes(node)
