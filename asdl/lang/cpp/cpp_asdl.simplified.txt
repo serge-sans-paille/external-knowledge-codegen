@@ -106,3 +106,5 @@ constrained_expression = ConstrainedExpression(expression expr, constant constra
 attribute = AlignedAttr(expression? size)
           | AliasAttr(identifier aliasee)
           | CleanupAttr(identifier func)
+          | DeprecatedAttr(constant? msg)
+          | UnavailableAttr(constant? msg)

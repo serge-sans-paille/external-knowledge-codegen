@@ -444,12 +444,12 @@ class Parser(object):
                                          child.get('clobbers', [])]
                 asm_infos['labels'] = [x['label'] for x in child.get('labels',
                                                                      [])]
-            if 'aliasee' in child:
-                self.attr_informations[child['node_id']] = {'aliasee':
-                                                            child['aliasee']}
-            if 'cleanup_function' in child:
-                self.attr_informations[child['node_id']] = {'cleanup_function':
-                                                            child['cleanup_function']}
+
+            for field in ('aliasee', 'cleanup_function', 'deprecation_message'):
+                if field not in child:
+                    continue
+
+                self.attr_informations[child['node_id']] = {field: child[field]}
 
 
     @parse_debug
@@ -1044,6 +1044,18 @@ class Parser(object):
         assert node['kind'] == "CleanupAttr"
         func = self.attr_informations[node['id']]['cleanup_function']
         return tree.CleanupAttr(func=func)
+
+    @parse_debug
+    def parse_DeprecatedAttr(self, node) -> tree.DeprecatedAttr:
+        assert node['kind'] == "DeprecatedAttr"
+        msg = self.attr_informations[node['id']]['deprecation_message'] or None
+        return tree.DeprecatedAttr(msg=msg)
+
+    @parse_debug
+    def parse_UnavailableAttr(self, node) -> tree.UnavailableAttr:
+        assert node['kind'] == "UnavailableAttr"
+        msg = self.attr_informations[node['id']]['deprecation_message'] or None
+        return tree.UnavailableAttr(msg=msg)
 
     @parse_debug
     def parse_InitListExpr(self, node) -> tree.InitListExpr:

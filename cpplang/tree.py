@@ -28,6 +28,14 @@ class CleanupAttr(Node):
     attrs = ("func",)
 
 
+class DeprecatedAttr(Node):
+    attrs = ("msg",)
+
+
+class UnavailableAttr(Node):
+    attrs = ("msg",)
+
+
 class Documented(Node):
     attrs = ("documentation",)
 

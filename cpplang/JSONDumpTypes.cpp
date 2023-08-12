@@ -169,6 +169,14 @@ public:
       JOS.attribute("node_id", createPointerRepresentation(CA));
       JOS.attribute("cleanup_function", CA->getFunctionDecl()->getName());
     }
+    else if(const auto * DA = dyn_cast<DeprecatedAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(DA));
+      JOS.attribute("deprecation_message", DA->getMessage());
+    }
+    else if(const auto * UA = dyn_cast<UnavailableAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(UA));
+      JOS.attribute("deprecation_message", UA->getMessage());
+    }
     InnerAttrVisitor::Visit(A);
   }
 

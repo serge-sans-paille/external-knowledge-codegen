@@ -326,6 +326,18 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_CleanupAttr(self, node: tree.CleanupAttr):
         self.write("__attribute__((cleanup(", node.func, ")))")
 
+    def visit_DeprecatedAttr(self, node: tree.DeprecatedAttr):
+        self.write("__attribute__((deprecated")
+        if node.msg is not None:
+            self.write("(\"", node.msg, "\")")
+        self.write("))")
+
+    def visit_UnavailableAttr(self, node: tree.UnavailableAttr):
+        self.write("__attribute__((unavailable")
+        if node.msg is not None:
+            self.write("(\"", node.msg, "\")")
+        self.write("))")
+
     def visit_VarDecl(self, node: tree.VarDecl):
         if node.storage_class:
             self.write(node.storage_class, " ")
