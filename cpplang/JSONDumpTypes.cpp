@@ -122,6 +122,7 @@ static llvm::json::Object fullType(const ASTContext &Ctx, QualType T) {
 
 class JSONNodeTypeDumper
     : public ConstStmtVisitor<JSONNodeTypeDumper>,
+      public ConstAttrVisitor<JSONNodeDumper>,
       public TypeVisitor<JSONNodeTypeDumper>,
       public ConstDeclVisitor<JSONNodeTypeDumper>,
       public NodeStreamer {
@@ -136,6 +137,7 @@ class JSONNodeTypeDumper
   unsigned LastLocLine, LastLocPresumedLine;
 
   using InnerStmtVisitor = ConstStmtVisitor<JSONNodeTypeDumper>;
+  using InnerAttrVisitor = ConstAttrVisitor<JSONNodeDumper>;
   using InnerTypeVisitor = TypeVisitor<JSONNodeTypeDumper>;
   using InnerDeclVisitor = ConstDeclVisitor<JSONNodeTypeDumper>;
 
@@ -158,7 +160,14 @@ public:
         LastLocPresumedLine(0)
 {}
 
-  void Visit(const Attr *A) {}
+  void Visit(const Attr *A) {
+    if(const auto * AA = dyn_cast<AliasAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(AA));
+      JOS.attribute("aliasee", AA->getAliasee());
+    }
+    InnerAttrVisitor::Visit(A);
+  }
+
   void Visit(const Stmt *S) {
     if(!S) return;
     if (const auto * GAS = dyn_cast<GCCAsmStmt>(S)) {

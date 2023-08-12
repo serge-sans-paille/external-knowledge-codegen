@@ -172,6 +172,7 @@ class Parser(object):
         self.tu = json.loads(stdout_data.decode())
         self.type_informations = {}
         self.asm_informations = {}
+        self.attr_informations = {}
         self.stack = []
         self.debug = False
         self.anonymous_types = {}
@@ -443,6 +444,9 @@ class Parser(object):
                                          child.get('clobbers', [])]
                 asm_infos['labels'] = [x['label'] for x in child.get('labels',
                                                                      [])]
+            if 'aliasee' in child:
+                self.attr_informations[child['node_id']] = {'aliasee':
+                                                            child['aliasee']}
 
 
     @parse_debug
@@ -1025,6 +1029,12 @@ class Parser(object):
         else:
             size, = inner_nodes
         return tree.AlignedAttr(size=size)
+
+    @parse_debug
+    def parse_AliasAttr(self, node) -> tree.AliasAttr:
+        assert node['kind'] == "AliasAttr"
+        aliasee = self.attr_informations[node['id']]['aliasee']
+        return tree.AliasAttr(aliasee=aliasee)
 
     @parse_debug
     def parse_InitListExpr(self, node) -> tree.InitListExpr:

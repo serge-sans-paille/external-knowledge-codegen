@@ -320,6 +320,9 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write("(", node.size, ")")
         self.write("))")
 
+    def visit_AliasAttr(self, node: tree.AliasAttr):
+        self.write("__attribute__((alias(\"", node.aliasee, "\")))")
+
     def visit_VarDecl(self, node: tree.VarDecl):
         if node.storage_class:
             self.write(node.storage_class, " ")

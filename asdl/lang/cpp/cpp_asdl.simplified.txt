@@ -104,3 +104,4 @@ enum_field = EnumConstantDecl(identifier name, expression? init)
 constrained_expression = ConstrainedExpression(expression expr, constant constraint)
 
 attribute = AlignedAttr(expression? size)
+          | AliasAttr(identifier aliasee)

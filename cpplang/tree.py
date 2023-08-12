@@ -20,6 +20,10 @@ class AlignedAttr(Node):
     attrs = ("size",)
 
 
+class AliasAttr(Node):
+    attrs = ("aliasee",)
+
+
 class Documented(Node):
     attrs = ("documentation",)
 
