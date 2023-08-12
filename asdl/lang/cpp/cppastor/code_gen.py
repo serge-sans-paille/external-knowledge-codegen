@@ -639,7 +639,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("break;\n")
 
     def visit_MemberExpr(self, node: tree.MemberExpr):
-        self.write(node.expr, node.op, node.name)
+        if node.expr:
+            self.write(node.expr, node.op, node.name)
+        else:
+            self.write(node.name)
 
     def visit_ConstantExpr(self, node: tree.ConstantExpr):
         self.write(node.value)
@@ -804,6 +807,15 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("}")
 
     def visit_CXXNewExpr(self, node: tree.CXXNewExpr):
-        if node.subnodes is not None and len(node.subnodes) > 0:
-            self.write("new ", node.subnodes[0])
+        markers = "[]" if node.is_array else "()"
+        self.write("new ", node.type, markers[0])
+        if node.is_array:
+            size, *initializers = node.args
+            self.write(size, markers[1])
+            if initializers:
+                initializer, = initializers
+                self.write(initializer)
+        else:
+            self.comma_list(node.args)
+            self.write(markers[1])
 

@@ -560,7 +560,7 @@ class CXXBindTemporaryExpr(Expression):
 
 
 class CXXNewExpr(Expression):
-    attrs = ("subnodes",)
+    attrs = ("type", "args", "is_array")
 
 
 class UnaryExprOrTypeTraitExpr(Expression):

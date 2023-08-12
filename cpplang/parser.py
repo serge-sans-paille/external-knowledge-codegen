@@ -739,9 +739,9 @@ class Parser(object):
         assert node['kind'] == "ParmVarDecl"
         name = node.get('name')
         var_type = self.parse_node(self.type_informations[node['id']])
-        subnodes = self.parse_subnodes(node)
+        default, = self.parse_subnodes(node) or (None,)
         return tree.ParmVarDecl(name=name, type=var_type,
-                                default=subnodes or None)
+                                default=default)
 
     def as_statement(self, subnode):
         if isinstance(subnode, tree.Expression):
@@ -887,16 +887,19 @@ class Parser(object):
 
     def parse_CXXThisExpr(self, node) -> tree.CXXThisExpr:
         assert node['kind'] == "CXXThisExpr"
-        if 'implicit' in node and node['implicit']:
+        if node.get('implicit'):
             return None
-        subnodes = self.parse_subnodes(node)
-        return tree.CXXThisExpr(subnodes=subnodes)
+        return tree.CXXThisExpr()
 
     def parse_MemberExpr(self, node) -> tree.MemberExpr:
         assert node['kind'] == "MemberExpr"
         name = node['name']
-        op = "->" if 'isArrow' in node and node['isArrow'] else "."
-        expr, = self.parse_subnodes(node)
+        op = "->" if node.get('isArrow') else "."
+        inner_nodes = self.parse_subnodes(node)
+        if inner_nodes:
+            expr, = inner_nodes
+        else:
+            expr = None
         return tree.MemberExpr(name=name, op=op, expr=expr)
 
     def parse_ConstantExpr(self, node) -> tree.ConstantExpr:
@@ -1283,7 +1286,11 @@ class Parser(object):
     @parse_debug
     def parse_CXXNewExpr(self, node) -> tree.CXXNewExpr:
         assert node['kind'] == "CXXNewExpr"
-        subnodes = self.parse_subnodes(node)
+        args = self.parse_subnodes(node)
+        type_ = self.parse_node(self.type_informations[node['id']])
+        assert isinstance(type_, tree.PointerType)
+        is_array = "array" if node.get("isArray") else None
+        return tree.CXXNewExpr(type=type_.type, args=args, is_array=is_array)
 
     @parse_debug
     def parse_CXXForRangeStmt(self, node) -> tree.CXXForRangeStmt:
