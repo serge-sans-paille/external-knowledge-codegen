@@ -172,6 +172,7 @@ class Parser(object):
         self.tu = json.loads(stdout_data.decode())
         self.type_informations = {}
         self.asm_informations = {}
+        self.attr_informations = {}
         self.stack = []
         self.debug = False
         self.anonymous_types = {}
@@ -443,6 +444,13 @@ class Parser(object):
                                          child.get('clobbers', [])]
                 asm_infos['labels'] = [x['label'] for x in child.get('labels',
                                                                      [])]
+
+            for field in ('aliasee', 'cleanup_function', 'deprecation_message',
+                          'section_name'):
+                if field not in child:
+                    continue
+
+                self.attr_informations[child['node_id']] = {field: child[field]}
 
 
     @parse_debug
@@ -996,12 +1004,16 @@ class Parser(object):
 
         type_ = self.parse_node(self.type_informations[node['id']])
 
+        inner_nodes = self.parse_subnodes(node)
+
         if 'init' in node:
-            init, = self.parse_subnodes(node)
+            init = inner_nodes.pop()
             init_mode = node['init']
         else:
             init = None
             init_mode = ''
+
+        attributes = inner_nodes
 
         return tree.VarDecl(name=name,
                             storage_class=storage_class,
@@ -1009,7 +1021,58 @@ class Parser(object):
                             init_mode=init_mode,
                             implicit=implicit,
                             referenced=referenced,
-                            init=init)
+                            init=init,
+                            attributes=attributes)
+
+    @parse_debug
+    def parse_AlignedAttr(self, node) -> tree.AlignedAttr:
+        assert node['kind'] == "AlignedAttr"
+        inner_nodes = self.parse_subnodes(node)
+        if not inner_nodes:
+            size = None
+        else:
+            size, = inner_nodes
+        return tree.AlignedAttr(size=size)
+
+    @parse_debug
+    def parse_AliasAttr(self, node) -> tree.AliasAttr:
+        assert node['kind'] == "AliasAttr"
+        aliasee = self.attr_informations[node['id']]['aliasee']
+        return tree.AliasAttr(aliasee=aliasee)
+
+    @parse_debug
+    def parse_CleanupAttr(self, node) -> tree.CleanupAttr:
+        assert node['kind'] == "CleanupAttr"
+        func = self.attr_informations[node['id']]['cleanup_function']
+        return tree.CleanupAttr(func=func)
+
+    @parse_debug
+    def parse_DeprecatedAttr(self, node) -> tree.DeprecatedAttr:
+        assert node['kind'] == "DeprecatedAttr"
+        msg = self.attr_informations[node['id']]['deprecation_message'] or None
+        return tree.DeprecatedAttr(msg=msg)
+
+    @parse_debug
+    def parse_UnavailableAttr(self, node) -> tree.UnavailableAttr:
+        assert node['kind'] == "UnavailableAttr"
+        msg = self.attr_informations[node['id']]['deprecation_message'] or None
+        return tree.UnavailableAttr(msg=msg)
+
+    @parse_debug
+    def parse_SectionAttr(self, node) -> tree.SectionAttr:
+        assert node['kind'] == "SectionAttr"
+        section = self.attr_informations[node['id']]['section_name']
+        return tree.SectionAttr(section=section)
+
+    @parse_debug
+    def parse_UnusedAttr(self, node) -> tree.UnusedAttr:
+        assert node['kind'] == "UnusedAttr"
+        return tree.UnusedAttr()
+
+    @parse_debug
+    def parse_UsedAttr(self, node) -> tree.UsedAttr:
+        assert node['kind'] == "UsedAttr"
+        return tree.UsedAttr()
 
     @parse_debug
     def parse_InitListExpr(self, node) -> tree.InitListExpr:

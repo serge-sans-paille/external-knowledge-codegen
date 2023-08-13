@@ -16,6 +16,38 @@ class OverrideAttr(Node):
     attrs = ()
 
 
+class AlignedAttr(Node):
+    attrs = ("size",)
+
+
+class AliasAttr(Node):
+    attrs = ("aliasee",)
+
+
+class CleanupAttr(Node):
+    attrs = ("func",)
+
+
+class DeprecatedAttr(Node):
+    attrs = ("msg",)
+
+
+class UnavailableAttr(Node):
+    attrs = ("msg",)
+
+
+class SectionAttr(Node):
+    attrs = ("section",)
+
+
+class UsedAttr(Node):
+    attrs = ()
+
+
+class UnusedAttr(Node):
+    attrs = ()
+
+
 class Documented(Node):
     attrs = ("documentation",)
 
@@ -413,7 +445,8 @@ class DeclStmt(Statement):
 
 
 class VarDecl(Declaration):
-    attrs = ("name", "type", "storage_class", "init_mode", "implicit", "referenced", "init")
+    attrs = ("name", "type", "storage_class", "init_mode", "implicit",
+             "referenced", "init", "attributes")
 
 
 class TypedefDecl(Declaration):

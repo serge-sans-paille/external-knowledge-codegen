@@ -314,9 +314,47 @@ class SourceGenerator(ExplicitNodeVisitor):
         # The cast is implicit, no need to pretty-print it.
         self.write(node.expr)
 
+    def visit_AlignedAttr(self, node: tree.AlignedAttr):
+        self.write("__attribute__((aligned")
+        if node.size is not None:
+            self.write("(", node.size, ")")
+        self.write("))")
+
+    def visit_AliasAttr(self, node: tree.AliasAttr):
+        self.write("__attribute__((alias(\"", node.aliasee, "\")))")
+
+    def visit_CleanupAttr(self, node: tree.CleanupAttr):
+        self.write("__attribute__((cleanup(", node.func, ")))")
+
+    def visit_DeprecatedAttr(self, node: tree.DeprecatedAttr):
+        self.write("__attribute__((deprecated")
+        if node.msg is not None:
+            self.write("(\"", node.msg, "\")")
+        self.write("))")
+
+    def visit_UnavailableAttr(self, node: tree.UnavailableAttr):
+        self.write("__attribute__((unavailable")
+        if node.msg is not None:
+            self.write("(\"", node.msg, "\")")
+        self.write("))")
+
+    def visit_SectionAttr(self, node: tree.SectionAttr):
+        self.write("__attribute__((section(\"", node.section, "\")))")
+
+    def visit_UnusedAttr(self, node: tree.UnusedAttr):
+        self.write("__attribute__((unused)))")
+
+    def visit_UsedAttr(self, node: tree.UsedAttr):
+        self.write("__attribute__((used)))")
+
     def visit_VarDecl(self, node: tree.VarDecl):
         if node.storage_class:
             self.write(node.storage_class, " ")
+
+        if node.attributes:
+            for attribute in node.attributes:
+                self.write(attribute, " ")
+
         if node.implicit and node.referenced:
             self.write(node.subnodes[0])
         else:
