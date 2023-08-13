@@ -108,10 +108,11 @@ attribute = AlignedAttr(expression? size)
           | AliasAttr(identifier aliasee)
           | CleanupAttr(identifier func)
           | DeprecatedAttr(constant? msg)
-          | UnavailableAttr(constant? msg)
+          | RetainAttr
           | SectionAttr(constant section)
-          | UsedAttr
-          | UnusedAttr
+          | UnavailableAttr(constant? msg)
           | UninitializedAttr
+          | UnusedAttr
+          | UsedAttr
           | VisibilityAttr(constant visibility)
           | WeakAttr

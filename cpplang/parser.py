@@ -1059,6 +1059,11 @@ class Parser(object):
         return tree.UnavailableAttr(msg=msg)
 
     @parse_debug
+    def parse_RetainAttr(self, node) -> tree.RetainAttr:
+        assert node['kind'] == "RetainAttr"
+        return tree.RetainAttr()
+
+    @parse_debug
     def parse_SectionAttr(self, node) -> tree.SectionAttr:
         assert node['kind'] == "SectionAttr"
         section = self.attr_informations[node['id']]['section_name']

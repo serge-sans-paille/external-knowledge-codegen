@@ -36,6 +36,10 @@ class UnavailableAttr(Node):
     attrs = ("msg",)
 
 
+class RetainAttr(Node):
+    attrs = ()
+
+
 class SectionAttr(Node):
     attrs = ("section",)
 
