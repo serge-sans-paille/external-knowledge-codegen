@@ -44,6 +44,10 @@ class SectionAttr(Node):
     attrs = ("section",)
 
 
+class TLSModelAttr(Node):
+    attrs = ("tls_model",)
+
+
 class UsedAttr(Node):
     attrs = ()
 

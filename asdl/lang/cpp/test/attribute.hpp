@@ -29,3 +29,5 @@ __attribute__ ((vector_size (16))) int n;
 __attribute__((visibility("hidden"))) int o;
 __attribute__((weak)) int p;
 __attribute__((retain)) int q;
+
+__attribute__((tls_model ("local-exec"))) __thread int r;

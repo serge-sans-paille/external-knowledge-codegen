@@ -110,6 +110,7 @@ attribute = AlignedAttr(expression? size)
           | DeprecatedAttr(constant? msg)
           | RetainAttr
           | SectionAttr(constant section)
+          | TLSModelAttr(constant tls_model)
           | UnavailableAttr(constant? msg)
           | UninitializedAttr
           | UnusedAttr

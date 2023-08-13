@@ -446,7 +446,7 @@ class Parser(object):
                                                                      [])]
 
             for field in ('aliasee', 'cleanup_function', 'deprecation_message',
-                          'section_name', 'visibility'):
+                          'section_name', 'visibility', 'tls_model'):
                 if field not in child:
                     continue
 
@@ -1070,6 +1070,12 @@ class Parser(object):
         assert node['kind'] == "SectionAttr"
         section = self.attr_informations[node['id']]['section_name']
         return tree.SectionAttr(section=section)
+
+    @parse_debug
+    def parse_TLSModelAttr(self, node) -> tree.TLSModelAttr:
+        assert node['kind'] == "TLSModelAttr"
+        tls_model = self.attr_informations[node['id']]['tls_model']
+        return tree.TLSModelAttr(tls_model=tls_model)
 
     @parse_debug
     def parse_UnusedAttr(self, node) -> tree.UnusedAttr:

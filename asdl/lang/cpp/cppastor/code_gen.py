@@ -344,6 +344,9 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_SectionAttr(self, node: tree.SectionAttr):
         self.write("__attribute__((section(\"", node.section, "\")))")
 
+    def visit_TLSModelAttr(self, node: tree.TLSModelAttr):
+        self.write("__attribute__((tls_model(\"", node.tls_model, "\")))")
+
     def visit_UnusedAttr(self, node: tree.UnusedAttr):
         self.write("__attribute__((unused)))")
 
