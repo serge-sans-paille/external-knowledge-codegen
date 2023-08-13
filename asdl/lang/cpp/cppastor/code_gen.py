@@ -367,6 +367,11 @@ class SourceGenerator(ExplicitNodeVisitor):
             for attribute in node.attributes:
                 self.write(attribute, " ")
 
+        if node.tls:
+            tls_mode = {'dynamic': 'thread_local',
+                        'static': '__thread'}
+            self.write(tls_mode[node.tls], " ")
+
         if node.implicit and node.referenced:
             self.write(node.subnodes[0])
         else:

@@ -1001,6 +1001,7 @@ class Parser(object):
         implicit = node.get('isImplicit')
         referenced = node.get('isReferenced')
         storage_class = node.get('storageClass')
+        tls = node.get('tls')
 
         type_ = self.parse_node(self.type_informations[node['id']])
 
@@ -1022,7 +1023,8 @@ class Parser(object):
                             implicit=implicit,
                             referenced=referenced,
                             init=init,
-                            attributes=attributes)
+                            attributes=attributes,
+                            tls=tls)
 
     @parse_debug
     def parse_AlignedAttr(self, node) -> tree.AlignedAttr:

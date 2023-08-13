@@ -465,7 +465,7 @@ class DeclStmt(Statement):
 
 class VarDecl(Declaration):
     attrs = ("name", "type", "storage_class", "init_mode", "implicit",
-             "referenced", "init", "attributes")
+             "referenced", "init", "attributes", "tls")
 
 
 class TypedefDecl(Declaration):
