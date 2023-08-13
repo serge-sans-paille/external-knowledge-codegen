@@ -338,6 +338,9 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write("(\"", node.msg, "\")")
         self.write("))")
 
+    def visit_PackedAttr(self, node: tree.PackedAttr):
+        self.write("__attribute__((packed))")
+
     def visit_RetainAttr(self, node: tree.RetainAttr):
         self.write("__attribute__((retain)))")
 
@@ -413,6 +416,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(");")
 
     def visit_FieldDecl(self, node: tree.FieldDecl):
+        if node.attributes:
+            for attribute in node.attributes:
+                self.write(attribute, " ")
+
         self.write(self.visit_type_helper(node.name, node.type))
         if node.init:
             self.write(" = ", node.init)

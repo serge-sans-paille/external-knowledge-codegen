@@ -31,3 +31,10 @@ __attribute__((weak)) int p;
 __attribute__((retain)) int q;
 
 __attribute__((tls_model ("local-exec"))) __thread int r;
+
+
+struct s
+{
+  char t;
+   __attribute__ ((packed)) int u[2];
+};

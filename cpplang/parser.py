@@ -1104,6 +1104,11 @@ class Parser(object):
         return tree.WeakAttr()
 
     @parse_debug
+    def parse_PackedAttr(self, node) -> tree.PackedAttr:
+        assert node['kind'] == "PackedAttr"
+        return tree.PackedAttr()
+
+    @parse_debug
     def parse_InitListExpr(self, node) -> tree.InitListExpr:
         assert node['kind'] == "InitListExpr"
         values = self.parse_subnodes(node)
@@ -1170,13 +1175,18 @@ class Parser(object):
     def parse_FieldDecl(self, node) -> tree.FieldDecl:
         assert node['kind'] == "FieldDecl"
         name = node['name']
-        #var_type = self.reparse_type(node['type']) #name, node['range'])
         var_type = self.parse_node(self.type_informations[node['id']])
+        inner_nodes = self.parse_subnodes(node)
+
         if 'hasInClassInitializer' in node:
-            init, = self.parse_subnodes(node)
+            init = inner_nodes.pop()
         else:
             init = None
-        return tree.FieldDecl(name=name, type=var_type, init=init)
+
+        attributes = inner_nodes
+
+        return tree.FieldDecl(name=name, type=var_type, init=init,
+                              attributes=attributes)
 
     @parse_debug
     def parse_BinaryOperator(self, node) -> tree.BinaryOperator:

@@ -36,6 +36,10 @@ class UnavailableAttr(Node):
     attrs = ("msg",)
 
 
+class PackedAttr(Node):
+    attrs = ()
+
+
 class RetainAttr(Node):
     attrs = ()
 
@@ -325,7 +329,7 @@ class ParmVarDecl(Declaration):
 
 
 class FieldDecl(Declaration):
-    attrs = ("type", "name", "init",)
+    attrs = ("type", "name", "init", "attributes",)
 
 
 # ------------------------------------------------------------------------------
