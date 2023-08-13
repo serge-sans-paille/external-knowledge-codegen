@@ -19,3 +19,7 @@ __attribute__ ((section ("INITDATA"))) int i;
 
 __attribute__ ((unused)) int j;
 __attribute__ ((used)) int k;
+
+void l() {
+  __attribute__((uninitialized)) int m;
+}

@@ -48,6 +48,10 @@ class UnusedAttr(Node):
     attrs = ()
 
 
+class UninitializedAttr(Node):
+    attrs = ()
+
+
 class Documented(Node):
     attrs = ("documentation",)
 

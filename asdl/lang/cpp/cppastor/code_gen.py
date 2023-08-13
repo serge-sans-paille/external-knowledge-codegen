@@ -347,6 +347,9 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_UsedAttr(self, node: tree.UsedAttr):
         self.write("__attribute__((used)))")
 
+    def visit_UninitializedAttr(self, node: tree.UninitializedAttr):
+        self.write("__attribute__((uninitialized)))")
+
     def visit_VarDecl(self, node: tree.VarDecl):
         if node.storage_class:
             self.write(node.storage_class, " ")

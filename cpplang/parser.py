@@ -1075,6 +1075,11 @@ class Parser(object):
         return tree.UsedAttr()
 
     @parse_debug
+    def parse_UninitializedAttr(self, node) -> tree.UninitializedAttr:
+        assert node['kind'] == "UninitializedAttr"
+        return tree.UninitializedAttr()
+
+    @parse_debug
     def parse_InitListExpr(self, node) -> tree.InitListExpr:
         assert node['kind'] == "InitListExpr"
         values = self.parse_subnodes(node)

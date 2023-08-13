@@ -111,3 +111,4 @@ attribute = AlignedAttr(expression? size)
           | SectionAttr(constant section)
           | UsedAttr
           | UnusedAttr
+          | UninitializedAttr
