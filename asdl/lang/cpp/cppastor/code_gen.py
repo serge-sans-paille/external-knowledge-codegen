@@ -350,6 +350,9 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_UninitializedAttr(self, node: tree.UninitializedAttr):
         self.write("__attribute__((uninitialized)))")
 
+    def visit_VisibilityAttr(self, node: tree.VisibilityAttr):
+        self.write("__attribute__((visibility(\"", node.visibility, "\")))")
+
     def visit_VarDecl(self, node: tree.VarDecl):
         if node.storage_class:
             self.write(node.storage_class, " ")

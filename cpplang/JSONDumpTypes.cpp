@@ -190,6 +190,10 @@ public:
       JOS.attribute("node_id", createPointerRepresentation(SA));
       JOS.attribute("section_name", SA->getName());
     }
+    else if(const auto * VA = dyn_cast<VisibilityAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(VA));
+      JOS.attribute("visibility", VisibilityAttr::ConvertVisibilityTypeToStr(VA->getVisibility()));
+    }
     InnerAttrVisitor::Visit(A);
   }
 

@@ -113,3 +113,4 @@ attribute = AlignedAttr(expression? size)
           | UsedAttr
           | UnusedAttr
           | UninitializedAttr
+          | VisibilityAttr(constant visibility)

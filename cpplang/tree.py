@@ -52,6 +52,10 @@ class UninitializedAttr(Node):
     attrs = ()
 
 
+class VisibilityAttr(Node):
+    attrs = ("visibility",)
+
+
 class Documented(Node):
     attrs = ("documentation",)
 

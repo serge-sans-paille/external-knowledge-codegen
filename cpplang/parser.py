@@ -446,7 +446,7 @@ class Parser(object):
                                                                      [])]
 
             for field in ('aliasee', 'cleanup_function', 'deprecation_message',
-                          'section_name'):
+                          'section_name', 'visibility'):
                 if field not in child:
                     continue
 
@@ -1078,6 +1078,12 @@ class Parser(object):
     def parse_UninitializedAttr(self, node) -> tree.UninitializedAttr:
         assert node['kind'] == "UninitializedAttr"
         return tree.UninitializedAttr()
+
+    @parse_debug
+    def parse_VisibilityAttr(self, node) -> tree.VisibilityAttr:
+        assert node['kind'] == "VisibilityAttr"
+        visibility = self.attr_informations[node['id']]['visibility']
+        return tree.VisibilityAttr(visibility=visibility)
 
     @parse_debug
     def parse_InitListExpr(self, node) -> tree.InitListExpr:

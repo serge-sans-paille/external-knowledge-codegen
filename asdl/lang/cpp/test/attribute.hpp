@@ -25,3 +25,5 @@ void l() {
 }
 
 __attribute__ ((vector_size (16))) int n;
+
+__attribute__((visibility("hidden"))) int o;
