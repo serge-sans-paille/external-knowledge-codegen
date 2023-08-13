@@ -220,6 +220,9 @@ class QualType(Node):
 class RecordType(Node):
     attrs = ("name",)
 
+class VectorType(Node):
+    attrs = ("type", "size")
+
 class EnumType(Node):
     attrs = ("name",)
 

@@ -97,6 +97,15 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Inner.push_back(fullType(Ctx, SQT.Ty));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
+  else if(auto * VectorTy = dyn_cast<VectorType>(Ty)) {
+    QualType QT = VectorTy->getElementType();
+    Ret["size"] = VectorTy->getNumElements() * Ctx.getTypeSizeInChars(VectorTy->getElementType()).getQuantity();
+    SplitQualType SQT = QT.split();
+    Ret["qualifiers"] = SQT.Quals.getAsString();
+    llvm::json::Array Inner;
+    Inner.push_back(fullType(Ctx, SQT.Ty));
+    Ret["inner"] = llvm::json::Value(std::move(Inner));
+  }
   else {
     Ty->dump();
     assert(false && "unsupported type");

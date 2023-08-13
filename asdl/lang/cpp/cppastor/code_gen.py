@@ -452,6 +452,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(current_type, tree.IncompleteArrayType):
             return self.visit_type_helper("{} []".format(current_expr),
                                           current_type.type)
+        if isinstance(current_type, tree.VectorType):
+            vector_type = self.visit_type_helper("", current_type.type)
+            return "__attribute__((vector_size({}))) {} {}".format(current_type.size, vector_type, current_expr)
+
         raise NotImplementedError(current_type)
 
     def visit_TypedefDecl(self, node: tree.TypedefDecl):

@@ -1422,6 +1422,13 @@ class Parser(object):
         return tree.RecordType(name=node['decl']['name'])
 
     @parse_debug
+    def parse_VectorType(self, node) -> tree.VectorType:
+        assert node['kind'] == "VectorType"
+        size = str(node['size'])
+        type_, = self.parse_subnodes(node)
+        return tree.VectorType(type=type_, size=size)
+
+    @parse_debug
     def parse_EnumType(self, node) -> tree.EnumType:
         assert node['kind'] == "EnumType"
         return tree.EnumType(name=node['decl']['name'])

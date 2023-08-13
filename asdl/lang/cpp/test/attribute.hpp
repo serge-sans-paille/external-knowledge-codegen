@@ -23,3 +23,5 @@ __attribute__ ((used)) int k;
 void l() {
   __attribute__((uninitialized)) int m;
 }
+
+__attribute__ ((vector_size (16))) int n;
