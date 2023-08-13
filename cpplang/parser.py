@@ -517,105 +517,89 @@ class Parser(object):
     def parse_RecordDecl(self, node) -> tree.RecordDecl:
         print(node)
 
+    def parse_function_inner(self, node):
+        inner_nodes = self.parse_subnodes(node)
+
+        body, args, init = None, [], []
+        for inner_node in inner_nodes:
+            if isinstance(inner_node, tree.ParmVarDecl):
+                args.append(inner_node)
+            elif isinstance(inner_node, tree.CXXCtorInitializer):
+                init.append(inner_node)
+            elif isinstance(inner_node, tree.CompoundStmt):
+                assert body is None
+                body = inner_node
+            else:
+                raise NotImplementedError(inner_node)
+        return body, args, init
+
     @parse_debug
     def parse_CXXConstructorDecl(self, node) -> tree.CXXConstructorDecl:
         assert node['kind'] == "CXXConstructorDecl"
-        if 'isImplicit' in node and node['isImplicit']:
+        if node.get('isImplicit'):
             return None
-        name = self.get_node_source_code(node).split("(")[0]
-        stmts = self.parse_subnodes(node)
-        noexcept = ""
-        type_ = node['type']['qualType']
-        try:
-            i = type_.index('noexcept')
-            noexcept = type_[i:]
-        except Exception as _:
-            pass
-        if len(noexcept) == 0:
-            try:
-                i = type_.index('throw')
-                noexcept = type_[i:]
-            except Exception as _:
-                pass
-        default = ''
-        if 'explicitlyDefaulted' in node:
-            if node['explicitlyDefaulted'] == "default":
-                default = "default"
-            elif node['explicitlyDefaulted'] == "deleted":
-                default = "delete"
 
-        return tree.CXXConstructorDecl(name=name, noexcept=noexcept, default=default,
-                                       stmts=stmts)
+        name = node['name']
+
+        body, args, inits = self.parse_function_inner(node)
+
+        noexcept = None
+
+        if node.get('explicitlyDefaulted'):
+            defaulted = "default"
+        elif node.get('explicitlyDeleted'):
+            defaulted = "delete"
+        else:
+            defaulted = None
+
+        return tree.CXXConstructorDecl(name=name, noexcept=noexcept,
+                                       defaulted=defaulted, body=body,
+                                       parameters=args, initializers=inits)
 
     @parse_debug
     def parse_CXXCtorInitializer(self, node) -> tree.CXXCtorInitializer:
         assert node['kind'] == "CXXCtorInitializer"
-        #if 'message.toStdString' in self.get_node_source_code(node['inner'][0]):
-            #breakpoint()
-        if (len(self.get_node_source_code(node['inner'][0])) == 0
-                and node['inner'][0]['kind'] == 'CXXConstructExpr'):
-            return None
-        elif 'anyInit' in node:
-            name = node['anyInit']['name']
-        #elif 'baseInit' in node:
-            #name = node['baseInit']['qualType']
-            #if name == "Lima::LimaException":
-                #breakpoint()
-        elif (len(self.get_node_source_code(node['inner'][0])) > 0
-                and node['inner'][0]['kind'] in ['CXXConstructExpr',
-                                                 'ExprWithCleanups']):
-            name = self.get_node_source_code(node['inner'][0])
-            try:
-                i = name.index("(")
-                name = name[:i]
-            except Exception as _:
-                pass
-            #breakpoint()
-        else:
-            name = None
-        subnodes = self.parse_subnodes(node)
-        return tree.CXXCtorInitializer(name=name, subnodes=subnodes)
+        anyInit = node.get('anyInit')
+        if anyInit:
+            name = anyInit['name']
+            args = self.parse_subnodes(node)
+
+        baseInit = node.get('baseInit')
+        if baseInit:
+            name = baseInit["qualType"]
+            args = self.parse_subnodes(node)
+
+        return tree.CXXCtorInitializer(name=name, args=args)
 
     @parse_debug
     def parse_CXXDestructorDecl(self, node) -> tree.CXXDestructorDecl:
         assert node['kind'] == "CXXDestructorDecl"
-        if 'isImplicit' in node and node['isImplicit']:
+
+        if node.get('isImplicit'):
             return None
-        virtual = 'virtual' if 'virtual' in node and node['virtual'] else ''
-        name = self.get_node_source_code(node).split("(")[0]
-        try:
-            i = name.index("~")
-            name = name[i:]
-        except Exception as _:
-            pass
-        noexcept = ""
-        type_ = node['type']['qualType']
-        try:
-            i = type_.index('noexcept')
-            if 'noexcept' in self.get_node_source_code(node):
-                noexcept = type_[i:]
-        except Exception as _:
-            pass
-        if len(noexcept) == 0:
-            try:
-                i = type_.index('throw')
-                noexcept = type_[i:]
-            except Exception as _:
-                pass
-        default = ''
-        if 'explicitlyDefaulted' in node:
-            if node['explicitlyDefaulted'] == "default":
-                default = "default"
-            elif node['explicitlyDefaulted'] == "deleted":
-                default = "delete"
-        subnodes = self.parse_subnodes(node)
-        #if not virtual:
-            #subnodes = self.parse_subnodes(node)
-        #else:
-            ##breakpoint()
-            #subnodes = []
-        return tree.CXXDestructorDecl(name=name, virtual=virtual, default=default,
-                                      noexcept=noexcept, subnodes=subnodes)
+
+        name = node['name']
+
+        virtual = node.get('virtual')
+        if virtual:
+            virtual = "virtual"
+
+        body, args, inits = self.parse_function_inner(node)
+        assert not args
+        assert not inits
+
+        noexcept = None
+
+        if node.get('explicitlyDefaulted'):
+            defaulted = "default"
+        elif node.get('explicitlyDeleted'):
+            defaulted = "delete"
+        else:
+            defaulted = None
+
+        return tree.CXXDestructorDecl(name=name, noexcept=noexcept,
+                                      virtual=virtual,
+                                      defaulted=defaulted, body=body)
 
     @parse_debug
     def parse_AccessSpecDecl(self, node) -> tree.AccessSpecDecl:
@@ -637,24 +621,7 @@ class Parser(object):
         if return_type.startswith("virtual "):
             virtual = "virtual"
             return_type = return_type.removeprefix("virtual ")
-        noexcept = ""
-        try:
-            i = self.get_node_source_code(node).index('noexcept')
-            noexcept = self.get_node_source_code(node)[i:]
-            if "{" in noexcept:
-                i = noexcept.index("{")
-                noexcept = noexcept[:i]
-        except Exception as _:
-            pass
-        if len(noexcept) == 0:
-            try:
-                i = self.get_node_source_code(node).index('throw')
-                noexcept = self.get_node_source_code(node)[i:]
-                if "{" in noexcept:
-                    i = noexcept.index("{")
-                    noexcept = noexcept[:i]
-            except Exception as _:
-                pass
+        noexcept = None
         qualType = re.sub(r"^.*?\)", "", node['type']['qualType'].replace(" ", ""))
         const = ""
         if "const" in qualType:
@@ -683,14 +650,9 @@ class Parser(object):
         variadic = "..." if node['type']['qualType'].endswith('...)') else None
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
-        inner_nodes = self.parse_subnodes(node)
-        body, args = None, []
-        for inner_node in inner_nodes:
-            if isinstance(inner_node, tree.ParmVarDecl):
-                args.append(inner_node)
-            else:
-                assert body is None
-                body = inner_node
+
+        body, args, inits = self.parse_function_inner(node)
+        assert not inits
 
         return tree.FunctionDecl(name=name, return_type=return_type,
                                  variadic=variadic, parameters=args,

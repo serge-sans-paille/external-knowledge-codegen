@@ -140,15 +140,15 @@ class RecordDecl(TypeDeclaration):
 
 
 class CXXConstructorDecl(Declaration):
-    attrs = ("name", "noexcept", "default", "subnodes",)
+    attrs = ("name", "noexcept", "defaulted", "body", "parameters", "initializers",)
 
 
 class CXXCtorInitializer(Node):
-    attrs = ("name", "subnodes",)
+    attrs = ("name", "args",)
 
 
 class CXXDestructorDecl(Declaration):
-    attrs = ("name", "virtual", "default", "noexcept", "subnodes",)
+    attrs = ("name", "noexcept", "virtual", "defaulted", "body",)
 
 
 class AccessSpecDecl(Declaration):

@@ -4,9 +4,9 @@ identifier, int, string, constant
 cu = TranslationUnit(statement* stmts)
 
 declaration = AccessSpecDecl(identifier access_spec)
-            | CXXConstructorDecl(identifier name, identifier noexcept, identifier default, statement* subnodes)
+            | CXXConstructorDecl(identifier name, constant? noexcept, constant? defaulted, statement? body, parameter* parameters, cxx_ctor_initializer* initializers)
             | CXXConversionDecl(identifier name, statement* subnodes)
-            | CXXDestructorDecl(identifier name, constant virtual, constant default, constant noexcept, statement* subnodes)
+            | CXXDestructorDecl(identifier name, constant? noexcept, constant? virtual, constant? defaulted, statement? body)
             | CXXMethodDecl(string? documentation, identifier name, constant virtual, identifier return_type, identifier noexcept, identifier const, identifier default, statement* subnodes)
             | CXXRecordDecl(identifier name, identifier kind, identifier bases, constant complete_definition, declaration* subnodes)
             | ClassTemplateDecl(statement* subnodes)
@@ -24,7 +24,6 @@ declaration = AccessSpecDecl(identifier access_spec)
             | VarDecl(identifier name, type type, constant? storage_class, constant init_mode, constant? implicit, constant? referenced, expression? init, attribute* attributes, constant? tls)
 
 statement = BreakStmt
-          | CXXCtorInitializer(identifier name, statement* subnodes)
           | CXXForRangeStmt(statement* subnodes)
           | CaseStmt(expression pattern, statement stmt)
           | CompoundStmt(statement* stmts)
@@ -83,6 +82,8 @@ expression = ArraySubscriptExpr(expression base, expression index)
 parameter = ParmVarDecl(type type, identifier? name, expression? default)
 
 declaration_or_expression = DeclOrExpr(declaration* decl, expression? expr)
+
+cxx_ctor_initializer = CXXCtorInitializer(identifier name, expression* args)
 
 
 type = BuiltinType(identifier name)
