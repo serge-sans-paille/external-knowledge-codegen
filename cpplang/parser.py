@@ -1086,6 +1086,11 @@ class Parser(object):
         return tree.VisibilityAttr(visibility=visibility)
 
     @parse_debug
+    def parse_WeakAttr(self, node) -> tree.WeakAttr:
+        assert node['kind'] == "WeakAttr"
+        return tree.WeakAttr()
+
+    @parse_debug
     def parse_InitListExpr(self, node) -> tree.InitListExpr:
         assert node['kind'] == "InitListExpr"
         values = self.parse_subnodes(node)

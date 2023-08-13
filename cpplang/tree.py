@@ -56,6 +56,10 @@ class VisibilityAttr(Node):
     attrs = ("visibility",)
 
 
+class WeakAttr(Node):
+    attrs = ()
+
+
 class Documented(Node):
     attrs = ("documentation",)
 
