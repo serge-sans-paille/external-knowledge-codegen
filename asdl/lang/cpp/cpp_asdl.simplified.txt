@@ -14,7 +14,7 @@ declaration = AccessSpecDecl(identifier access_spec)
             | EnumDecl(identifier? name, enum_field* fields)
             | FieldDecl(identifier name, type type, expression? init, attribute* attributes)
             | FriendDecl(identifier type)
-            | FunctionDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, statement? body, parameter* parameters)
+            | FunctionDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, exception_spec? exception, statement? body, parameter* parameters)
             | FunctionTemplateDecl(statement* subnodes)
             | NamespaceDecl(identifier name, statement* subnodes)
             | NonTypeTemplateParmDecl(identifier name, identifier type, statement* subnodes)
@@ -125,3 +125,6 @@ default_mode = Default
              | PureVirtual
 
 final = FinalAttr
+
+exception_spec = Throw(identifier* args)
+               | NoExcept(constant? repr)

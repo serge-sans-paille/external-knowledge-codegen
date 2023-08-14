@@ -322,7 +322,14 @@ class CXXMethodDecl(Declaration):
 
 
 class FunctionDecl(Declaration):
-    attrs = ("name", "return_type", "storage", "variadic", "inline", "body", "parameters")
+    attrs = ("name", "return_type", "storage", "variadic", "inline",
+             "exception", "body", "parameters")
+
+class Throw(Node):
+    attrs = ("args",)
+
+class NoExcept(Node):
+    attrs = ("repr",)
 
 
 class ClassTemplateDecl(Declaration):

@@ -589,6 +589,9 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write("...")
         self.write(")")
 
+        if node.exception:
+            self.write(" ", node.exception)
+
         if node.body:
             self.write(node.body)
         else:
@@ -878,4 +881,14 @@ class SourceGenerator(ExplicitNodeVisitor):
         else:
             self.comma_list(node.args)
             self.write(markers[1])
+
+    def visit_Throw(self, node: tree.Throw):
+        self.write("throw(")
+        self.comma_list(node.args)
+        self.write(")")
+
+    def visit_NoExcept(self, node: tree.NoExcept):
+        self.write("noexcept")
+        if node.repr:
+            self.write("(", node.repr, ")")
 
