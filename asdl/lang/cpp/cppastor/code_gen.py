@@ -338,14 +338,32 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write("(\"", node.msg, "\")")
         self.write("))")
 
+    def visit_PackedAttr(self, node: tree.PackedAttr):
+        self.write("__attribute__((packed))")
+
+    def visit_RetainAttr(self, node: tree.RetainAttr):
+        self.write("__attribute__((retain)))")
+
     def visit_SectionAttr(self, node: tree.SectionAttr):
         self.write("__attribute__((section(\"", node.section, "\")))")
+
+    def visit_TLSModelAttr(self, node: tree.TLSModelAttr):
+        self.write("__attribute__((tls_model(\"", node.tls_model, "\")))")
 
     def visit_UnusedAttr(self, node: tree.UnusedAttr):
         self.write("__attribute__((unused)))")
 
     def visit_UsedAttr(self, node: tree.UsedAttr):
         self.write("__attribute__((used)))")
+
+    def visit_UninitializedAttr(self, node: tree.UninitializedAttr):
+        self.write("__attribute__((uninitialized)))")
+
+    def visit_VisibilityAttr(self, node: tree.VisibilityAttr):
+        self.write("__attribute__((visibility(\"", node.visibility, "\")))")
+
+    def visit_WeakAttr(self, node: tree.WeakAttr):
+        self.write("__attribute__((weak)))")
 
     def visit_VarDecl(self, node: tree.VarDecl):
         if node.storage_class:
@@ -354,6 +372,11 @@ class SourceGenerator(ExplicitNodeVisitor):
         if node.attributes:
             for attribute in node.attributes:
                 self.write(attribute, " ")
+
+        if node.tls:
+            tls_mode = {'dynamic': 'thread_local',
+                        'static': '__thread'}
+            self.write(tls_mode[node.tls], " ")
 
         if node.implicit and node.referenced:
             self.write(node.subnodes[0])
@@ -393,6 +416,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(");")
 
     def visit_FieldDecl(self, node: tree.FieldDecl):
+        if node.attributes:
+            for attribute in node.attributes:
+                self.write(attribute, " ")
+
         self.write(self.visit_type_helper(node.name, node.type))
         if node.init:
             self.write(" = ", node.init)
@@ -449,6 +476,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(current_type, tree.IncompleteArrayType):
             return self.visit_type_helper("{} []".format(current_expr),
                                           current_type.type)
+        if isinstance(current_type, tree.VectorType):
+            vector_type = self.visit_type_helper("", current_type.type)
+            return "__attribute__((vector_size({}))) {} {}".format(current_type.size, vector_type, current_expr)
+
         raise NotImplementedError(current_type)
 
     def visit_TypedefDecl(self, node: tree.TypedefDecl):

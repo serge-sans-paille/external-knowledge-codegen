@@ -97,6 +97,15 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Inner.push_back(fullType(Ctx, SQT.Ty));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
+  else if(auto * VectorTy = dyn_cast<VectorType>(Ty)) {
+    QualType QT = VectorTy->getElementType();
+    Ret["size"] = VectorTy->getNumElements() * Ctx.getTypeSizeInChars(VectorTy->getElementType()).getQuantity();
+    SplitQualType SQT = QT.split();
+    Ret["qualifiers"] = SQT.Quals.getAsString();
+    llvm::json::Array Inner;
+    Inner.push_back(fullType(Ctx, SQT.Ty));
+    Ret["inner"] = llvm::json::Value(std::move(Inner));
+  }
   else {
     Ty->dump();
     assert(false && "unsupported type");
@@ -180,6 +189,14 @@ public:
     else if(const auto * SA = dyn_cast<SectionAttr>(A)) {
       JOS.attribute("node_id", createPointerRepresentation(SA));
       JOS.attribute("section_name", SA->getName());
+    }
+    else if(const auto * TA = dyn_cast<TLSModelAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(TA));
+      JOS.attribute("tls_model", TA->getModel());
+    }
+    else if(const auto * VA = dyn_cast<VisibilityAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(VA));
+      JOS.attribute("visibility", VisibilityAttr::ConvertVisibilityTypeToStr(VA->getVisibility()));
     }
     InnerAttrVisitor::Visit(A);
   }

@@ -36,8 +36,20 @@ class UnavailableAttr(Node):
     attrs = ("msg",)
 
 
+class PackedAttr(Node):
+    attrs = ()
+
+
+class RetainAttr(Node):
+    attrs = ()
+
+
 class SectionAttr(Node):
     attrs = ("section",)
+
+
+class TLSModelAttr(Node):
+    attrs = ("tls_model",)
 
 
 class UsedAttr(Node):
@@ -45,6 +57,18 @@ class UsedAttr(Node):
 
 
 class UnusedAttr(Node):
+    attrs = ()
+
+
+class UninitializedAttr(Node):
+    attrs = ()
+
+
+class VisibilityAttr(Node):
+    attrs = ("visibility",)
+
+
+class WeakAttr(Node):
     attrs = ()
 
 
@@ -216,6 +240,9 @@ class QualType(Node):
 class RecordType(Node):
     attrs = ("name",)
 
+class VectorType(Node):
+    attrs = ("type", "size")
+
 class EnumType(Node):
     attrs = ("name",)
 
@@ -302,7 +329,7 @@ class ParmVarDecl(Declaration):
 
 
 class FieldDecl(Declaration):
-    attrs = ("type", "name", "init",)
+    attrs = ("type", "name", "init", "attributes",)
 
 
 # ------------------------------------------------------------------------------
@@ -446,7 +473,7 @@ class DeclStmt(Statement):
 
 class VarDecl(Declaration):
     attrs = ("name", "type", "storage_class", "init_mode", "implicit",
-             "referenced", "init", "attributes")
+             "referenced", "init", "attributes", "tls")
 
 
 class TypedefDecl(Declaration):

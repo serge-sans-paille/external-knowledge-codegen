@@ -19,3 +19,22 @@ __attribute__ ((section ("INITDATA"))) int i;
 
 __attribute__ ((unused)) int j;
 __attribute__ ((used)) int k;
+
+void l() {
+  __attribute__((uninitialized)) int m;
+}
+
+__attribute__ ((vector_size (16))) int n;
+
+__attribute__((visibility("hidden"))) int o;
+__attribute__((weak)) int p;
+__attribute__((retain)) int q;
+
+__attribute__((tls_model ("local-exec"))) __thread int r;
+
+
+struct s
+{
+  char t;
+   __attribute__ ((packed)) int u[2];
+};

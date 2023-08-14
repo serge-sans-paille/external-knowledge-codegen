@@ -446,7 +446,7 @@ class Parser(object):
                                                                      [])]
 
             for field in ('aliasee', 'cleanup_function', 'deprecation_message',
-                          'section_name'):
+                          'section_name', 'visibility', 'tls_model'):
                 if field not in child:
                     continue
 
@@ -1001,6 +1001,7 @@ class Parser(object):
         implicit = node.get('isImplicit')
         referenced = node.get('isReferenced')
         storage_class = node.get('storageClass')
+        tls = node.get('tls')
 
         type_ = self.parse_node(self.type_informations[node['id']])
 
@@ -1022,7 +1023,8 @@ class Parser(object):
                             implicit=implicit,
                             referenced=referenced,
                             init=init,
-                            attributes=attributes)
+                            attributes=attributes,
+                            tls=tls)
 
     @parse_debug
     def parse_AlignedAttr(self, node) -> tree.AlignedAttr:
@@ -1059,10 +1061,21 @@ class Parser(object):
         return tree.UnavailableAttr(msg=msg)
 
     @parse_debug
+    def parse_RetainAttr(self, node) -> tree.RetainAttr:
+        assert node['kind'] == "RetainAttr"
+        return tree.RetainAttr()
+
+    @parse_debug
     def parse_SectionAttr(self, node) -> tree.SectionAttr:
         assert node['kind'] == "SectionAttr"
         section = self.attr_informations[node['id']]['section_name']
         return tree.SectionAttr(section=section)
+
+    @parse_debug
+    def parse_TLSModelAttr(self, node) -> tree.TLSModelAttr:
+        assert node['kind'] == "TLSModelAttr"
+        tls_model = self.attr_informations[node['id']]['tls_model']
+        return tree.TLSModelAttr(tls_model=tls_model)
 
     @parse_debug
     def parse_UnusedAttr(self, node) -> tree.UnusedAttr:
@@ -1073,6 +1086,27 @@ class Parser(object):
     def parse_UsedAttr(self, node) -> tree.UsedAttr:
         assert node['kind'] == "UsedAttr"
         return tree.UsedAttr()
+
+    @parse_debug
+    def parse_UninitializedAttr(self, node) -> tree.UninitializedAttr:
+        assert node['kind'] == "UninitializedAttr"
+        return tree.UninitializedAttr()
+
+    @parse_debug
+    def parse_VisibilityAttr(self, node) -> tree.VisibilityAttr:
+        assert node['kind'] == "VisibilityAttr"
+        visibility = self.attr_informations[node['id']]['visibility']
+        return tree.VisibilityAttr(visibility=visibility)
+
+    @parse_debug
+    def parse_WeakAttr(self, node) -> tree.WeakAttr:
+        assert node['kind'] == "WeakAttr"
+        return tree.WeakAttr()
+
+    @parse_debug
+    def parse_PackedAttr(self, node) -> tree.PackedAttr:
+        assert node['kind'] == "PackedAttr"
+        return tree.PackedAttr()
 
     @parse_debug
     def parse_InitListExpr(self, node) -> tree.InitListExpr:
@@ -1141,13 +1175,18 @@ class Parser(object):
     def parse_FieldDecl(self, node) -> tree.FieldDecl:
         assert node['kind'] == "FieldDecl"
         name = node['name']
-        #var_type = self.reparse_type(node['type']) #name, node['range'])
         var_type = self.parse_node(self.type_informations[node['id']])
+        inner_nodes = self.parse_subnodes(node)
+
         if 'hasInClassInitializer' in node:
-            init, = self.parse_subnodes(node)
+            init = inner_nodes.pop()
         else:
             init = None
-        return tree.FieldDecl(name=name, type=var_type, init=init)
+
+        attributes = inner_nodes
+
+        return tree.FieldDecl(name=name, type=var_type, init=init,
+                              attributes=attributes)
 
     @parse_debug
     def parse_BinaryOperator(self, node) -> tree.BinaryOperator:
@@ -1415,6 +1454,13 @@ class Parser(object):
     def parse_RecordType(self, node) -> tree.RecordType:
         assert node['kind'] == "RecordType"
         return tree.RecordType(name=node['decl']['name'])
+
+    @parse_debug
+    def parse_VectorType(self, node) -> tree.VectorType:
+        assert node['kind'] == "VectorType"
+        size = str(node['size'])
+        type_, = self.parse_subnodes(node)
+        return tree.VectorType(type=type_, size=size)
 
     @parse_debug
     def parse_EnumType(self, node) -> tree.EnumType:

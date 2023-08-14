@@ -12,7 +12,7 @@ declaration = AccessSpecDecl(identifier access_spec)
             | ClassTemplateDecl(statement* subnodes)
             | EmptyDecl
             | EnumDecl(identifier? name, enum_field* fields)
-            | FieldDecl(identifier name, type type, expression? init)
+            | FieldDecl(identifier name, type type, expression? init, attribute* attributes)
             | FriendDecl(identifier type)
             | FunctionDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, statement? body, parameter* parameters)
             | FunctionTemplateDecl(statement* subnodes)
@@ -21,7 +21,7 @@ declaration = AccessSpecDecl(identifier access_spec)
             | TemplateTypeParmDecl(identifier name, statement* subnodes)
             | TypedefDecl(identifier name, type type)
             | UsingDirectiveDecl(identifier name)
-            | VarDecl(identifier name, type type, constant? storage_class, constant init_mode, constant? implicit, constant? referenced, expression? init, attribute* attributes)
+            | VarDecl(identifier name, type type, constant? storage_class, constant init_mode, constant? implicit, constant? referenced, expression? init, attribute* attributes, constant? tls)
 
 statement = BreakStmt
           | CXXCtorInitializer(identifier name, statement* subnodes)
@@ -98,6 +98,7 @@ type = BuiltinType(identifier name)
      | QualType(identifier? qualifiers, type type)
      | RValueReferenceType(type type)
      | RecordType(identifier name)
+     | VectorType(type type, constant size)
 
 enum_field = EnumConstantDecl(identifier name, expression? init)
 
@@ -107,7 +108,13 @@ attribute = AlignedAttr(expression? size)
           | AliasAttr(identifier aliasee)
           | CleanupAttr(identifier func)
           | DeprecatedAttr(constant? msg)
-          | UnavailableAttr(constant? msg)
+          | PackedAttr
+          | RetainAttr
           | SectionAttr(constant section)
-          | UsedAttr
+          | TLSModelAttr(constant tls_model)
+          | UnavailableAttr(constant? msg)
+          | UninitializedAttr
           | UnusedAttr
+          | UsedAttr
+          | VisibilityAttr(constant visibility)
+          | WeakAttr
