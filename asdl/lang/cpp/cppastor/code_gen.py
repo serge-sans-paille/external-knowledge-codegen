@@ -344,6 +344,9 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_WeakAttr(self, node: tree.WeakAttr):
         self.write("__attribute__((weak)))")
 
+    def visit_FinalAttr(self, node: tree.WeakAttr):
+        self.write("final")
+
     def visit_VarDecl(self, node: tree.VarDecl):
         if node.storage_class:
             self.write(node.storage_class, " ")
@@ -531,39 +534,41 @@ class SourceGenerator(ExplicitNodeVisitor):
                 self.write(" ", node.qualifiers)
 
     def visit_CXXMethodDecl(self, node: tree.CXXMethodDecl):
-        parameters = []
-        statements = []
-        comment = ""
-        for c in node.subnodes:
-            if c.__class__.__name__ == "ParmVarDecl":
-                parameters.append(c)
-            elif c.__class__.__name__ == "FullComment":
-                comment = c.comment
-            else:
-                statements.append(c)
-        if len(comment) > 0:
-            self.write("/** ", comment, "*/\n")
-        if len(node.virtual) > 0:
+        if node.virtual:
             self.write("virtual ")
+
         self.write(node.return_type, " ")
         self.write(node.name)
         self.write("(")
-        if parameters:
-            self.comma_list(parameters)
+        if node.parameters:
+            self.comma_list(node.parameters)
         self.write(")")
-        if len(node.const) > 0:
-            self.write(" ", node.const)
+
+        if node.const:
+            self.write(" const")
 
         if node.noexcept:
             self.write(" ", node.noexcept)
-        if len(statements) > 0:
-            for c in statements:
-                self.write(c)
+
+        if node.final:
+            self.write(" ", node.final)
+
+        if node.body:
+            self.write(node.body)
         else:
-            if len(node.default) > 0:
-                self.write(" = ", node.default)
+            if node.defaulted:
+                self.write(" = ", node.defaulted)
             self.write(";")
         self.newline(extra=1)
+
+    def visit_PureVirtual(self, node: tree.PureVirtual):
+        self.write("0")
+
+    def visit_Default(self, node: tree.Default):
+        self.write("default")
+
+    def visit_Delete(self, node: tree.Delete):
+        self.write("delete")
 
     def visit_FunctionDecl(self, node: tree.FunctionDecl):
         if node.storage:

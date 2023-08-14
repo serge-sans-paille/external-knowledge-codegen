@@ -520,18 +520,20 @@ class Parser(object):
     def parse_function_inner(self, node):
         inner_nodes = self.parse_subnodes(node)
 
-        body, args, init = None, [], []
+        body, args, init, final = None, [], [], None
         for inner_node in inner_nodes:
             if isinstance(inner_node, tree.ParmVarDecl):
                 args.append(inner_node)
             elif isinstance(inner_node, tree.CXXCtorInitializer):
                 init.append(inner_node)
+            elif isinstance(inner_node, tree.FinalAttr):
+                final = inner_node
             elif isinstance(inner_node, tree.CompoundStmt):
                 assert body is None
                 body = inner_node
             else:
                 raise NotImplementedError(inner_node)
-        return body, args, init
+        return body, args, init, final
 
     @parse_debug
     def parse_CXXConstructorDecl(self, node) -> tree.CXXConstructorDecl:
@@ -541,16 +543,13 @@ class Parser(object):
 
         name = node['name']
 
-        body, args, inits = self.parse_function_inner(node)
+        body, args, inits, final = self.parse_function_inner(node)
+
+        assert not final
 
         noexcept = None
 
-        if node.get('explicitlyDefaulted'):
-            defaulted = "default"
-        elif node.get('explicitlyDeleted'):
-            defaulted = "delete"
-        else:
-            defaulted = None
+        defaulted = self.parse_default(node)
 
         return tree.CXXConstructorDecl(name=name, noexcept=noexcept,
                                        defaulted=defaulted, body=body,
@@ -584,22 +583,28 @@ class Parser(object):
         if virtual:
             virtual = "virtual"
 
-        body, args, inits = self.parse_function_inner(node)
+        body, args, inits, final = self.parse_function_inner(node)
         assert not args
         assert not inits
+        assert not final
 
         noexcept = None
 
-        if node.get('explicitlyDefaulted'):
-            defaulted = "default"
-        elif node.get('explicitlyDeleted'):
-            defaulted = "delete"
-        else:
-            defaulted = None
+        defaulted = self.parse_default(node)
 
         return tree.CXXDestructorDecl(name=name, noexcept=noexcept,
                                       virtual=virtual,
                                       defaulted=defaulted, body=body)
+
+    def parse_default(self, node):
+        if node.get('explicitlyDefaulted'):
+            return tree.Default()
+        elif node.get('explicitlyDeleted'):
+            return tree.Delete()
+        elif node.get('pure'):
+            return tree.PureVirtual()
+        else:
+            return None
 
     @parse_debug
     def parse_AccessSpecDecl(self, node) -> tree.AccessSpecDecl:
@@ -612,32 +617,30 @@ class Parser(object):
     @parse_debug
     def parse_CXXMethodDecl(self, node) -> tree.CXXMethodDecl:
         assert node['kind'] == "CXXMethodDecl"
-        if 'isImplicit' in node and node['isImplicit']:
+        if node.get('isImplicit'):
             return None
-        name = self.get_node_source_code(node).split("(")[0].strip().split(" ")[-1]
-        iname = self.get_node_source_code(node).index(name)
-        return_type = self.get_node_source_code(node)[:iname].strip()
-        virtual = ""
-        if return_type.startswith("virtual "):
-            virtual = "virtual"
-            return_type = return_type.removeprefix("virtual ")
+
+        name = node['name']
+        body, args, inits, final = self.parse_function_inner(node)
+        assert not inits
+
+        return_type = self.parse_node(self.type_informations[node['id']]).return_type
+
         noexcept = None
-        qualType = re.sub(r"^.*?\)", "", node['type']['qualType'].replace(" ", ""))
-        const = ""
-        if "const" in qualType:
-            const = "const"
-        default = ""
-        if 'explicitlyDefaulted' in node:
-            if node['explicitlyDefaulted'] == "default":
-                default = "default"
-            elif node['explicitlyDefaulted'] == "deleted":
-                default = "delete"
-        if 'explicitlyDeleted' in node and node['explicitlyDeleted']:
-            default = "delete"
-        subnodes = self.parse_subnodes(node)
-        return tree.CXXMethodDecl(name=name, virtual=virtual, return_type=return_type,
-                                  noexcept=noexcept, const=const, default=default,
-                                  subnodes=subnodes)
+
+        const = None
+
+        virtual = node.get('virtual')
+        if virtual:
+            virtual = "virtual"
+
+        defaulted = self.parse_default(node)
+
+        return tree.CXXMethodDecl(name=name, return_type=return_type, virtual=virtual,
+                                  noexcept=noexcept, const=const,
+                                  defaulted=defaulted,
+                                  final=final,
+                                  body=body, parameters=args)
 
     @parse_debug
     def parse_FunctionDecl(self, node) -> tree.FunctionDecl:
@@ -651,8 +654,9 @@ class Parser(object):
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
 
-        body, args, inits = self.parse_function_inner(node)
+        body, args, inits, final = self.parse_function_inner(node)
         assert not inits
+        assert not final
 
         return tree.FunctionDecl(name=name, return_type=return_type,
                                  variadic=variadic, parameters=args,
@@ -1043,6 +1047,11 @@ class Parser(object):
     def parse_UnusedAttr(self, node) -> tree.UnusedAttr:
         assert node['kind'] == "UnusedAttr"
         return tree.UnusedAttr()
+
+    @parse_debug
+    def parse_FinalAttr(self, node) -> tree.FinalAttr:
+        assert node['kind'] == "FinalAttr"
+        return tree.FinalAttr()
 
     @parse_debug
     def parse_UsedAttr(self, node) -> tree.UsedAttr:
