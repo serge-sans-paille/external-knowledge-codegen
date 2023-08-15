@@ -16,6 +16,10 @@ class OverrideAttr(Node):
     attrs = ()
 
 
+class FinalAttr(Node):
+    attrs = ()
+
+
 class AlignedAttr(Node):
     attrs = ("size",)
 
@@ -74,6 +78,18 @@ class WeakAttr(Node):
 
 class Documented(Node):
     attrs = ("documentation",)
+
+
+class Delete(Node):
+    attrs = ()
+
+
+class Default(Node):
+    attrs = ()
+
+
+class PureVirtual(Node):
+    attrs = ()
 
 
 class Comment(Node):
@@ -140,15 +156,15 @@ class RecordDecl(TypeDeclaration):
 
 
 class CXXConstructorDecl(Declaration):
-    attrs = ("name", "noexcept", "default", "subnodes",)
+    attrs = ("name", "noexcept", "defaulted", "body", "parameters", "initializers",)
 
 
 class CXXCtorInitializer(Node):
-    attrs = ("name", "subnodes",)
+    attrs = ("name", "args",)
 
 
 class CXXDestructorDecl(Declaration):
-    attrs = ("name", "virtual", "default", "noexcept", "subnodes",)
+    attrs = ("name", "noexcept", "virtual", "defaulted", "body",)
 
 
 class AccessSpecDecl(Declaration):
@@ -301,7 +317,8 @@ class Member(NonEmptyDeclaration):
 
 
 class CXXMethodDecl(Declaration):
-    attrs = ("virtual", "return_type", "name", "noexcept", "const", "default", "subnodes",)
+    attrs = ("name", "return_type", "virtual", "noexcept", "const", "defaulted",
+             "final", "body", "parameters",)
 
 
 class FunctionDecl(Declaration):

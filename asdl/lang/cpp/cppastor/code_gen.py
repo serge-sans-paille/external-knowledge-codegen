@@ -210,37 +210,33 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(";")
         self.newline(extra=1)
 
-    def visit_CXXConstructorDecl(self, node: tree.CXXConstructorDecl):
-        parameters = []
-        initializers = []
-        statements = []
-        if node.stmts is not None:
-            for c in node.stmts:
-                if c.__class__.__name__ == "ParmVarDecl":
-                    parameters.append(c)
-                elif c.__class__.__name__ == "CXXCtorInitializer":
-                    if c.stmts is not None and len(c.stmts) > 0:
-                        initializers.append(c)
-                else:
-                    statements.append(c)
+    def visit_CXXConstructorDestructorDecl(self, node):
+        if getattr(node, "virtual", None):
+            self.write("virtual ")
+
         self.write(node.name)
         self.write("(")
-        if parameters:
-            self.comma_list(parameters)
+        if getattr(node, "parameters", None):
+            self.comma_list(node.parameters)
         self.write(")")
-        if len(node.noexcept) > 0:
+
+        if node.noexcept:
             self.write(" ", node.noexcept)
-        if len(initializers) > 0:
+
+        if getattr(node, 'initializers', None):
             self.write(" : ")
-            self.comma_list(initializers)
-        if len(statements) > 0:
-            for c in statements:
-                self.write(c)
+            self.comma_list(node.initializers)
+
+        if node.body is not None:
+            self.write(node.body)
         else:
-            if len(node.default) > 0:
-                self.write(" = ", node.default)
+            if node.defaulted:
+                self.write(" = ", node.defaulted)
             self.write(";")
         self.newline(extra=1)
+
+    def visit_CXXConstructorDecl(self, node: tree.CXXConstructorDecl):
+        self.visit_CXXConstructorDestructorDecl(node)
 
     def visit_CXXConstructExpr(self, node: tree.CXXConstructExpr):
         if node.subnodes is not None and len(node.subnodes) > 0:
@@ -249,28 +245,11 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_CXXCtorInitializer(self, node: tree.CXXCtorInitializer):
         self.write(node.name)
         self.write('(')
-        self.comma_list(node.subnodes)
+        self.comma_list(node.args)
         self.write(')')
-        #if node.subnodes is not None and len(node.subnodes) > 0:
-            #self.write(node.subnodes[0])
 
     def visit_CXXDestructorDecl(self, node: tree.CXXDestructorDecl):
-        if node.virtual == 'virtual':
-            self.write("virtual", " ")
-        self.write(node.name)
-        self.write("(")
-        self.write(")")
-        if len(node.noexcept) > 0:
-            self.write(" ", node.noexcept)
-        if len(node.default) > 0:
-            self.write(" = ", node.default)
-            self.write(";")
-        elif node.subnodes is not None and len(node.subnodes) > 0:
-            for c in node.subnodes:
-                self.write(c)
-        else:
-            self.write(";")
-        self.newline(extra=1)
+        self.visit_CXXConstructorDestructorDecl(node)
 
     def visit_NamespaceDecl(self, node: tree.NamespaceDecl):
         assert node.name is not None
@@ -365,6 +344,9 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_WeakAttr(self, node: tree.WeakAttr):
         self.write("__attribute__((weak)))")
 
+    def visit_FinalAttr(self, node: tree.WeakAttr):
+        self.write("final")
+
     def visit_VarDecl(self, node: tree.VarDecl):
         if node.storage_class:
             self.write(node.storage_class, " ")
@@ -455,7 +437,7 @@ class SourceGenerator(ExplicitNodeVisitor):
                 return self.visit_type_helper(current_expr, qualified_type)
 
             # west const
-            if isinstance(qualified_type, tree.BuiltinType):
+            if isinstance(qualified_type, (tree.BuiltinType, tree.RecordType)):
                 return "{} {}".format(current_type.qualifiers,
                                       self.visit_type_helper(current_expr,
                                                                 qualified_type))
@@ -479,6 +461,12 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(current_type, tree.VectorType):
             vector_type = self.visit_type_helper("", current_type.type)
             return "__attribute__((vector_size({}))) {} {}".format(current_type.size, vector_type, current_expr)
+
+        if isinstance(current_type, tree.LValueReferenceType):
+            return self.visit_type_helper("& " + current_expr, current_type.type)
+
+        if isinstance(current_type, tree.RValueReferenceType):
+            return self.visit_type_helper("&& " + current_expr, current_type.type)
 
         raise NotImplementedError(current_type)
 
@@ -546,38 +534,41 @@ class SourceGenerator(ExplicitNodeVisitor):
                 self.write(" ", node.qualifiers)
 
     def visit_CXXMethodDecl(self, node: tree.CXXMethodDecl):
-        parameters = []
-        statements = []
-        comment = ""
-        for c in node.subnodes:
-            if c.__class__.__name__ == "ParmVarDecl":
-                parameters.append(c)
-            elif c.__class__.__name__ == "FullComment":
-                comment = c.comment
-            else:
-                statements.append(c)
-        if len(comment) > 0:
-            self.write("/** ", comment, "*/\n")
-        if len(node.virtual) > 0:
+        if node.virtual:
             self.write("virtual ")
+
         self.write(node.return_type, " ")
         self.write(node.name)
         self.write("(")
-        if parameters:
-            self.comma_list(parameters)
+        if node.parameters:
+            self.comma_list(node.parameters)
         self.write(")")
-        if len(node.const) > 0:
-            self.write(" ", node.const)
-        if len(node.noexcept) > 0:
+
+        if node.const:
+            self.write(" const")
+
+        if node.noexcept:
             self.write(" ", node.noexcept)
-        if len(statements) > 0:
-            for c in statements:
-                self.write(c)
+
+        if node.final:
+            self.write(" ", node.final)
+
+        if node.body:
+            self.write(node.body)
         else:
-            if len(node.default) > 0:
-                self.write(" = ", node.default)
+            if node.defaulted:
+                self.write(" = ", node.defaulted)
             self.write(";")
         self.newline(extra=1)
+
+    def visit_PureVirtual(self, node: tree.PureVirtual):
+        self.write("0")
+
+    def visit_Default(self, node: tree.Default):
+        self.write("default")
+
+    def visit_Delete(self, node: tree.Delete):
+        self.write("delete")
 
     def visit_FunctionDecl(self, node: tree.FunctionDecl):
         if node.storage:
