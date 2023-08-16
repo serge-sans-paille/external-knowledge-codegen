@@ -21,4 +21,7 @@ void call_method(const s & obj) {
 void call_constructor() {
   s a;
   s b(1);
+  s c{};
+  s d{1};
+  s e = 1;
 }

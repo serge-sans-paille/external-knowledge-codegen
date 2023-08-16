@@ -520,7 +520,7 @@ class GCCAsmStmt(Statement):
     attrs = ("string", "output_operands", "input_operands", "clobbers", "labels",)
 
 class ExprWithCleanups(Node):
-    attrs = ("subnodes",)
+    attrs = ("expr",)
 
 class ConstrainedExpression(Node):
     attrs = ("expr", "constraint")

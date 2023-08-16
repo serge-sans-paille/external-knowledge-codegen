@@ -279,7 +279,7 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write(" = ", node.default)
 
     def visit_ExprWithCleanups(self, node: tree.ExprWithCleanups):
-        self.write(node.subnodes[0])
+        self.write(node.expr)
 
     def visit_DeclRefExpr(self, node: tree.DeclRefExpr):
         if node.name.startswith("operator"):
@@ -371,6 +371,8 @@ class SourceGenerator(ExplicitNodeVisitor):
             if node.init_mode:
                 if node.init_mode == 'call':
                     self.write("(", node.init, ")")
+                elif node.init_mode == 'list':
+                    self.write("{", node.init, "}")
                 else:
                     self.write(" = ", node.init)
 

@@ -1123,8 +1123,8 @@ class Parser(object):
     @parse_debug
     def parse_ExprWithCleanups(self, node) -> tree.ExprWithCleanups:
         assert node['kind'] == "ExprWithCleanups"
-        subnodes = self.parse_subnodes(node)
-        return tree.ExprWithCleanups(subnodes=subnodes)
+        expr, = self.parse_subnodes(node)
+        return tree.ExprWithCleanups(expr=expr)
 
     @parse_debug
     def parse_CXXConstructExpr(self, node) -> tree.CXXConstructExpr:
