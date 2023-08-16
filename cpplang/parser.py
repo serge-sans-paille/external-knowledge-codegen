@@ -628,7 +628,9 @@ class Parser(object):
 
         noexcept = None
 
-        const = None
+        const = self.type_informations[node['id']].get('isconst')
+        if const:
+            const = "const"
 
         virtual = node.get('virtual')
         if virtual:

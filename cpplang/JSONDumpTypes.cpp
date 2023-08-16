@@ -58,6 +58,9 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
       Inner.push_back(fullType(Ctx, ParamTy));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
 
+    if(FunctionProtoTy->isConst())
+      Ret["isconst"] = true;
+
     if(FunctionProtoTy->hasExceptionSpec()) {
       auto ESI = FunctionProtoTy->getExceptionSpecInfo();
       llvm::json::Object ExceptionSpec;
