@@ -547,6 +547,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         if node.const:
             self.write(" const")
 
+        if node.ref_qualifier:
+            self.write(" ", node.ref_qualifier)
+
         if node.noexcept:
             self.write(" ", node.noexcept)
 

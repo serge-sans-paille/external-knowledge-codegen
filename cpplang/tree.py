@@ -318,7 +318,7 @@ class Member(NonEmptyDeclaration):
 
 class CXXMethodDecl(Declaration):
     attrs = ("name", "return_type", "virtual", "noexcept", "const", "defaulted",
-             "final", "body", "parameters",)
+             "final", "ref_qualifier", "body", "parameters",)
 
 
 class FunctionDecl(Declaration):

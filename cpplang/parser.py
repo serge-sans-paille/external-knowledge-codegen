@@ -632,6 +632,14 @@ class Parser(object):
         if const:
             const = "const"
 
+        ref_qualifier = self.type_informations[node['id']].get('ref_qualifier')
+        if ref_qualifier == "LValue":
+            ref_qualifier = "&"
+        elif ref_qualifier == "RValue":
+            ref_qualifier = "&&"
+        else:
+            assert ref_qualifier is None
+
         virtual = node.get('virtual')
         if virtual:
             virtual = "virtual"
@@ -642,6 +650,7 @@ class Parser(object):
                                   noexcept=noexcept, const=const,
                                   defaulted=defaulted,
                                   final=final,
+                                  ref_qualifier=ref_qualifier,
                                   body=body, parameters=args)
 
     @parse_debug
