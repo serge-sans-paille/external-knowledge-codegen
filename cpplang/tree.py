@@ -721,6 +721,14 @@ class CXXFunctionalCastExpr(Expression):
     attrs = ("type", "expr",)
 
 
+class CXXStaticCastExpr(Expression):
+    attrs = ("type", "expr",)
+
+
+class CXXReinterpretCastExpr(Expression):
+    attrs = ("type", "expr",)
+
+
 class NullStmt(Statement):
     attrs = ()
 

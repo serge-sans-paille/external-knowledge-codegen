@@ -12,5 +12,8 @@ void foo() {
 
 void bar() {
   int(1);
+  static_cast<float>(1);
+  unsigned long i;
+  reinterpret_cast<long *>(&i);
 }
 

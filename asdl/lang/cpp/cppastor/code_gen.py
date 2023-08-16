@@ -793,6 +793,12 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_CXXFunctionalCastExpr(self, node: tree.CXXFunctionalCastExpr):
         self.write(node.type, "(", node.expr, ")")
 
+    def visit_CXXStaticCastExpr(self, node: tree.CXXStaticCastExpr):
+        self.write("static_cast<", node.type, ">(", node.expr, ")")
+
+    def visit_CXXReinterpretCastExpr(self, node: tree.CXXReinterpretCastExpr):
+        self.write("reinterpret_cast<", node.type, ">(", node.expr, ")")
+
     def visit_CXXTemporaryObjectExpr(self, node: tree.CXXTemporaryObjectExpr):
         self.write(node.type, "(")
         self.comma_list(node.subnodes)

@@ -1310,6 +1310,20 @@ class Parser(object):
         return tree.CXXFunctionalCastExpr(type=type_, expr=expr)
 
     @parse_debug
+    def parse_CXXStaticCastExpr(self, node) -> tree.CXXStaticCastExpr:
+        assert node['kind'] == "CXXStaticCastExpr"
+        type_ = self.parse_node(self.type_informations[node['id']])
+        expr, = self.parse_subnodes(node)
+        return tree.CXXStaticCastExpr(type=type_, expr=expr)
+
+    @parse_debug
+    def parse_CXXReinterpretCastExpr(self, node) -> tree.CXXReinterpretCastExpr:
+        assert node['kind'] == "CXXReinterpretCastExpr"
+        type_ = self.parse_node(self.type_informations[node['id']])
+        expr, = self.parse_subnodes(node)
+        return tree.CXXReinterpretCastExpr(type=type_, expr=expr)
+
+    @parse_debug
     def parse_NullStmt(self, node) -> tree.NullStmt:
         assert node['kind'] == "NullStmt"
         return tree.NullStmt()
