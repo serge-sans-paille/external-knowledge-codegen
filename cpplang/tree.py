@@ -698,7 +698,7 @@ class ConstantExpr(Primary):
 
 
 class CXXMemberCallExpr(Primary):
-    attrs = ("subnodes",)
+    attrs = ("bound_method", "args")
 
 
 class CallExpr(Primary):

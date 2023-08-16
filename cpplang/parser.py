@@ -1274,14 +1274,14 @@ class Parser(object):
     @parse_debug
     def parse_CXXMemberCallExpr(self, node) -> tree.CXXMemberCallExpr:
         assert node['kind'] == "CXXMemberCallExpr"
-        subnodes = self.parse_subnodes(node)
-        return tree.CXXMemberCallExpr(subnodes=subnodes)
+        bound_method, *args = self.parse_subnodes(node)
+        return tree.CXXMemberCallExpr(bound_method=bound_method, args=args)
 
     @parse_debug
     def parse_CallExpr(self, node) -> tree.CallExpr:
         assert node['kind'] == "CallExpr"
         callee, *args = self.parse_subnodes(node)
-        return tree.CallExpr(calee=callee, args=args)
+        return tree.CallExpr(callee=callee, args=args)
 
     @parse_debug
     def parse_CXXOperatorCallExpr(self, node) -> tree.CXXOperatorCallExpr:

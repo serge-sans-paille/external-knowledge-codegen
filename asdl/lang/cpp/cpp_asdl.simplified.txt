@@ -54,7 +54,7 @@ expression = ArraySubscriptExpr(expression base, expression index)
            | CXXConstructExpr(identifier type, expression* subnodes)
            | CXXDefaultArgExpr
            | CXXFunctionalCastExpr(identifier type, expression* subnodes)
-           | CXXMemberCallExpr(expression* subnodes)
+           | CXXMemberCallExpr(expression bound_method, expression* args)
            | CXXNewExpr(type type, expression* args, constant? is_array)
            | CXXNullPtrLiteralExpr
            | CXXOperatorCallExpr(expression left, expression op, expression right)

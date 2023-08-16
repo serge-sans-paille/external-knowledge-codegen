@@ -768,13 +768,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         #self.newline(extra=1)
 
     def visit_CXXMemberCallExpr(self, node: tree.CXXMemberCallExpr):
-        self.write(node.subnodes[0], "(")
-        self.comma_list(node.subnodes[1:])
+        self.write(node.bound_method, "(")
+        self.comma_list(node.args)
         self.write(")")
-        #if len(node.subnodes) > 1:
-            #self.write(node.subnodes[0], "(", node.subnodes[1], ")")
-        #else:
-            #self.write(node.subnodes[0])
 
     def visit_CallExpr(self, node: tree.CallExpr):
         self.write(node.callee)
