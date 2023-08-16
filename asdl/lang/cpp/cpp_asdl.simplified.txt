@@ -51,7 +51,7 @@ expression = ArraySubscriptExpr(expression base, expression index)
            | CStyleCastExpr(type type, expression expr)
            | CXXBindTemporaryExpr(expression* subnodes)
            | CXXBoolLiteralExpr(constant value)
-           | CXXConstructExpr(identifier type, expression* subnodes)
+           | CXXConstructExpr(expression* args)
            | CXXDefaultArgExpr
            | CXXFunctionalCastExpr(identifier type, expression* subnodes)
            | CXXMemberCallExpr(expression bound_method, expression* args)

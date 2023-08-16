@@ -632,7 +632,7 @@ class LambdaExpression(Primary):
 
 
 class CXXConstructExpr(Expression):
-    attrs = ("type", "subnodes",)
+    attrs = ("args",)
 
 
 class MaterializeTemporaryExpr(Expression):

@@ -1129,13 +1129,9 @@ class Parser(object):
     @parse_debug
     def parse_CXXConstructExpr(self, node) -> tree.CXXConstructExpr:
         assert node['kind'] == "CXXConstructExpr"
-        #if len(self.get_node_source_code(node)) == 0:
-            #breakpoint()
-            #return None
 
-        type_ = node['type']['qualType']
-        subnodes = self.parse_subnodes(node)
-        return tree.CXXConstructExpr(type=type_, subnodes=subnodes)
+        args = self.parse_subnodes(node)
+        return tree.CXXConstructExpr(args=args)
 
     @parse_debug
     def parse_MaterializeTemporaryExpr(self, node) -> tree.MaterializeTemporaryExpr:
@@ -1153,7 +1149,6 @@ class Parser(object):
     @parse_debug
     def parse_ImplicitCastExpr(self, node) -> tree.ImplicitCastExpr:
         assert node['kind'] == "ImplicitCastExpr"
-        #type_ = self.reparse_type(node['type'])
         type_ = self.parse_node(self.type_informations[node['id']])
         expr, = self.parse_subnodes(node)
         return tree.ImplicitCastExpr(type=type_, expr=expr)

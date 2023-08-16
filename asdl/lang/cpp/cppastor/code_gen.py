@@ -244,8 +244,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.visit_CXXConstructorDestructorDecl(node)
 
     def visit_CXXConstructExpr(self, node: tree.CXXConstructExpr):
-        if node.subnodes is not None and len(node.subnodes) > 0:
-            self.write(node.subnodes[0])
+        self.comma_list(node.args)
 
     def visit_CXXCtorInitializer(self, node: tree.CXXCtorInitializer):
         self.write(node.name)
