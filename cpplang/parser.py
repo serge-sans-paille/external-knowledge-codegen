@@ -520,20 +520,20 @@ class Parser(object):
     def parse_function_inner(self, node):
         inner_nodes = self.parse_subnodes(node)
 
-        body, args, init, final = None, [], [], None
+        body, args, init, method_attrs = None, [], [], []
         for inner_node in inner_nodes:
             if isinstance(inner_node, tree.ParmVarDecl):
                 args.append(inner_node)
             elif isinstance(inner_node, tree.CXXCtorInitializer):
                 init.append(inner_node)
-            elif isinstance(inner_node, tree.FinalAttr):
-                final = inner_node
+            elif isinstance(inner_node, (tree.OverrideAttr, tree.FinalAttr)):
+                method_attrs.append(inner_node)
             elif isinstance(inner_node, tree.CompoundStmt):
                 assert body is None
                 body = inner_node
             else:
                 raise NotImplementedError(inner_node)
-        return body, args, init, final
+        return body, args, init, method_attrs
 
     @parse_debug
     def parse_CXXConstructorDecl(self, node) -> tree.CXXConstructorDecl:
@@ -543,9 +543,9 @@ class Parser(object):
 
         name = node['name']
 
-        body, args, inits, final = self.parse_function_inner(node)
+        body, args, inits, method_attrs = self.parse_function_inner(node)
 
-        assert not final
+        assert not method_attrs
 
         noexcept = None
 
@@ -583,10 +583,10 @@ class Parser(object):
         if virtual:
             virtual = "virtual"
 
-        body, args, inits, final = self.parse_function_inner(node)
+        body, args, inits, method_attrs = self.parse_function_inner(node)
         assert not args
         assert not inits
-        assert not final
+        assert not method_attrs
 
         noexcept = None
 
@@ -621,7 +621,7 @@ class Parser(object):
             return None
 
         name = node['name']
-        body, args, inits, final = self.parse_function_inner(node)
+        body, args, inits, method_attrs = self.parse_function_inner(node)
         assert not inits
 
         return_type = self.parse_node(self.type_informations[node['id']]).return_type
@@ -649,7 +649,7 @@ class Parser(object):
         return tree.CXXMethodDecl(name=name, return_type=return_type, virtual=virtual,
                                   noexcept=noexcept, const=const,
                                   defaulted=defaulted,
-                                  final=final,
+                                  method_attrs=method_attrs,
                                   ref_qualifier=ref_qualifier,
                                   body=body, parameters=args)
 
@@ -675,9 +675,9 @@ class Parser(object):
                 repr_ = exception_spec.get('expr_repr')
                 exception = tree.NoExcept(repr=repr_)
 
-        body, args, inits, final = self.parse_function_inner(node)
+        body, args, inits, method_attrs = self.parse_function_inner(node)
         assert not inits
-        assert not final
+        assert not method_attrs
 
         return tree.FunctionDecl(name=name, return_type=return_type,
                                  variadic=variadic, parameters=args,
