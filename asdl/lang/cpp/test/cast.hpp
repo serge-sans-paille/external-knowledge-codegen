@@ -10,3 +10,7 @@ void foo() {
   const void * p3 = (const void*)&x;
 }
 
+void bar() {
+  int(1);
+}
+

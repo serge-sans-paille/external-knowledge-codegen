@@ -791,7 +791,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("true" if node.value == "True" else "false")
 
     def visit_CXXFunctionalCastExpr(self, node: tree.CXXFunctionalCastExpr):
-        self.write(node.type, "(", node.subnodes[0], ")")
+        self.write(node.type, "(", node.expr, ")")
 
     def visit_CXXTemporaryObjectExpr(self, node: tree.CXXTemporaryObjectExpr):
         self.write(node.type, "(")

@@ -52,7 +52,7 @@ expression = ArraySubscriptExpr(expression base, expression index)
            | CXXBoolLiteralExpr(constant value)
            | CXXConstructExpr(expression* args)
            | CXXDefaultArgExpr
-           | CXXFunctionalCastExpr(identifier type, expression* subnodes)
+           | CXXFunctionalCastExpr(type type, expression expr)
            | CXXMemberCallExpr(expression bound_method, expression* args)
            | CXXNewExpr(type type, expression* args, constant? is_array)
            | CXXNullPtrLiteralExpr

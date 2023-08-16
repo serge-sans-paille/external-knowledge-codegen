@@ -717,8 +717,8 @@ class CXXTemporaryObjectExpr(Node):
     attrs = ("type", "subnodes",)
 
 
-class CXXFunctionalCastExpr(Node):
-    attrs = ("type", "subnodes",)
+class CXXFunctionalCastExpr(Expression):
+    attrs = ("type", "expr",)
 
 
 class NullStmt(Statement):

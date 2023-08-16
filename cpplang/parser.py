@@ -1305,15 +1305,9 @@ class Parser(object):
     @parse_debug
     def parse_CXXFunctionalCastExpr(self, node) -> tree.CXXFunctionalCastExpr:
         assert node['kind'] == "CXXFunctionalCastExpr"
-        type_ = self.get_node_source_code(node).split("(")[0]
-        #type_ = node['type']['qualType']
-        #type_ = node['conversionFunc']['name']
-        if type_ == 'Lima::Common::XMLConfigurationFiles::ModuleConfigurationStructure':
-            breakpoint()
-        elif type_ == 'basic_string':
-            breakpoint()
-        subnodes = self.parse_subnodes(node)
-        return tree.CXXFunctionalCastExpr(type=type_, subnodes=subnodes)
+        type_ = self.parse_node(self.type_informations[node['id']])
+        expr, = self.parse_subnodes(node)
+        return tree.CXXFunctionalCastExpr(type=type_, expr=expr)
 
     @parse_debug
     def parse_NullStmt(self, node) -> tree.NullStmt:
@@ -1355,7 +1349,6 @@ class Parser(object):
     @parse_debug
     def parse_CStyleCastExpr(self, node) -> tree.CStyleCastExpr:
         assert node['kind'] == "CStyleCastExpr"
-        #type_ = self.reparse_type(node['type'])
         type_ = self.parse_node(self.type_informations[node['id']])
         expr, = self.parse_subnodes(node)
         return tree.CStyleCastExpr(type=type_, expr=expr)
