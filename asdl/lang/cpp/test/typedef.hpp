@@ -17,3 +17,7 @@ typedef int (*(array_of_functions[8]))(float, bool);
 
 struct foo {};
 typedef foo record;
+
+typedef int (&function_ref)(float);
+
+typedef const char (&char_array)[10];
