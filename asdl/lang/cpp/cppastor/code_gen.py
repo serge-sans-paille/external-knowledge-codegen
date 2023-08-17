@@ -170,12 +170,17 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.newline(node)
         self.write(*params)
 
-    def comma_list(self, items, trailing=False):
-        # set_precedence(Precedence.Comma, *items)
+    def sep_list(self, sep, items, trailing=False):
         if items:
             for idx, item in enumerate(items):
-                self.write(", " if idx else "", item)
-            self.write("," if trailing else "")
+                self.write(sep if idx else "", item)
+            self.write(sep if trailing else "")
+
+    def comma_list(self, items, trailing=False):
+        self.sep_list(", ", items, trailing)
+
+    def space_list(self, items, trailing=False):
+        self.sep_list(" ", items, trailing)
 
     # Statements
 
@@ -547,11 +552,14 @@ class SourceGenerator(ExplicitNodeVisitor):
         if node.const:
             self.write(" const")
 
+        if node.ref_qualifier:
+            self.write(" ", node.ref_qualifier)
+
         if node.noexcept:
             self.write(" ", node.noexcept)
 
-        if node.final:
-            self.write(" ", node.final)
+        if node.method_attrs:
+            self.space_list(node.method_attrs)
 
         if node.body:
             self.write(node.body)
@@ -760,18 +768,12 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("/** ", node.comment, "*/")
 
     def visit_OverrideAttr(self, node: tree.OverrideAttr):
-        pass
-        #self.write(" ", "override", ";")
-        #self.newline(extra=1)
+        self.write("override")
 
     def visit_CXXMemberCallExpr(self, node: tree.CXXMemberCallExpr):
-        self.write(node.subnodes[0], "(")
-        self.comma_list(node.subnodes[1:])
+        self.write(node.bound_method, "(")
+        self.comma_list(node.args)
         self.write(")")
-        #if len(node.subnodes) > 1:
-            #self.write(node.subnodes[0], "(", node.subnodes[1], ")")
-        #else:
-            #self.write(node.subnodes[0])
 
     def visit_CallExpr(self, node: tree.CallExpr):
         self.write(node.callee)

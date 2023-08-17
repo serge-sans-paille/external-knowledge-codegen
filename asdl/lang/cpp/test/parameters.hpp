@@ -26,3 +26,8 @@ void array_param(int x[2], int y[]) {
 
 void default_param(int x = 0) {
 }
+
+void rref(int &x);
+void cref(const int &x);
+void lref(int &&x);
+

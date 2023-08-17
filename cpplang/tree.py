@@ -318,7 +318,7 @@ class Member(NonEmptyDeclaration):
 
 class CXXMethodDecl(Declaration):
     attrs = ("name", "return_type", "virtual", "noexcept", "const", "defaulted",
-             "final", "body", "parameters",)
+             "method_attrs", "ref_qualifier", "body", "parameters",)
 
 
 class FunctionDecl(Declaration):
@@ -698,7 +698,7 @@ class ConstantExpr(Primary):
 
 
 class CXXMemberCallExpr(Primary):
-    attrs = ("subnodes",)
+    attrs = ("bound_method", "args")
 
 
 class CallExpr(Primary):

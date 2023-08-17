@@ -58,6 +58,19 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
       Inner.push_back(fullType(Ctx, ParamTy));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
 
+    if(FunctionProtoTy->isConst())
+      Ret["isconst"] = true;
+    switch(FunctionProtoTy->getRefQualifier()) {
+      case RefQualifierKind::RQ_None:
+        break;
+      case RefQualifierKind::RQ_LValue:
+        Ret["ref_qualifier"] = "LValue";
+        break;
+      case RefQualifierKind::RQ_RValue:
+        Ret["ref_qualifier"] = "RValue";
+        break;
+    }
+
     if(FunctionProtoTy->hasExceptionSpec()) {
       auto ESI = FunctionProtoTy->getExceptionSpecInfo();
       llvm::json::Object ExceptionSpec;
