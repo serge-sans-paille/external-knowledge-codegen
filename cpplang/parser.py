@@ -14,7 +14,7 @@ from . import tree
 ENABLE_DEBUG_SUPPORT = True
 
 preprocess_command = [
-    shutil.which("clang"), "-x", "c++", "-std=c++17",
+    shutil.which("clang"), "-x", "c++", "-std=c++14",
     "-E", "-"]
 
 module_dir = os.path.dirname(__file__)
@@ -147,7 +147,7 @@ class Parser(object):
         #           file=sys.stderr)
         preprocess_stderr_data = preprocess.stderr
         process_command = [
-            shutil.which("clang"), "-x", "c++", "-std=c++17",
+            shutil.which("clang"), "-x", "c++", "-std=c++14",
             "-fplugin={}".format(plugin_path),
             "-fsyntax-only", "-"]
         # if ENABLE_DEBUG_SUPPORT:
@@ -446,7 +446,7 @@ class Parser(object):
                                                                      [])]
 
             for field in ('aliasee', 'cleanup_function', 'deprecation_message',
-                          'section_name', 'visibility', 'tls_model'):
+                          'section_name', 'visibility', 'tls_model',):
                 if field not in child:
                     continue
 
@@ -649,10 +649,20 @@ class Parser(object):
         self.parsed_labels.clear()
 
         name = node['name']
-        return_type = self.parse_node(self.type_informations[node['id']]).return_type
+        type_info = self.type_informations[node['id']]
+        return_type = self.parse_node(type_info).return_type
         variadic = "..." if node['type']['qualType'].endswith('...)') else None
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
+
+        exception = None
+        exception_spec = type_info.get('exception_spec')
+        if exception_spec:
+            if exception_spec.get('isDynamic'):
+                exception = tree.Throw(args=exception_spec.get('inner', []))
+            elif exception_spec.get('isBasic'):
+                repr_ = exception_spec.get('expr_repr')
+                exception = tree.NoExcept(repr=repr_)
 
         body, args, inits, final = self.parse_function_inner(node)
         assert not inits
@@ -661,7 +671,7 @@ class Parser(object):
         return tree.FunctionDecl(name=name, return_type=return_type,
                                  variadic=variadic, parameters=args,
                                  inline=inline, storage=storage,
-                                 body=body)
+                                 body=body, exception=exception)
 
     @parse_debug
     def parse_GCCAsmStmt(self, node) -> tree.GCCAsmStmt:

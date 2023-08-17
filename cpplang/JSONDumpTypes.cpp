@@ -57,6 +57,50 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     for(auto ParamTy : FunctionProtoTy->param_types ())
       Inner.push_back(fullType(Ctx, ParamTy));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
+
+    if(FunctionProtoTy->hasExceptionSpec()) {
+      auto ESI = FunctionProtoTy->getExceptionSpecInfo();
+      llvm::json::Object ExceptionSpec;
+      switch(ESI.Type) {
+        case ExceptionSpecificationType::EST_None:
+          assert(false && "should not happen");
+          break;
+        case ExceptionSpecificationType::EST_DynamicNone:
+          ExceptionSpec["isDynamic"] = true;
+          break;
+        case ExceptionSpecificationType::EST_Dynamic:
+          ExceptionSpec["isDynamic"] = true;
+          {
+            llvm::json::Array Inner;
+            for(QualType QT : ESI.Exceptions)
+              Inner.push_back(QT.getAsString());
+            ExceptionSpec["inner"] = llvm::json::Value(std::move(Inner));
+          }
+          break;
+        case ExceptionSpecificationType::EST_NoexceptFalse:
+        case ExceptionSpecificationType::EST_NoexceptTrue:
+        case ExceptionSpecificationType::EST_DependentNoexcept:
+          // FIXME: parsing the expression at this level would be great
+          // but this is rather complex for a feature that's scarcely used, so
+          // rely on string representation as of now.
+          {
+          std::string pretty_buffer;
+          llvm::raw_string_ostream pretty_stream(pretty_buffer);
+          ESI.NoexceptExpr->printPretty(pretty_stream, nullptr, PrintingPolicy(Ctx.getLangOpts()));
+          ExceptionSpec["expr_repr"] = pretty_buffer;
+          }
+        case ExceptionSpecificationType::EST_BasicNoexcept:
+          ExceptionSpec["isBasic"] = true;
+          break;
+        case ExceptionSpecificationType::EST_Unevaluated:
+          break;
+        default:
+          llvm::errs() << ESI.Type << "\n";
+          assert(0 && "Not implemented Yet");
+      }
+
+      Ret["exception_spec"] = llvm::json::Value(std::move(ExceptionSpec));
+    }
   }
   else if(auto * ReferenceTy = dyn_cast<ReferenceType>(Ty)) {
     llvm::json::Array Inner;
