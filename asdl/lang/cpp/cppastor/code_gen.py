@@ -299,7 +299,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.expr)
 
     def visit_CXXBindTemporaryExpr(self, node: tree.CXXBindTemporaryExpr):
-        self.write(node.subnodes[0])
+        self.write(node.expr)
 
     def visit_ImplicitCastExpr(self, node: tree.ImplicitCastExpr):
         # The cast is implicit, no need to pretty-print it.

@@ -50,7 +50,7 @@ statement = BreakStmt
 expression = ArraySubscriptExpr(expression base, expression index)
            | BinaryOperator(constant opcode, expression lhs, expression rhs)
            | CStyleCastExpr(type type, expression expr)
-           | CXXBindTemporaryExpr(expression* subnodes)
+           | CXXBindTemporaryExpr(expression expr)
            | CXXBoolLiteralExpr(constant value)
            | CXXConstructExpr(expression* args)
            | CXXDefaultArgExpr

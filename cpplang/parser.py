@@ -1168,9 +1168,8 @@ class Parser(object):
     @parse_debug
     def parse_CXXBindTemporaryExpr(self, node) -> tree.CXXBindTemporaryExpr:
         assert node['kind'] == "CXXBindTemporaryExpr"
-        subnodes = self.parse_subnodes(node)
-        assert len(subnodes) > 0
-        return tree.CXXBindTemporaryExpr(subnodes=subnodes)
+        expr, = self.parse_subnodes(node)
+        return tree.CXXBindTemporaryExpr(expr=expr)
 
     @parse_debug
     def parse_ImplicitCastExpr(self, node) -> tree.ImplicitCastExpr:

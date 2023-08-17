@@ -663,7 +663,7 @@ class MaterializeTemporaryExpr(Expression):
 
 
 class CXXBindTemporaryExpr(Expression):
-    attrs = ("subnodes",)
+    attrs = ("expr",)
 
 
 class CXXNewExpr(Expression):
