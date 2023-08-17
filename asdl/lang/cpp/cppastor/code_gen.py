@@ -229,13 +229,12 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.visit_function_like(node)
 
     def visit_NamespaceDecl(self, node: tree.NamespaceDecl):
-        assert node.name is not None
         self.write("namespace ")
-        self.write(node.name, "\n")
+        if node.name is not None:
+            self.write(node.name)
         self.write(" {", "\n")
-        if node.subnodes is not None:
-            for c in node.subnodes:
-                self.write(c)
+        for decl in node.decls or ():
+            self.write(decl, ";" if isinstance(decl, tree.VarDecl) else "", "\n")
         self.write("}")
         self.newline(extra=1)
 
