@@ -171,6 +171,18 @@ class AccessSpecDecl(Declaration):
     attrs = ("access_spec",)
 
 
+class Public(Node):
+    attrs = ()
+
+
+class Private(Node):
+    attrs = ()
+
+
+class Protected(Node):
+    attrs = ()
+
+
 class EnumDeclaration(TypeDeclaration):
     attrs = ("implements",)
 

@@ -3,7 +3,7 @@ identifier, int, string, constant
 
 cu = TranslationUnit(statement* stmts)
 
-declaration = AccessSpecDecl(identifier access_spec)
+declaration = AccessSpecDecl(access_spec access_spec)
             | CXXConstructorDecl(identifier name, constant? noexcept, default_mode? defaulted, statement? body, parameter* parameters, cxx_ctor_initializer* initializers)
             | CXXConversionDecl(identifier name, statement* subnodes)
             | CXXDestructorDecl(identifier name, constant? noexcept, constant? virtual, default_mode? defaulted, statement? body)
@@ -125,6 +125,10 @@ attribute = AlignedAttr(expression? size)
           | UsedAttr
           | VisibilityAttr(constant visibility)
           | WeakAttr
+
+access_spec = Public
+            | Protected
+            | Private
 
 default_mode = Default
              | Delete

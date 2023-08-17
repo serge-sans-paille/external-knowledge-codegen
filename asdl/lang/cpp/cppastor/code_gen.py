@@ -273,6 +273,15 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_AccessSpecDecl(self, node: tree.AccessSpecDecl):
         self.write(node.access_spec, ":", "\n")
 
+    def visit_Public(self, node: tree.Public):
+        self.write("public")
+
+    def visit_Protected(self, node: tree.Protected):
+        self.write("protected")
+
+    def visit_Private(self, node: tree.Private):
+        self.write("private")
+
     def visit_ParmVarDecl(self, node: tree.ParmVarDecl):
         self.write(self.visit_type_helper(node.name or "", node.type))
         if node.default:

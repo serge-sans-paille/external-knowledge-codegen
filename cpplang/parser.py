@@ -610,10 +610,9 @@ class Parser(object):
     @parse_debug
     def parse_AccessSpecDecl(self, node) -> tree.AccessSpecDecl:
         assert node['kind'] == "AccessSpecDecl"
-        access_spec = node['access']
-        subnodes = self.parse_subnodes(node)
-
-        return tree.AccessSpecDecl(access_spec=access_spec, subnodes=subnodes)
+        access = node['access']
+        access_spec = getattr(tree, access.capitalize())()
+        return tree.AccessSpecDecl(access_spec=access_spec)
 
     @parse_debug
     def parse_CXXMethodDecl(self, node) -> tree.CXXMethodDecl:

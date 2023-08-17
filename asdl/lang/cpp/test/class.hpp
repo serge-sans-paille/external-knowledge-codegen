@@ -67,3 +67,13 @@ class with_virtual_destructor {
   virtual ~with_virtual_destructor();
 };
 
+
+class access_spec {
+  public:
+    int i;
+  private:
+    int j;
+  protected:
+    int k;
+  private:
+};
