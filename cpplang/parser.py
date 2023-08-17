@@ -446,7 +446,7 @@ class Parser(object):
                                                                      [])]
 
             for field in ('aliasee', 'cleanup_function', 'deprecation_message',
-                          'section_name', 'visibility', 'tls_model',):
+                          'section_name', 'visibility', 'tls_model', 'name'):
                 if field not in child:
                     continue
 
@@ -1425,6 +1425,12 @@ class Parser(object):
         return_type, *parameter_types = self.parse_subnodes(node)
         return tree.FunctionProtoType(return_type=return_type,
                                       parameter_types=parameter_types)
+    @parse_debug
+    def parse_TypedefType(self, node) -> tree.TypedefType:
+        assert node['kind'] == "TypedefType"
+        type_, = self.parse_subnodes(node)
+        return tree.TypedefType(name=node['name'], type=type_)
+
 
     @parse_debug
     def parse_IncompleteArrayType(self, node) -> tree.IncompleteArrayType:

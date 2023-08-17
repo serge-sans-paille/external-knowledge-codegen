@@ -474,6 +474,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(current_type, tree.RValueReferenceType):
             return self.visit_type_helper("&& " + current_expr, current_type.type)
 
+        if isinstance(current_type, tree.TypedefType):
+            return "{} {}".format(current_type.name, current_expr)
+
         raise NotImplementedError(current_type)
 
     def visit_TypedefDecl(self, node: tree.TypedefDecl):
@@ -514,6 +517,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_RValueReferenceType(self, node: tree.RValueReferenceType):
         self.write(node.type)
+
+    def visit_TypedefType(self, node: tree.TypedefType):
+        self.write(node.name)
 
     def visit_ConstantArrayType(self, node: tree.ConstantArrayType):
         self.write(node.type, "[", node.size, "]")

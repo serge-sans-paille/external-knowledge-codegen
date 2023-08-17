@@ -229,6 +229,9 @@ class ConstantArrayType(Node):
 class DecayedType(Node):
     attrs = ("type",)
 
+class TypedefType(Node):
+    attrs = ("name", "type",)
+
 class ElaboratedType(Node):
     attrs = ("type", "qualifiers", )
 

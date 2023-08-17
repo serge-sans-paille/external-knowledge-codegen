@@ -101,6 +101,7 @@ type = BuiltinType(identifier name)
      | QualType(identifier? qualifiers, type type)
      | RValueReferenceType(type type)
      | RecordType(identifier name)
+     | TypedefType(identifier name, type type)
      | VectorType(type type, constant size)
 
 enum_field = EnumConstantDecl(identifier name, expression? init)
