@@ -827,7 +827,7 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_CXXTemporaryObjectExpr(self, node: tree.CXXTemporaryObjectExpr):
         self.write(node.type, "(")
-        self.comma_list(node.subnodes)
+        self.comma_list(node.args)
         self.write(")")
 
     def visit_DeclOrExpr(self, node: tree.DeclOrExpr):

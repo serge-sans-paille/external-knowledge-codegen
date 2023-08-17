@@ -62,7 +62,7 @@ expression = ArraySubscriptExpr(expression base, expression index)
            | CXXReinterpretCastExpr(type type, expression expr)
            | CXXStaticCastExpr(type type, expression expr)
            | CXXStdInitializerListExpr(expression* subnodes)
-           | CXXTemporaryObjectExpr(identifier type, expression* subnodes)
+           | CXXTemporaryObjectExpr(type type, expression* args)
            | CXXThisExpr
            | CXXTypeidExpr(expression? expr, type? type)
            | CallExpr(expression callee, expression* args)

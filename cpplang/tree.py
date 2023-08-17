@@ -741,7 +741,7 @@ class CXXBoolLiteralExpr(Primary):
 
 
 class CXXTemporaryObjectExpr(Node):
-    attrs = ("type", "subnodes",)
+    attrs = ("type", "args",)
 
 
 class CXXFunctionalCastExpr(Expression):

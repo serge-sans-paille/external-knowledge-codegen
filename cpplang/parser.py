@@ -1323,10 +1323,9 @@ class Parser(object):
     @parse_debug
     def parse_CXXTemporaryObjectExpr(self, node) -> tree.CXXTemporaryObjectExpr:
         assert node['kind'] == "CXXTemporaryObjectExpr"
-        type_ = node['type']['qualType']
-        subnodes = self.parse_subnodes(node)
-        # assert len(subnodes) > 0
-        return tree.CXXTemporaryObjectExpr(type=type_, subnodes=subnodes)
+        type_ = self.parse_node(self.type_informations[node['id']])
+        args = self.parse_subnodes(node)
+        return tree.CXXTemporaryObjectExpr(type=type_, args=args)
 
     @parse_debug
     def parse_CXXFunctionalCastExpr(self, node) -> tree.CXXFunctionalCastExpr:
