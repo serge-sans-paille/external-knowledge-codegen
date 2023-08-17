@@ -489,24 +489,25 @@ class Parser(object):
         subnodes = self.parse_subnodes(node)
 
         # specific support for anonymous record through indirect field
-        indirect_field_names = {n['name'] for n in node['inner']
-                                if n['kind'] == 'IndirectFieldDecl'}
-        anonymous_records = [n for n in node['inner']
-                             if n['kind'] == 'CXXRecordDecl'
-                             if 'name' not in n]
+        if subnodes:
+            indirect_field_names = {n['name'] for n in node['inner']
+                                    if n['kind'] == 'IndirectFieldDecl'}
+            anonymous_records = [n for n in node['inner']
+                                 if n['kind'] == 'CXXRecordDecl'
+                                 if 'name' not in n]
 
-        for subnode in subnodes:
-            if not isinstance(subnode, tree.CXXRecordDecl):
-                continue
-            if subnode.name not in self.anonymous_types.values():
-                continue
-            field_names = {field.name for field in subnode.subnodes
-                           if isinstance(field, tree.FieldDecl)}
+            for subnode in subnodes:
+                if not isinstance(subnode, tree.CXXRecordDecl):
+                    continue
+                if subnode.name not in self.anonymous_types.values():
+                    continue
+                field_names = {field.name for field in subnode.subnodes
+                               if isinstance(field, tree.FieldDecl)}
 
-            # Force the record name to empty to correctly represent indirect
-            # fields.
-            if field_names.issubset(indirect_field_names):
-                subnode.name = ""
+                # Force the record name to empty to correctly represent indirect
+                # fields.
+                if field_names.issubset(indirect_field_names):
+                    subnode.name = ""
 
 
         return tree.CXXRecordDecl(name=name, kind=kind, bases=bases,

@@ -1,3 +1,5 @@
+class fwd;
+
 class empty {};
 
 class non_empty {
