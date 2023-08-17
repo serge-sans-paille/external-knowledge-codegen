@@ -405,6 +405,7 @@ public:
 };
 
 void JSONNodeTypeDumper::Visit(const Type *T) {
+  if(!T) return;
   InnerTypeVisitor::Visit(T);
 }
 

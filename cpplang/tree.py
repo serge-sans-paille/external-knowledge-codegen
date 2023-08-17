@@ -507,6 +507,14 @@ class TypedefDecl(Declaration):
     attrs = ("name", "type")
 
 
+class TypeAliasDecl(Declaration):
+    attrs = ("name", "type")
+
+
+class UsingDecl(Declaration):
+    attrs = ("name",)
+
+
 class TypeRef(Node):
     attrs = ("name",)
 

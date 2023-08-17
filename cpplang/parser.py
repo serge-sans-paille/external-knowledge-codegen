@@ -1127,6 +1127,19 @@ class Parser(object):
         subnodes = self.parse_subnodes(node)
         return tree.TypeRef(name=name, subnodes=subnodes)
 
+    @parse_debug
+    def parse_TypeAliasDecl(self, node) -> tree.TypeAliasDecl:
+        assert node['kind'] == "TypeAliasDecl"
+        name = node['name']
+        type_, = self.parse_subnodes(node)
+        return tree.TypeAliasDecl(name=name, type=type_)
+
+    @parse_debug
+    def parse_UsingDecl(self, node) -> tree.UsingDecl:
+        assert node['kind'] == "UsingDecl"
+        name = node['name']
+        return tree.UsingDecl(name=name)
+
     #@parse_debug
     #def parse_NamespaceRef(self, node) -> tree.NamespaceRef:
         #assert node['kind'] == "NamespaceRef"

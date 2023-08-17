@@ -20,6 +20,8 @@ declaration = AccessSpecDecl(identifier access_spec)
             | NonTypeTemplateParmDecl(identifier name, identifier type, statement* subnodes)
             | TemplateTypeParmDecl(identifier name, statement* subnodes)
             | TypedefDecl(identifier name, type type)
+            | TypeAliasDecl(identifier name, type type)
+            | UsingDecl(identifier name)
             | UsingDirectiveDecl(identifier name)
             | VarDecl(identifier name, type type, constant? storage_class, constant init_mode, constant? implicit, constant? referenced, expression? init, attribute* attributes, constant? tls)
 

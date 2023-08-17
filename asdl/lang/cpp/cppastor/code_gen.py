@@ -483,6 +483,12 @@ class SourceGenerator(ExplicitNodeVisitor):
         expr = self.visit_type_helper(node.name, node.type)
         self.write("typedef ", expr, ";")
 
+    def visit_TypeAliasDecl(self, node: tree.TypeAliasDecl):
+        self.write("using ", node.name, " = ", node.type, ";")
+
+    def visit_UsingDecl(self, node: tree.UsingDecl):
+        self.write("using ", node.name, ";")
+
     def visit_BuiltinType(self, node: tree.BuiltinType):
         self.write(node.name)
 
