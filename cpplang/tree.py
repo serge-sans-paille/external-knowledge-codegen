@@ -148,7 +148,7 @@ class PackageDeclaration(NonEmptyDeclaration):
 
 
 class CXXRecordDecl(TypeDeclaration):
-    attrs = ("kind", "bases", "complete_definition", "subnodes",)
+    attrs = ("kind", "bases", "complete_definition", "decls",)
 
 
 class RecordDecl(TypeDeclaration):

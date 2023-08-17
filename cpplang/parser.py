@@ -486,33 +486,33 @@ class Parser(object):
             p = r"^[^:]*:([^{]*){"
             temp = re.search(p, s).group(1)
             bases = temp.replace("\\n", "")
-        subnodes = self.parse_subnodes(node)
+        inner_nodes = self.parse_subnodes(node)
 
         # specific support for anonymous record through indirect field
-        if subnodes:
+        if inner_nodes:
             indirect_field_names = {n['name'] for n in node['inner']
                                     if n['kind'] == 'IndirectFieldDecl'}
             anonymous_records = [n for n in node['inner']
                                  if n['kind'] == 'CXXRecordDecl'
                                  if 'name' not in n]
 
-            for subnode in subnodes:
-                if not isinstance(subnode, tree.CXXRecordDecl):
+            for inner_node in inner_nodes:
+                if not isinstance(inner_node, tree.CXXRecordDecl):
                     continue
-                if subnode.name not in self.anonymous_types.values():
+                if inner_node.name not in self.anonymous_types.values():
                     continue
-                field_names = {field.name for field in subnode.subnodes
+                field_names = {field.name for field in inner_node.decls
                                if isinstance(field, tree.FieldDecl)}
 
                 # Force the record name to empty to correctly represent indirect
                 # fields.
                 if field_names.issubset(indirect_field_names):
-                    subnode.name = ""
+                    inner_node.name = ""
 
 
         return tree.CXXRecordDecl(name=name, kind=kind, bases=bases,
                                   complete_definition=complete_definition,
-                                  subnodes=subnodes)
+                                  decls=inner_nodes)
 
     @parse_debug
     def parse_RecordDecl(self, node) -> tree.RecordDecl:

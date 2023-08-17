@@ -200,11 +200,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.name)
         if node.bases:
             self.write(" : ", node.bases)
-        if node.subnodes is not None:
-            if len(node.subnodes) > 0:
+        if node.decls is not None:
+            if len(node.decls) > 0:
                 self.write(" {", "\n")
-                for c in node.subnodes:
-                    self.write(c)
+                self.space_list(node.decls)
                 self.write("}")
             elif len(node.complete_definition) > 0:
                 self.write(" {", "\n")
