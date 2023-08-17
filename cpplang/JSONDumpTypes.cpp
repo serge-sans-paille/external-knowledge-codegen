@@ -136,6 +136,9 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Inner.push_back(fullType(Ctx, TypedefTy->getDecl()->getUnderlyingType()));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
+  else if(auto * UsingTy = dyn_cast<UsingType>(Ty)) {
+    Ret["name"] = UsingTy->getFoundDecl()->getName();
+  }
   else if(auto * RecordTy = dyn_cast<RecordType>(Ty)) {
     Ret["decl"] = llvm::json::Object({{"name", RecordTy->getDecl()->getName()}});
   }
