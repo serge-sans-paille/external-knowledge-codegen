@@ -887,6 +887,17 @@ class Parser(object):
             return None
         return tree.CXXThisExpr()
 
+    def parse_CXXTypeidExpr(self, node) -> tree.CXXTypeidExpr:
+        assert node['kind'] == "CXXTypeidExpr"
+        if 'typeArg' in node:
+            expr = None
+            type_ = self.parse_node(self.type_informations[node['id']])
+        else:
+            expr, = self.parse_subnodes(node)
+            type_ = None
+        print(expr, type_)
+        return tree.CXXTypeidExpr(expr=expr, type=type_)
+
     def parse_MemberExpr(self, node) -> tree.MemberExpr:
         assert node['kind'] == "MemberExpr"
         name = node['name']
@@ -988,6 +999,8 @@ class Parser(object):
         name = node['name']
         implicit = node.get('isImplicit')
         referenced = node.get('isReferenced')
+        if referenced:
+            referenced = "referenced"
         storage_class = node.get('storageClass')
         tls = node.get('tls')
 

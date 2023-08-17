@@ -62,6 +62,7 @@ expression = ArraySubscriptExpr(expression base, expression index)
            | CXXStdInitializerListExpr(expression* subnodes)
            | CXXTemporaryObjectExpr(identifier type, expression* subnodes)
            | CXXThisExpr
+           | CXXTypeidExpr(expression? expr, type? type)
            | CallExpr(expression callee, expression* args)
            | CharacterLiteral(identifier value)
            | CompoundAssignOperator(constant opcode, expression lhs, expression rhs)

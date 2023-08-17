@@ -692,6 +692,10 @@ class CXXThisExpr(Primary):
     attrs = ("subnodes",)
 
 
+class CXXTypeidExpr(Primary):
+    attrs = ("expr", "type",)
+
+
 class MemberExpr(Primary):
     attrs = ("name", "op", "expr")
 

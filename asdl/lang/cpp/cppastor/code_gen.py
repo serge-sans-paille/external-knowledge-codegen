@@ -650,6 +650,11 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.visit(node.type if node.type is not None else node.expr)
         self.write(")")
 
+    def visit_CXXTypeidExpr(self, node: tree.CXXTypeidExpr):
+        self.write("typeid(")
+        self.visit(node.type if node.type is not None else node.expr)
+        self.write(")")
+
     def visit_BinaryOperator(self, node: tree.BinaryOperator):
         self.write(node.lhs)
         self.write(" ", node.opcode, " ")

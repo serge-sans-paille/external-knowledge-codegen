@@ -335,6 +335,18 @@ public:
             JOS.attributeEnd();
         }
       }
+      else if(const auto * TypeidE = dyn_cast<CXXTypeidExpr>(E)) {
+        if(TypeidE->isTypeOperand()) {
+          JOS.attribute("node_id", createPointerRepresentation(E));
+            JOS.attributeBegin("node_inner");
+            JOS.arrayBegin();
+          JOS.objectBegin();
+          Visit(TypeidE-> getTypeOperand (Ctx));
+          JOS.objectEnd();
+            JOS.arrayEnd();
+            JOS.attributeEnd();
+        }
+      }
       else {
         JOS.attribute("node_id", createPointerRepresentation(E));
           JOS.attributeBegin("node_inner");
