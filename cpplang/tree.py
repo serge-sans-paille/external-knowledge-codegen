@@ -564,6 +564,9 @@ class ConstrainedExpression(Node):
 class CXXForRangeStmt(Statement):
     attrs = ("decl", "range", "body",)
 
+class DeclsOrExpr(Node):
+    attrs = ("decls", "expr",)
+
 class DeclOrExpr(Node):
     attrs = ("decl", "expr",)
 

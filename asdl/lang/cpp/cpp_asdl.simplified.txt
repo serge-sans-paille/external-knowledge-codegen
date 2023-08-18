@@ -34,7 +34,7 @@ statement = BreakStmt
           | DefaultStmt(statement stmt)
           | DoStmt(expression cond, statement body)
           | ExprStmt(expression expr)
-          | ForStmt(declaration_or_expression? init, declaration_or_expression? cond, expression? inc, statement body)
+          | ForStmt(declarations_or_expression? init, declaration_or_expression? cond, expression? inc, statement body)
           | FullComment(string comment)
           | GCCAsmStmt(constant string, constrained_expression* output_operands, constrained_expression* input_operands, constant* clobbers, constant* labels)
           | GotoStmt(identifier target)
@@ -86,7 +86,9 @@ expression = ArraySubscriptExpr(expression base, expression index)
 
 parameter = ParmVarDecl(type type, identifier? name, expression? default)
 
-declaration_or_expression = DeclOrExpr(declaration* decl, expression? expr)
+declarations_or_expression = DeclsOrExpr(declaration* decls, expression? expr)
+
+declaration_or_expression = DeclOrExpr(declaration? decl, expression? expr)
 
 cxx_ctor_initializer = CXXCtorInitializer(identifier name, expression* args)
 
