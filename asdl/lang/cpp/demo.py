@@ -270,9 +270,7 @@ def check_filepath(filepath: str,
                            f"**Warn**{bcolors.ENDC} Test failed for "
                            f"file: {bcolors.MAGENTA}{filepath}",
                            file=sys.stderr)
-                    # print(cpp, file=sys.stderr)
                     return False
-                    # exit(1)
                 else:
                     cprint(bcolors.GREEN,
                            f"Success for file: {bcolors.MAGENTA}{filepath}",
@@ -287,11 +285,13 @@ def check_filepath(filepath: str,
         return None
 
 
-def stats(nb_ok: int, nb_ko: int):
+def stats(nb_ok: int, nb_ko: int, ignored: List[str]):
     if nb_ok == nb_ko == 0:
         print(f"No tests, no stats")
         return None
-    print(f"Succes: {nb_ok}/{nb_ok+nb_ko} ({int(nb_ok*100.0/(nb_ok+nb_ko))}%)")
+    print(f"Success: {nb_ok}/{nb_ok+nb_ko} ({int(nb_ok*100.0/(nb_ok+nb_ko))}%)")
+    if ignored:
+        print(f"Ignored: {', '.join(ignored)})")
 
 
 def collect_files(dir: str) -> int:
@@ -359,10 +359,10 @@ if __name__ == '__main__':
     exclusions.extend(load_exclusions(args.exclusions, debug=args.debug))
     nb_ok = 0
     nb_ko = 0
+    ignored = []
     filepaths = [
         "test.cpp"
     ]
-    test_num = 0
 
     files = None
     if args.list:
@@ -374,25 +374,26 @@ if __name__ == '__main__':
         files.remove(f"{args.dir}/exclusions.txt")
     if args.debug:
         print(files)
-    total = len(files)
-    for filepath in files:
-        test_num += 1
-        if filepath not in exclusions:
-            test_result = check_filepath(filepath,
-                                        check_hypothesis=check_hypothesis,
-                                        fail_on_error=fail_on_error,
-                                        member=args.member,
-                                        number=test_num,
-                                        total=total,
-                                        debug=args.debug)
-            if test_result is not None:
-                if test_result:
-                    nb_ok = nb_ok + 1
-                else:
-                    nb_ko = nb_ko + 1
-                    if fail_on_error:
-                        stats(nb_ok, nb_ko)
-                        exit(1)
+
+    filtered_files = [f for f in files if f not in exclusions]
+
+    total = len(filtered_files)
+    for test_num, filepath in enumerate(filtered_files, start=1):
+        test_result = check_filepath(filepath,
+                                    check_hypothesis=check_hypothesis,
+                                    fail_on_error=fail_on_error,
+                                    member=args.member,
+                                    number=test_num,
+                                    total=total,
+                                    debug=args.debug)
+        if test_result is not None:
+            if test_result:
+                nb_ok = nb_ok + 1
             else:
-                nb_ko += 1
-    stats(nb_ok, nb_ko)
+                nb_ko = nb_ko + 1
+                if fail_on_error:
+                    stats(nb_ok, nb_ko, ignored)
+                    exit(1)
+        else:
+            ignored.append(filepath)
+    stats(nb_ok, nb_ko, ignored)

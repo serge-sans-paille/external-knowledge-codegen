@@ -244,8 +244,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.visit_CXXConstructorDestructorDecl(node)
 
     def visit_CXXConstructExpr(self, node: tree.CXXConstructExpr):
-        if node.subnodes is not None and len(node.subnodes) > 0:
-            self.write(node.subnodes[0])
+        self.comma_list(node.args)
 
     def visit_CXXCtorInitializer(self, node: tree.CXXCtorInitializer):
         self.write(node.name)
@@ -280,7 +279,7 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write(" = ", node.default)
 
     def visit_ExprWithCleanups(self, node: tree.ExprWithCleanups):
-        self.write(node.subnodes[0])
+        self.write(node.expr)
 
     def visit_DeclRefExpr(self, node: tree.DeclRefExpr):
         if node.name.startswith("operator"):
@@ -372,6 +371,8 @@ class SourceGenerator(ExplicitNodeVisitor):
             if node.init_mode:
                 if node.init_mode == 'call':
                     self.write("(", node.init, ")")
+                elif node.init_mode == 'list':
+                    self.write("{", node.init, "}")
                 else:
                     self.write(" = ", node.init)
 

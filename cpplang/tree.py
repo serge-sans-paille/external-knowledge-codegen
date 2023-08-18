@@ -520,7 +520,7 @@ class GCCAsmStmt(Statement):
     attrs = ("string", "output_operands", "input_operands", "clobbers", "labels",)
 
 class ExprWithCleanups(Node):
-    attrs = ("subnodes",)
+    attrs = ("expr",)
 
 class ConstrainedExpression(Node):
     attrs = ("expr", "constraint")
@@ -632,7 +632,7 @@ class LambdaExpression(Primary):
 
 
 class CXXConstructExpr(Expression):
-    attrs = ("type", "subnodes",)
+    attrs = ("args",)
 
 
 class MaterializeTemporaryExpr(Expression):
