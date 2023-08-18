@@ -1428,8 +1428,17 @@ class Parser(object):
     @parse_debug
     def parse_CXXForRangeStmt(self, node) -> tree.CXXForRangeStmt:
         assert node['kind'] == "CXXForRangeStmt"
-        subnodes = self.parse_subnodes(node)
-        return tree.CXXForRangeStmt(subnodes=subnodes)
+        # range is not explicit, one need to dive through the implicitly generated begin statement
+        range_ = self.parse_node(node['inner'][1]['inner'][0]['inner'][0])
+        decl_stmt = self.parse_node(node['inner'][6])
+        body =  self.parse_node(node['inner'][7])
+        assert isinstance(decl_stmt, tree.DeclStmt)
+        if len(decl_stmt.decls) != 1:
+            raise NotImplementedError()
+        decl, = decl_stmt.decls
+        decl.init_mode = ''
+        decl.init = None
+        return tree.CXXForRangeStmt(decl=decl, range=range_, body=body)
 
     @parse_debug
     def parse_BuiltinType(self, node) -> tree.BuiltinType:

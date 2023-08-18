@@ -857,10 +857,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("goto", node.target, ";")
 
     def visit_CXXForRangeStmt(self, node: tree.CXXForRangeStmt):
-        assert len(node.subnodes) == 7
-        self.write("for (", node.subnodes[-2])
-        self.write(": ", node.subnodes[0], ")\n")
-        self.write(node.subnodes[-1])
+        self.write("for (", node.decl)
+        self.write(": ", node.range, ")\n")
+        self.write(node.body)
 
     def visit_WhileStmt(self, node: tree.WhileStmt):
         self.write("while (", node.cond, ")")

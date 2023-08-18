@@ -23,3 +23,8 @@ void for_break() {
 void for_continue() {
   for(;;) continue;
 }
+
+void range_for() {
+  char a[10];
+  for(char b: a) ;
+}

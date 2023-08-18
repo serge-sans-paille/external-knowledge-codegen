@@ -561,8 +561,8 @@ class ExprWithCleanups(Node):
 class ConstrainedExpression(Node):
     attrs = ("expr", "constraint")
 
-class CXXForRangeStmt(Node):
-    attrs = ("subnodes",)
+class CXXForRangeStmt(Statement):
+    attrs = ("decl", "range", "body",)
 
 class DeclOrExpr(Node):
     attrs = ("decl", "expr",)

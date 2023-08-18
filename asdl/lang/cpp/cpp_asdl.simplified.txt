@@ -26,7 +26,7 @@ declaration = AccessSpecDecl(access_spec access_spec)
             | VarDecl(identifier name, type type, constant? storage_class, constant init_mode, constant? implicit, constant? referenced, expression? init, attribute* attributes, constant? tls)
 
 statement = BreakStmt
-          | CXXForRangeStmt(statement* subnodes)
+          | CXXForRangeStmt(declaration decl, expression range, statement body)
           | CaseStmt(expression pattern, statement stmt)
           | CompoundStmt(statement* stmts)
           | ContinueStmt
