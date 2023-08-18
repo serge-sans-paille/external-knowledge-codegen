@@ -91,7 +91,8 @@ declaration_or_expression = DeclOrExpr(declaration* decl, expression? expr)
 cxx_ctor_initializer = CXXCtorInitializer(identifier name, expression* args)
 
 
-type = BuiltinType(identifier name)
+type = AutoType(auto_keyword keyword)
+     | BuiltinType(identifier name)
      | ConstantArrayType(type type, constant size)
      | DecayedType(type type)
      | ElaboratedType(type type, identifier? qualifiers)
@@ -139,3 +140,5 @@ method_attr = FinalAttr
 
 exception_spec = Throw(identifier* args)
                | NoExcept(constant? repr)
+
+auto_keyword = Auto | DecltypeAuto | GNUAutoType

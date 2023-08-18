@@ -986,6 +986,19 @@ class Parser(object):
             return qual_type
 
     @parse_debug
+    def parse_AutoType(self, node) -> tree.AutoType:
+        assert node['kind'] == "AutoType"
+        keyword = node['keyword']
+        if keyword == "auto":
+            keyword = tree.Auto()
+        elif keyword == "decltype(auto)":
+            keyword = tree.DecltypeAuto()
+        elif keyword == "__auto_type":
+            keyword = tree.GNUAutoType()
+
+        return tree.AutoType(keyword=keyword)
+
+    @parse_debug
     def parse_QualType(self, node) -> tree.QualType:
         assert node['kind'] == "QualType"
         type_, = self.parse_subnodes(node)

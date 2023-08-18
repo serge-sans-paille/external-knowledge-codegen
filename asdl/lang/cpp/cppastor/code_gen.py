@@ -451,7 +451,8 @@ class SourceGenerator(ExplicitNodeVisitor):
                 return self.visit_type_helper(current_expr, qualified_type)
 
             # west const
-            if isinstance(qualified_type, (tree.BuiltinType, tree.RecordType)):
+            if isinstance(qualified_type, (tree.BuiltinType, tree.RecordType,
+                                           tree.AutoType)):
                 return "{} {}".format(current_type.qualifiers,
                                       self.visit_type_helper(current_expr,
                                                                 qualified_type))
@@ -484,6 +485,11 @@ class SourceGenerator(ExplicitNodeVisitor):
 
         if isinstance(current_type, tree.TypedefType):
             return "{} {}".format(current_type.name, current_expr)
+
+        if isinstance(current_type, tree.AutoType):
+            auto_kw = { tree.Auto: "auto", tree.DecltypeAuto: "decltype(auto)",
+                       tree.GNUAutoType: '__auto_type'}
+            return "{} {}".format(auto_kw[type(current_type.keyword)], current_expr)
 
         raise NotImplementedError(current_type)
 
@@ -549,7 +555,8 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_QualType(self, node: tree.QualType):
         # west const
-        if isinstance(node.type, tree.BuiltinType):
+        if isinstance(node.type, (tree.BuiltinType, tree.RecordType,
+                                           tree.AutoType)):
             if node.qualifiers:
                 self.write(node.qualifiers, " ")
             self.write(node.type)

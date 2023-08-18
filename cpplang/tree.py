@@ -232,6 +232,9 @@ class Operator(Node):
 class Type(Node):
     attrs = ("name", "dimensions",)
 
+class AutoType(Node):
+    attrs = ("keyword",)
+
 class BuiltinType(Node):
     attrs = ("name",)
 
@@ -290,6 +293,16 @@ class TypeArgument(Node):
 
 # ------------------------------------------------------------------------------
 
+class Auto(Node):
+    attrs = ()
+
+class DecltypeAuto(Node):
+    attrs = ()
+
+class GNUAutoType(Node):
+    attrs = ()
+
+# ------------------------------------------------------------------------------
 
 class TypeParameter(Node):
     attrs = ("name", "extends",)
