@@ -7,7 +7,7 @@ declaration = AccessSpecDecl(access_spec access_spec)
             | CXXConstructorDecl(identifier name, constant? noexcept, default_mode? defaulted, statement? body, parameter* parameters, cxx_ctor_initializer* initializers)
             | CXXConversionDecl(identifier name, statement* subnodes)
             | CXXDestructorDecl(identifier name, constant? noexcept, constant? virtual, default_mode? defaulted, statement? body)
-            | CXXMethodDecl(identifier name, type return_type, constant? virtual, constant? noexcept, constant? const, default_mode? defaulted, method_attr* method_attrs, constant? ref_qualifier, statement? body, parameter* parameters)
+            | CXXMethodDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, exception_spec? exception, constant? virtual, constant? const, default_mode? defaulted, method_attr* method_attrs, constant? ref_qualifier, statement? body, parameter* parameters)
             | CXXRecordDecl(identifier name, identifier kind, base* bases, constant complete, declaration* decls)
             | ClassTemplateDecl(statement* subnodes)
             | EmptyDecl

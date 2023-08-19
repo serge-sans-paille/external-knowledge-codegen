@@ -588,8 +588,8 @@ class SourceGenerator(ExplicitNodeVisitor):
         if node.ref_qualifier:
             self.write(" ", node.ref_qualifier)
 
-        if node.noexcept:
-            self.write(" ", node.noexcept)
+        if node.exception:
+            self.write(" ", node.exception)
 
         if node.method_attrs:
             self.space_list(node.method_attrs)
