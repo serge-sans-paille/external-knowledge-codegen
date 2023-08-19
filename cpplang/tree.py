@@ -292,6 +292,10 @@ class TypeOfExprType(Type):
     attrs = ("repr",)
 
 
+class DecltypeType(Type):
+    attrs = ("repr",)
+
+
 class TypeArgument(Node):
     attrs = ("type", "pattern_type",)
 
