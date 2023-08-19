@@ -27,6 +27,7 @@ declaration = AccessSpecDecl(access_spec access_spec)
 
 statement = BreakStmt
           | CXXForRangeStmt(declaration decl, expression range, statement body)
+          | CXXTryStmt(statement body, exception_handler* handlers)
           | CaseStmt(expression pattern, statement stmt)
           | CompoundStmt(statement* stmts)
           | ContinueStmt
@@ -143,5 +144,7 @@ method_attr = FinalAttr
 
 exception_spec = Throw(identifier* args)
                | NoExcept(constant? repr)
+
+exception_handler = CXXCatchStmt(declaration? decl, statement body)
 
 auto_keyword = Auto | DecltypeAuto | GNUAutoType

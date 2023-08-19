@@ -482,8 +482,12 @@ class SynchronizedStmt(Statement):
     attrs = ("lock", "block")
 
 
-class TryStmt(Statement):
-    attrs = ("resources", "block", "catches", "finally_block")
+class CXXTryStmt(Statement):
+    attrs = ("body", "handlers",)
+
+
+class CXXCatchStmt(Statement):
+    attrs = ("decl", "body",)
 
 
 class SwitchStmt(Statement):

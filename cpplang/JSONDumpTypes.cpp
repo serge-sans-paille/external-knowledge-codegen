@@ -377,7 +377,8 @@ public:
   }
 
   void Visit(const Decl *D) {
-    if(const auto * VD = dyn_cast_or_null<ValueDecl>(D)) {
+    if(!D) return;
+    if(const auto * VD = dyn_cast<ValueDecl>(D)) {
       JOS.attribute("node_id", createPointerRepresentation(D));
         JOS.attributeBegin("node_inner");
         JOS.arrayBegin();

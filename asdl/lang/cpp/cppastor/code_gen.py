@@ -842,6 +842,14 @@ class SourceGenerator(ExplicitNodeVisitor):
         if node.expr:
             self.write(" ", node.expr)
 
+    def visit_CXXTryStmt(self, node: tree.CXXTryStmt):
+        self.write("try", node.body)
+        for handler in node.handlers:
+            self.visit(handler)
+
+    def visit_CXXCatchStmt(self, node: tree.CXXCatchStmt):
+        self.write("catch(", node.decl or "...", ")", node.body)
+
     def anonymize_type(self, prev_type, *, lvl=0):
         if isinstance(prev_type, (tree.BuiltinType, tree.RecordType, tree.TypedefType)):
             return tree.BuiltinType(name="")
