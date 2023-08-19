@@ -564,16 +564,18 @@ class Parser(object):
             self.anonymous_types[where] = name
 
         kind = node['tagUsed']
-        complete_definition = ('complete_definition'
-                               if ('completeDefinition' in node
-                                   and node['completeDefinition'])
-                               else '')
-        bases = ""
-        if "bases" in node:
-            s = self.get_node_source_code(node)
-            p = r"^[^:]*:([^{]*){"
-            temp = re.search(p, s).group(1)
-            bases = temp.replace("\\n", "")
+        complete = node.get('completeDefinition', '') and 'complete'
+
+        bases = []
+        for base in node.get('bases', ()):
+            written_access = base['writtenAccess']
+            if written_access == 'none':
+                access_type = type(None)
+            else:
+                access_type = getattr(tree, written_access.capitalize())
+            bases.append(tree.Base(access_spec=access_type(),
+                                   name=base['type']['qualType']))
+
         inner_nodes = self.parse_subnodes(node)
 
         # specific support for anonymous record through indirect field
@@ -599,7 +601,7 @@ class Parser(object):
 
 
         return tree.CXXRecordDecl(name=name, kind=kind, bases=bases,
-                                  complete_definition=complete_definition,
+                                  complete=complete,
                                   decls=inner_nodes)
 
     @parse_debug
