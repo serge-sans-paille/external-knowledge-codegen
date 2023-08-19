@@ -987,6 +987,18 @@ class Parser(object):
         #return tree.Namespace(name=name, subnodes=subnodes)
 
     @parse_debug
+    def parse_StaticAssertDecl(self, node) -> tree.StaticAssertDecl:
+        assert node['kind'] == "StaticAssertDecl"
+        inner_nodes = self.parse_subnodes(node)
+        if len(inner_nodes) == 1:
+            cond, = inner_nodes
+            message = None
+        else:
+            cond, message = inner_nodes
+            message = message.value
+        return tree.StaticAssertDecl(cond=cond, message=message)
+
+    @parse_debug
     def parse_UsingDirectiveDecl(self, node) -> tree.UsingDirectiveDecl:
         assert node['kind'] == "UsingDirectiveDecl"
         name = (self.get_node_source_code(node).replace('using namespace','').strip()

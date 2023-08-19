@@ -527,6 +527,10 @@ class DeclStmt(Statement):
     attrs = ("decls",)
 
 
+class StaticAssertDecl(Declaration):
+    attrs = ("cond", "message",)
+
+
 class VarDecl(Declaration):
     attrs = ("name", "type", "storage_class", "init_mode", "implicit",
              "referenced", "init", "attributes", "tls")

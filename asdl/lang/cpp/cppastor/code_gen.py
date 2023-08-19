@@ -927,6 +927,12 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("continue;")
         self.newline(extra=1)
 
+    def visit_StaticAssertDecl(self, node: tree.StaticAssertDecl):
+        self.write("static_assert(", node.cond)
+        if node.message is not None:
+            self.write(', ', node.message)
+        self.write(");")
+
     def visit_EnumConstantDecl(self, node: tree.EnumConstantDecl):
         if node.init is None:
             self.write(node.name)
