@@ -837,6 +837,11 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.comma_list(node.args)
         self.write(")")
 
+    def visit_CXXThrowExpr(self, node: tree.CXXThrowExpr):
+        self.write("throw")
+        if node.expr:
+            self.write(" ", node.expr)
+
     def anonymize_type(self, prev_type, *, lvl=0):
         if isinstance(prev_type, (tree.BuiltinType, tree.RecordType, tree.TypedefType)):
             return tree.BuiltinType(name="")

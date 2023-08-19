@@ -877,6 +877,15 @@ class Parser(object):
         child, = self.parse_subnodes(node)
         return tree.DefaultStmt(stmt=self.as_statement(child))
 
+    def parse_CXXThrowExpr(self, node) -> tree.CXXThrowExpr:
+        assert node['kind'] == "CXXThrowExpr"
+        inner_nodes = self.parse_subnodes(node)
+        if inner_nodes:
+            expr, = inner_nodes
+        else:
+            expr = None
+        return tree.CXXThrowExpr(expr=expr)
+
     def parse_CXXThisExpr(self, node) -> tree.CXXThisExpr:
         assert node['kind'] == "CXXThisExpr"
         if node.get('implicit'):
