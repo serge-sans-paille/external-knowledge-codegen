@@ -628,6 +628,9 @@ class Parser(object):
 
         type_info = self.type_informations[node['id']]
         return_type = self.parse_node(type_info).return_type
+        variadic = "..." if node['type']['qualType'].endswith('...)') else None
+        inline = "inline" if node.get('inline') else None
+        storage = node.get('storageClass')
 
         exception = None
         exception_spec = type_info.get('exception_spec')
@@ -656,12 +659,15 @@ class Parser(object):
 
         defaulted = self.parse_default(node)
 
-        return tree.CXXMethodDecl(name=name, return_type=return_type, virtual=virtual,
-                                  exception=exception, const=const,
-                                  defaulted=defaulted,
+        return tree.CXXMethodDecl(name=name, return_type=return_type,
+                                  variadic=variadic, parameters=args,
+                                  inline=inline, storage=storage,
+                                  virtual=virtual,
+                                  body=body, exception=exception,
+                                  # method specific keywords
+                                  const=const, defaulted=defaulted,
                                   method_attrs=method_attrs,
-                                  ref_qualifier=ref_qualifier,
-                                  body=body, parameters=args)
+                                  ref_qualifier=ref_qualifier)
 
     @parse_debug
     def parse_FunctionDecl(self, node) -> tree.FunctionDecl:

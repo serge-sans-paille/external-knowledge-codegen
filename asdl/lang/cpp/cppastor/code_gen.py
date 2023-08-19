@@ -572,6 +572,12 @@ class SourceGenerator(ExplicitNodeVisitor):
                 self.write(" ", node.qualifiers)
 
     def visit_CXXMethodDecl(self, node: tree.CXXMethodDecl):
+        if node.storage:
+            self.write(node.storage, " ")
+
+        if node.inline:
+            self.write("inline ")
+
         if node.virtual:
             self.write("virtual ")
 
@@ -580,6 +586,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("(")
         if node.parameters:
             self.comma_list(node.parameters)
+        if node.variadic:
+            if node.parameters:
+                self.write(", ")
+            self.write("...")
         self.write(")")
 
         if node.const:
