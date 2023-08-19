@@ -12,6 +12,12 @@ struct foo {
   void barbare() noexcept;
   void barbare(int) throw();
   void barbare(int, int) noexcept(false);
+
+  void barbant(int, ...);
+
+  inline void barbiche();
+
+  static void barbie();
 };
 
 struct foofoo : foo {
