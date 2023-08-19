@@ -353,13 +353,16 @@ class Member(NonEmptyDeclaration):
 
 
 class CXXMethodDecl(Declaration):
-    attrs = ("name", "return_type", "virtual", "noexcept", "const", "defaulted",
-             "method_attrs", "ref_qualifier", "body", "parameters",)
+    attrs = ("name", "return_type", "storage", "variadic", "inline",
+             "exception",
+             "virtual", "const", "defaulted", "method_attrs", "ref_qualifier",
+             "body", "parameters",)
 
 
 class FunctionDecl(Declaration):
     attrs = ("name", "return_type", "storage", "variadic", "inline",
-             "exception", "body", "parameters")
+             "exception",
+             "body", "parameters")
 
 class Throw(Node):
     attrs = ("args",)

@@ -714,15 +714,23 @@ class Parser(object):
         body, args, inits, method_attrs = self.parse_function_inner(node)
         assert not inits
 
-        return_type = self.parse_node(self.type_informations[node['id']]).return_type
+        type_info = self.type_informations[node['id']]
+        return_type = self.parse_node(type_info).return_type
 
-        noexcept = None
+        exception = None
+        exception_spec = type_info.get('exception_spec')
+        if exception_spec:
+            if exception_spec.get('isDynamic'):
+                exception = tree.Throw(args=exception_spec.get('inner', []))
+            elif exception_spec.get('isBasic'):
+                repr_ = exception_spec.get('expr_repr')
+                exception = tree.NoExcept(repr=repr_)
 
-        const = self.type_informations[node['id']].get('isconst')
+        const = type_info.get('isconst')
         if const:
             const = "const"
 
-        ref_qualifier = self.type_informations[node['id']].get('ref_qualifier')
+        ref_qualifier = type_info.get('ref_qualifier')
         if ref_qualifier == "LValue":
             ref_qualifier = "&"
         elif ref_qualifier == "RValue":
@@ -737,7 +745,7 @@ class Parser(object):
         defaulted = self.parse_default(node)
 
         return tree.CXXMethodDecl(name=name, return_type=return_type, virtual=virtual,
-                                  noexcept=noexcept, const=const,
+                                  exception=exception, const=const,
                                   defaulted=defaulted,
                                   method_attrs=method_attrs,
                                   ref_qualifier=ref_qualifier,
