@@ -139,6 +139,15 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
   else if(auto * UsingTy = dyn_cast<UsingType>(Ty)) {
     Ret["name"] = UsingTy->getFoundDecl()->getName();
   }
+  else if(auto* TypeOfExprTy = dyn_cast<TypeOfExprType>(Ty)) {
+    // FIXME: Just as for exception spec, we're hitting the limit of the approach
+    // here as we would like to parse the expression instead of just getting its
+    // raw representation, but we don't have support for that feature yet.
+    std::string pretty_buffer;
+    llvm::raw_string_ostream pretty_stream(pretty_buffer);
+    TypeOfExprTy->getUnderlyingExpr()->printPretty(pretty_stream, nullptr, PrintingPolicy(Ctx.getLangOpts()));
+    Ret["expr_repr"] = pretty_buffer;
+  }
   else if(auto * AutoTy = dyn_cast<AutoType>(Ty)) {
     switch(AutoTy->getKeyword()) {
       case AutoTypeKeyword::Auto:

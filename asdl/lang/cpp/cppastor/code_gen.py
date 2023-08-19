@@ -492,6 +492,9 @@ class SourceGenerator(ExplicitNodeVisitor):
                        tree.GNUAutoType: '__auto_type'}
             return "{} {}".format(auto_kw[type(current_type.keyword)], current_expr)
 
+        if isinstance(current_type, tree.TypeOfExprType):
+            return "__typeof__ {} {}".format(current_type.repr, current_expr)
+
         raise NotImplementedError(current_type)
 
     def visit_TypedefDecl(self, node: tree.TypedefDecl):

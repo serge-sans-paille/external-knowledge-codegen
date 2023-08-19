@@ -288,6 +288,10 @@ class ReferenceType(Type):
     attrs = ("arguments", "sub_type",)
 
 
+class TypeOfExprType(Type):
+    attrs = ("repr",)
+
+
 class TypeArgument(Node):
     attrs = ("type", "pattern_type",)
 

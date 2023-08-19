@@ -1534,6 +1534,11 @@ class Parser(object):
         return tree.RecordType(name=node['decl']['name'])
 
     @parse_debug
+    def parse_TypeOfExprType(self, node) -> tree.TypeOfExprType:
+        assert node['kind'] == "TypeOfExprType"
+        return tree.TypeOfExprType(repr=node["expr_repr"])
+
+    @parse_debug
     def parse_VectorType(self, node) -> tree.VectorType:
         assert node['kind'] == "VectorType"
         size = str(node['size'])
