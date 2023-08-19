@@ -148,7 +148,7 @@ class PackageDeclaration(NonEmptyDeclaration):
 
 
 class CXXRecordDecl(TypeDeclaration):
-    attrs = ("kind", "bases", "complete_definition", "decls",)
+    attrs = ("kind", "bases", "complete", "decls",)
 
 
 class RecordDecl(TypeDeclaration):
@@ -902,6 +902,10 @@ class CStyleCastExpr(Node):
 
 class FriendDecl(Declaration):
     attrs = ("type",)
+
+
+class Base(Node):
+    attrs = ("name", "access_spec",)
 
 
 class CXXStdInitializerListExpr(Node):

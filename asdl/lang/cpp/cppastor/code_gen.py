@@ -196,21 +196,19 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("}")
         self.newline(extra=1)
 
+    def visit_Base(self, node: tree.Base):
+        if node.access_spec:
+            self.write(node.access_spec, " ")
+        self.write(node.name)
+
     def visit_CXXRecordDecl(self, node: tree.CXXRecordDecl):
         self.write(node.kind, " ")
         self.write(node.name)
-        if node.bases:
-            self.write(" : ", node.bases)
-        if node.decls is not None:
-            if len(node.decls) > 0:
-                self.write(" {", "\n")
-                self.space_list(node.decls)
-                self.write("}")
-            elif len(node.complete_definition) > 0:
-                self.write(" {", "\n")
-                self.write("}")
-        elif node.complete_definition:
+        for base in node.bases or ():
+            self.write(" : ", base)
+        if node.complete:
             self.write(" {", "\n")
+            self.space_list(node.decls)
             self.write("}")
         self.write(";")
         self.newline(extra=1)
