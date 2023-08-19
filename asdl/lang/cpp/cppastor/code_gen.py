@@ -474,11 +474,20 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(current_type, tree.RValueReferenceType):
             return self.visit_type_helper("&& " + current_expr, current_type.type)
 
+        if isinstance(current_type, tree.TypedefType):
+            return "{} {}".format(current_type.name, current_expr)
+
         raise NotImplementedError(current_type)
 
     def visit_TypedefDecl(self, node: tree.TypedefDecl):
         expr = self.visit_type_helper(node.name, node.type)
         self.write("typedef ", expr, ";")
+
+    def visit_TypeAliasDecl(self, node: tree.TypeAliasDecl):
+        self.write("using ", node.name, " = ", node.type, ";")
+
+    def visit_UsingDecl(self, node: tree.UsingDecl):
+        self.write("using ", node.name, ";")
 
     def visit_BuiltinType(self, node: tree.BuiltinType):
         self.write(node.name)
@@ -514,6 +523,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_RValueReferenceType(self, node: tree.RValueReferenceType):
         self.write(node.type)
+
+    def visit_TypedefType(self, node: tree.TypedefType):
+        self.write(node.name)
 
     def visit_ConstantArrayType(self, node: tree.ConstantArrayType):
         self.write(node.type, "[", node.size, "]")
@@ -641,6 +653,11 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_UnaryExprOrTypeTraitExpr(self, node: tree.UnaryExprOrTypeTraitExpr):
         self.write(node.name, "(")
+        self.visit(node.type if node.type is not None else node.expr)
+        self.write(")")
+
+    def visit_CXXTypeidExpr(self, node: tree.CXXTypeidExpr):
+        self.write("typeid(")
         self.visit(node.type if node.type is not None else node.expr)
         self.write(")")
 
@@ -791,7 +808,13 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("true" if node.value == "True" else "false")
 
     def visit_CXXFunctionalCastExpr(self, node: tree.CXXFunctionalCastExpr):
-        self.write(node.type, "(", node.subnodes[0], ")")
+        self.write(node.type, "(", node.expr, ")")
+
+    def visit_CXXStaticCastExpr(self, node: tree.CXXStaticCastExpr):
+        self.write("static_cast<", node.type, ">(", node.expr, ")")
+
+    def visit_CXXReinterpretCastExpr(self, node: tree.CXXReinterpretCastExpr):
+        self.write("reinterpret_cast<", node.type, ">(", node.expr, ")")
 
     def visit_CXXTemporaryObjectExpr(self, node: tree.CXXTemporaryObjectExpr):
         self.write(node.type, "(")

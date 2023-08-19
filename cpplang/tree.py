@@ -229,6 +229,9 @@ class ConstantArrayType(Node):
 class DecayedType(Node):
     attrs = ("type",)
 
+class TypedefType(Node):
+    attrs = ("name", "type",)
+
 class ElaboratedType(Node):
     attrs = ("type", "qualifiers", )
 
@@ -504,6 +507,14 @@ class TypedefDecl(Declaration):
     attrs = ("name", "type")
 
 
+class TypeAliasDecl(Declaration):
+    attrs = ("name", "type")
+
+
+class UsingDecl(Declaration):
+    attrs = ("name",)
+
+
 class TypeRef(Node):
     attrs = ("name",)
 
@@ -689,6 +700,10 @@ class CXXThisExpr(Primary):
     attrs = ("subnodes",)
 
 
+class CXXTypeidExpr(Primary):
+    attrs = ("expr", "type",)
+
+
 class MemberExpr(Primary):
     attrs = ("name", "op", "expr")
 
@@ -717,8 +732,16 @@ class CXXTemporaryObjectExpr(Node):
     attrs = ("type", "subnodes",)
 
 
-class CXXFunctionalCastExpr(Node):
-    attrs = ("type", "subnodes",)
+class CXXFunctionalCastExpr(Expression):
+    attrs = ("type", "expr",)
+
+
+class CXXStaticCastExpr(Expression):
+    attrs = ("type", "expr",)
+
+
+class CXXReinterpretCastExpr(Expression):
+    attrs = ("type", "expr",)
 
 
 class NullStmt(Statement):

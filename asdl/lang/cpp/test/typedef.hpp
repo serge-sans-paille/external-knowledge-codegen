@@ -21,3 +21,5 @@ typedef foo record;
 typedef int (&function_ref)(float);
 
 typedef const char (&char_array)[10];
+
+simple user;

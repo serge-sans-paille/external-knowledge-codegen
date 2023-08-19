@@ -130,6 +130,12 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Inner.push_back(fullType(Ctx, PointerTy->getPointeeType()));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
+  else if(auto * TypedefTy = dyn_cast<TypedefType>(Ty)) {
+    Ret["name"] = TypedefTy->getDecl()->getName();
+    llvm::json::Array Inner;
+    Inner.push_back(fullType(Ctx, TypedefTy->getDecl()->getUnderlyingType()));
+    Ret["inner"] = llvm::json::Value(std::move(Inner));
+  }
   else if(auto * RecordTy = dyn_cast<RecordType>(Ty)) {
     Ret["decl"] = llvm::json::Object({{"name", RecordTy->getDecl()->getName()}});
   }
@@ -329,6 +335,18 @@ public:
             JOS.attributeEnd();
         }
       }
+      else if(const auto * TypeidE = dyn_cast<CXXTypeidExpr>(E)) {
+        if(TypeidE->isTypeOperand()) {
+          JOS.attribute("node_id", createPointerRepresentation(E));
+            JOS.attributeBegin("node_inner");
+            JOS.arrayBegin();
+          JOS.objectBegin();
+          Visit(TypeidE-> getTypeOperand (Ctx));
+          JOS.objectEnd();
+            JOS.arrayEnd();
+            JOS.attributeEnd();
+        }
+      }
       else {
         JOS.attribute("node_id", createPointerRepresentation(E));
           JOS.attributeBegin("node_inner");
@@ -387,6 +405,7 @@ public:
 };
 
 void JSONNodeTypeDumper::Visit(const Type *T) {
+  if(!T) return;
   InnerTypeVisitor::Visit(T);
 }
 

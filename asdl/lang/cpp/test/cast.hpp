@@ -10,3 +10,10 @@ void foo() {
   const void * p3 = (const void*)&x;
 }
 
+void bar() {
+  int(1);
+  static_cast<float>(1);
+  unsigned long i;
+  reinterpret_cast<long *>(&i);
+}
+

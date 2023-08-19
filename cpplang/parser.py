@@ -446,7 +446,7 @@ class Parser(object):
                                                                      [])]
 
             for field in ('aliasee', 'cleanup_function', 'deprecation_message',
-                          'section_name', 'visibility', 'tls_model',):
+                          'section_name', 'visibility', 'tls_model', 'name'):
                 if field not in child:
                     continue
 
@@ -489,24 +489,25 @@ class Parser(object):
         subnodes = self.parse_subnodes(node)
 
         # specific support for anonymous record through indirect field
-        indirect_field_names = {n['name'] for n in node['inner']
-                                if n['kind'] == 'IndirectFieldDecl'}
-        anonymous_records = [n for n in node['inner']
-                             if n['kind'] == 'CXXRecordDecl'
-                             if 'name' not in n]
+        if subnodes:
+            indirect_field_names = {n['name'] for n in node['inner']
+                                    if n['kind'] == 'IndirectFieldDecl'}
+            anonymous_records = [n for n in node['inner']
+                                 if n['kind'] == 'CXXRecordDecl'
+                                 if 'name' not in n]
 
-        for subnode in subnodes:
-            if not isinstance(subnode, tree.CXXRecordDecl):
-                continue
-            if subnode.name not in self.anonymous_types.values():
-                continue
-            field_names = {field.name for field in subnode.subnodes
-                           if isinstance(field, tree.FieldDecl)}
+            for subnode in subnodes:
+                if not isinstance(subnode, tree.CXXRecordDecl):
+                    continue
+                if subnode.name not in self.anonymous_types.values():
+                    continue
+                field_names = {field.name for field in subnode.subnodes
+                               if isinstance(field, tree.FieldDecl)}
 
-            # Force the record name to empty to correctly represent indirect
-            # fields.
-            if field_names.issubset(indirect_field_names):
-                subnode.name = ""
+                # Force the record name to empty to correctly represent indirect
+                # fields.
+                if field_names.issubset(indirect_field_names):
+                    subnode.name = ""
 
 
         return tree.CXXRecordDecl(name=name, kind=kind, bases=bases,
@@ -886,6 +887,17 @@ class Parser(object):
             return None
         return tree.CXXThisExpr()
 
+    def parse_CXXTypeidExpr(self, node) -> tree.CXXTypeidExpr:
+        assert node['kind'] == "CXXTypeidExpr"
+        if 'typeArg' in node:
+            expr = None
+            type_ = self.parse_node(self.type_informations[node['id']])
+        else:
+            expr, = self.parse_subnodes(node)
+            type_ = None
+        print(expr, type_)
+        return tree.CXXTypeidExpr(expr=expr, type=type_)
+
     def parse_MemberExpr(self, node) -> tree.MemberExpr:
         assert node['kind'] == "MemberExpr"
         name = node['name']
@@ -987,6 +999,8 @@ class Parser(object):
         name = node['name']
         implicit = node.get('isImplicit')
         referenced = node.get('isReferenced')
+        if referenced:
+            referenced = "referenced"
         storage_class = node.get('storageClass')
         tls = node.get('tls')
 
@@ -1112,6 +1126,19 @@ class Parser(object):
         name = node['name']
         subnodes = self.parse_subnodes(node)
         return tree.TypeRef(name=name, subnodes=subnodes)
+
+    @parse_debug
+    def parse_TypeAliasDecl(self, node) -> tree.TypeAliasDecl:
+        assert node['kind'] == "TypeAliasDecl"
+        name = node['name']
+        type_, = self.parse_subnodes(node)
+        return tree.TypeAliasDecl(name=name, type=type_)
+
+    @parse_debug
+    def parse_UsingDecl(self, node) -> tree.UsingDecl:
+        assert node['kind'] == "UsingDecl"
+        name = node['name']
+        return tree.UsingDecl(name=name)
 
     #@parse_debug
     #def parse_NamespaceRef(self, node) -> tree.NamespaceRef:
@@ -1305,15 +1332,23 @@ class Parser(object):
     @parse_debug
     def parse_CXXFunctionalCastExpr(self, node) -> tree.CXXFunctionalCastExpr:
         assert node['kind'] == "CXXFunctionalCastExpr"
-        type_ = self.get_node_source_code(node).split("(")[0]
-        #type_ = node['type']['qualType']
-        #type_ = node['conversionFunc']['name']
-        if type_ == 'Lima::Common::XMLConfigurationFiles::ModuleConfigurationStructure':
-            breakpoint()
-        elif type_ == 'basic_string':
-            breakpoint()
-        subnodes = self.parse_subnodes(node)
-        return tree.CXXFunctionalCastExpr(type=type_, subnodes=subnodes)
+        type_ = self.parse_node(self.type_informations[node['id']])
+        expr, = self.parse_subnodes(node)
+        return tree.CXXFunctionalCastExpr(type=type_, expr=expr)
+
+    @parse_debug
+    def parse_CXXStaticCastExpr(self, node) -> tree.CXXStaticCastExpr:
+        assert node['kind'] == "CXXStaticCastExpr"
+        type_ = self.parse_node(self.type_informations[node['id']])
+        expr, = self.parse_subnodes(node)
+        return tree.CXXStaticCastExpr(type=type_, expr=expr)
+
+    @parse_debug
+    def parse_CXXReinterpretCastExpr(self, node) -> tree.CXXReinterpretCastExpr:
+        assert node['kind'] == "CXXReinterpretCastExpr"
+        type_ = self.parse_node(self.type_informations[node['id']])
+        expr, = self.parse_subnodes(node)
+        return tree.CXXReinterpretCastExpr(type=type_, expr=expr)
 
     @parse_debug
     def parse_NullStmt(self, node) -> tree.NullStmt:
@@ -1355,7 +1390,6 @@ class Parser(object):
     @parse_debug
     def parse_CStyleCastExpr(self, node) -> tree.CStyleCastExpr:
         assert node['kind'] == "CStyleCastExpr"
-        #type_ = self.reparse_type(node['type'])
         type_ = self.parse_node(self.type_informations[node['id']])
         expr, = self.parse_subnodes(node)
         return tree.CStyleCastExpr(type=type_, expr=expr)
@@ -1418,6 +1452,12 @@ class Parser(object):
         return_type, *parameter_types = self.parse_subnodes(node)
         return tree.FunctionProtoType(return_type=return_type,
                                       parameter_types=parameter_types)
+    @parse_debug
+    def parse_TypedefType(self, node) -> tree.TypedefType:
+        assert node['kind'] == "TypedefType"
+        type_, = self.parse_subnodes(node)
+        return tree.TypedefType(name=node['name'], type=type_)
+
 
     @parse_debug
     def parse_IncompleteArrayType(self, node) -> tree.IncompleteArrayType:

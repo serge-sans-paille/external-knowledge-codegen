@@ -1,3 +1,5 @@
+struct fwd;
+
 struct empty {
 };
 
