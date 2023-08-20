@@ -878,7 +878,7 @@ class ImplicitValueInitExpr(Node):
 
 
 class CXXConversionDecl(Declaration):
-    attrs = ("name", "subnodes",)
+    attrs = ("name", "inline", "exception", "const", "body",)
 
 # ------------------------------------------------------------------------------
 
