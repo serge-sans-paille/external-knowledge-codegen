@@ -213,33 +213,8 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(";")
         self.newline(extra=1)
 
-    def visit_CXXConstructorDestructorDecl(self, node):
-        if getattr(node, "virtual", None):
-            self.write("virtual ")
-
-        self.write(node.name)
-        self.write("(")
-        if getattr(node, "parameters", None):
-            self.comma_list(node.parameters)
-        self.write(")")
-
-        if node.noexcept:
-            self.write(" ", node.noexcept)
-
-        if getattr(node, 'initializers', None):
-            self.write(" : ")
-            self.comma_list(node.initializers)
-
-        if node.body is not None:
-            self.write(node.body)
-        else:
-            if node.defaulted:
-                self.write(" = ", node.defaulted)
-            self.write(";")
-        self.newline(extra=1)
-
     def visit_CXXConstructorDecl(self, node: tree.CXXConstructorDecl):
-        self.visit_CXXConstructorDestructorDecl(node)
+        self.visit_function_like(node)
 
     def visit_CXXConstructExpr(self, node: tree.CXXConstructExpr):
         self.comma_list(node.args)
@@ -251,7 +226,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(')')
 
     def visit_CXXDestructorDecl(self, node: tree.CXXDestructorDecl):
-        self.visit_CXXConstructorDestructorDecl(node)
+        self.visit_function_like(node)
 
     def visit_NamespaceDecl(self, node: tree.NamespaceDecl):
         assert node.name is not None
@@ -572,45 +547,7 @@ class SourceGenerator(ExplicitNodeVisitor):
                 self.write(" ", node.qualifiers)
 
     def visit_CXXMethodDecl(self, node: tree.CXXMethodDecl):
-        if node.storage:
-            self.write(node.storage, " ")
-
-        if node.inline:
-            self.write("inline ")
-
-        if node.virtual:
-            self.write("virtual ")
-
-        self.write(node.return_type, " ")
-        self.write(node.name)
-        self.write("(")
-        if node.parameters:
-            self.comma_list(node.parameters)
-        if node.variadic:
-            if node.parameters:
-                self.write(", ")
-            self.write("...")
-        self.write(")")
-
-        if node.const:
-            self.write(" const")
-
-        if node.ref_qualifier:
-            self.write(" ", node.ref_qualifier)
-
-        if node.exception:
-            self.write(" ", node.exception)
-
-        if node.method_attrs:
-            self.space_list(node.method_attrs)
-
-        if node.body:
-            self.write(node.body)
-        else:
-            if node.defaulted:
-                self.write(" = ", node.defaulted)
-            self.write(";")
-        self.newline(extra=1)
+        self.visit_function_like(node)
 
     def visit_PureVirtual(self, node: tree.PureVirtual):
         self.write("0")
@@ -622,33 +559,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("delete")
 
     def visit_FunctionDecl(self, node: tree.FunctionDecl):
-        if node.storage:
-            self.write(node.storage, " ")
-
-        if node.inline:
-            self.write("inline ")
-
-        self.write(node.return_type, " ")
-        self.write(node.name)
-
-        self.write("(")
-        if node.parameters:
-            self.comma_list(node.parameters)
-        if node.variadic:
-            if node.parameters:
-                self.write(", ")
-            self.write("...")
-        self.write(")")
-
-        if node.exception:
-            self.write(" ", node.exception)
-
-        if node.body:
-            self.write(node.body)
-        else:
-            # forward declaration
-            self.write(";")
-        self.newline(extra=1)
+        self.visit_function_like(node)
 
     def visit_IntegerLiteral(self, node: tree.IntegerLiteral):
         suffixes = {
@@ -962,24 +873,59 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_ImplicitValueInitExpr(self, node: tree.ImplicitValueInitExpr):
         pass
 
-    def visit_CXXConversionDecl(self, node: tree.CXXConversionDecl):
-        if node.inline:
+    def visit_function_like(self, node):
+        if getattr(node, 'storage', None):
+            self.write(node.storage, " ")
+
+        if getattr(node, 'inline', None):
             self.write("inline ")
 
-        self.write(node.name)
-        self.write("()")
+        if getattr(node, 'virtual', None):
+            self.write("virtual ")
 
-        if node.const:
+        if hasattr(node, 'return_type'):
+            self.write(node.return_type, " ")
+
+        self.write(node.name)
+
+        self.write("(")
+
+        if hasattr(node, 'parameters'):
+            self.comma_list(node.parameters)
+
+        if getattr(node, 'variadic', None):
+            if node.parameters:
+                self.write(", ")
+            self.write("...")
+        self.write(")")
+
+        if getattr(node, 'const', None):
             self.write(" const")
 
-        if node.exception:
+        if getattr(node, 'ref_qualifier', None):
+            self.write(" ", node.ref_qualifier)
+
+        if getattr(node, 'exception', None):
             self.write(" ", node.exception)
 
-        if node.body:
+        if getattr(node, 'method_attrs', None):
+            self.space_list(node.method_attrs)
+
+        if getattr(node, 'initializers', None):
+            self.write(" : ")
+            self.comma_list(node.initializers)
+
+        if node.body is not None:
             self.write(node.body)
         else:
+            if getattr(node, 'defaulted', None):
+                self.write(" = ", node.defaulted)
+            # forward declaration
             self.write(";")
         self.newline(extra=1)
+
+    def visit_CXXConversionDecl(self, node: tree.CXXConversionDecl):
+        self.visit_function_like(node)
 
     def visit_EmptyDecl(self, node: tree.EmptyDecl):
         self.write(";")
