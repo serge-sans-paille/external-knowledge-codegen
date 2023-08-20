@@ -3,12 +3,12 @@ identifier, int, string, constant
 
 cu = TranslationUnit(statement* stmts)
 
-declaration = AccessSpecDecl(identifier access_spec)
+declaration = AccessSpecDecl(access_spec access_spec)
             | CXXConstructorDecl(identifier name, constant? noexcept, default_mode? defaulted, statement? body, parameter* parameters, cxx_ctor_initializer* initializers)
             | CXXConversionDecl(identifier name, statement* subnodes)
             | CXXDestructorDecl(identifier name, constant? noexcept, constant? virtual, default_mode? defaulted, statement? body)
             | CXXMethodDecl(identifier name, type return_type, constant? virtual, constant? noexcept, constant? const, default_mode? defaulted, method_attr* method_attrs, constant? ref_qualifier, statement? body, parameter* parameters)
-            | CXXRecordDecl(identifier name, identifier kind, identifier bases, constant complete_definition, declaration* subnodes)
+            | CXXRecordDecl(identifier name, identifier kind, identifier bases, constant complete_definition, declaration* decls)
             | ClassTemplateDecl(statement* subnodes)
             | EmptyDecl
             | EnumDecl(identifier? name, enum_field* fields)
@@ -26,7 +26,7 @@ declaration = AccessSpecDecl(identifier access_spec)
             | VarDecl(identifier name, type type, constant? storage_class, constant init_mode, constant? implicit, constant? referenced, expression? init, attribute* attributes, constant? tls)
 
 statement = BreakStmt
-          | CXXForRangeStmt(statement* subnodes)
+          | CXXForRangeStmt(declaration decl, expression range, statement body)
           | CaseStmt(expression pattern, statement stmt)
           | CompoundStmt(statement* stmts)
           | ContinueStmt
@@ -50,7 +50,7 @@ statement = BreakStmt
 expression = ArraySubscriptExpr(expression base, expression index)
            | BinaryOperator(constant opcode, expression lhs, expression rhs)
            | CStyleCastExpr(type type, expression expr)
-           | CXXBindTemporaryExpr(expression* subnodes)
+           | CXXBindTemporaryExpr(expression expr)
            | CXXBoolLiteralExpr(constant value)
            | CXXConstructExpr(expression* args)
            | CXXDefaultArgExpr
@@ -62,7 +62,7 @@ expression = ArraySubscriptExpr(expression base, expression index)
            | CXXReinterpretCastExpr(type type, expression expr)
            | CXXStaticCastExpr(type type, expression expr)
            | CXXStdInitializerListExpr(expression* subnodes)
-           | CXXTemporaryObjectExpr(identifier type, expression* subnodes)
+           | CXXTemporaryObjectExpr(type type, expression* args)
            | CXXThisExpr
            | CXXTypeidExpr(expression? expr, type? type)
            | CallExpr(expression callee, expression* args)
@@ -91,7 +91,8 @@ declaration_or_expression = DeclOrExpr(declaration* decl, expression? expr)
 cxx_ctor_initializer = CXXCtorInitializer(identifier name, expression* args)
 
 
-type = BuiltinType(identifier name)
+type = AutoType(auto_keyword keyword)
+     | BuiltinType(identifier name)
      | ConstantArrayType(type type, constant size)
      | DecayedType(type type)
      | ElaboratedType(type type, identifier? qualifiers)
@@ -126,6 +127,10 @@ attribute = AlignedAttr(expression? size)
           | VisibilityAttr(constant visibility)
           | WeakAttr
 
+access_spec = Public
+            | Protected
+            | Private
+
 default_mode = Default
              | Delete
              | PureVirtual
@@ -135,3 +140,5 @@ method_attr = FinalAttr
 
 exception_spec = Throw(identifier* args)
                | NoExcept(constant? repr)
+
+auto_keyword = Auto | DecltypeAuto | GNUAutoType

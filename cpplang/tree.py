@@ -148,7 +148,7 @@ class PackageDeclaration(NonEmptyDeclaration):
 
 
 class CXXRecordDecl(TypeDeclaration):
-    attrs = ("kind", "bases", "complete_definition", "subnodes",)
+    attrs = ("kind", "bases", "complete_definition", "decls",)
 
 
 class RecordDecl(TypeDeclaration):
@@ -169,6 +169,18 @@ class CXXDestructorDecl(Declaration):
 
 class AccessSpecDecl(Declaration):
     attrs = ("access_spec",)
+
+
+class Public(Node):
+    attrs = ()
+
+
+class Private(Node):
+    attrs = ()
+
+
+class Protected(Node):
+    attrs = ()
 
 
 class EnumDeclaration(TypeDeclaration):
@@ -219,6 +231,9 @@ class Operator(Node):
 
 class Type(Node):
     attrs = ("name", "dimensions",)
+
+class AutoType(Node):
+    attrs = ("keyword",)
 
 class BuiltinType(Node):
     attrs = ("name",)
@@ -278,6 +293,16 @@ class TypeArgument(Node):
 
 # ------------------------------------------------------------------------------
 
+class Auto(Node):
+    attrs = ()
+
+class DecltypeAuto(Node):
+    attrs = ()
+
+class GNUAutoType(Node):
+    attrs = ()
+
+# ------------------------------------------------------------------------------
 
 class TypeParameter(Node):
     attrs = ("name", "extends",)
@@ -536,8 +561,8 @@ class ExprWithCleanups(Node):
 class ConstrainedExpression(Node):
     attrs = ("expr", "constraint")
 
-class CXXForRangeStmt(Node):
-    attrs = ("subnodes",)
+class CXXForRangeStmt(Statement):
+    attrs = ("decl", "range", "body",)
 
 class DeclOrExpr(Node):
     attrs = ("decl", "expr",)
@@ -651,7 +676,7 @@ class MaterializeTemporaryExpr(Expression):
 
 
 class CXXBindTemporaryExpr(Expression):
-    attrs = ("subnodes",)
+    attrs = ("expr",)
 
 
 class CXXNewExpr(Expression):
@@ -729,7 +754,7 @@ class CXXBoolLiteralExpr(Primary):
 
 
 class CXXTemporaryObjectExpr(Node):
-    attrs = ("type", "subnodes",)
+    attrs = ("type", "args",)
 
 
 class CXXFunctionalCastExpr(Expression):

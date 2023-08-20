@@ -200,11 +200,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.name)
         if node.bases:
             self.write(" : ", node.bases)
-        if node.subnodes is not None:
-            if len(node.subnodes) > 0:
+        if node.decls is not None:
+            if len(node.decls) > 0:
                 self.write(" {", "\n")
-                for c in node.subnodes:
-                    self.write(c)
+                self.space_list(node.decls)
                 self.write("}")
             elif len(node.complete_definition) > 0:
                 self.write(" {", "\n")
@@ -273,6 +272,15 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_AccessSpecDecl(self, node: tree.AccessSpecDecl):
         self.write(node.access_spec, ":", "\n")
 
+    def visit_Public(self, node: tree.Public):
+        self.write("public")
+
+    def visit_Protected(self, node: tree.Protected):
+        self.write("protected")
+
+    def visit_Private(self, node: tree.Private):
+        self.write("private")
+
     def visit_ParmVarDecl(self, node: tree.ParmVarDecl):
         self.write(self.visit_type_helper(node.name or "", node.type))
         if node.default:
@@ -291,7 +299,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.expr)
 
     def visit_CXXBindTemporaryExpr(self, node: tree.CXXBindTemporaryExpr):
-        self.write(node.subnodes[0])
+        self.write(node.expr)
 
     def visit_ImplicitCastExpr(self, node: tree.ImplicitCastExpr):
         # The cast is implicit, no need to pretty-print it.
@@ -443,7 +451,8 @@ class SourceGenerator(ExplicitNodeVisitor):
                 return self.visit_type_helper(current_expr, qualified_type)
 
             # west const
-            if isinstance(qualified_type, (tree.BuiltinType, tree.RecordType)):
+            if isinstance(qualified_type, (tree.BuiltinType, tree.RecordType,
+                                           tree.AutoType)):
                 return "{} {}".format(current_type.qualifiers,
                                       self.visit_type_helper(current_expr,
                                                                 qualified_type))
@@ -476,6 +485,11 @@ class SourceGenerator(ExplicitNodeVisitor):
 
         if isinstance(current_type, tree.TypedefType):
             return "{} {}".format(current_type.name, current_expr)
+
+        if isinstance(current_type, tree.AutoType):
+            auto_kw = { tree.Auto: "auto", tree.DecltypeAuto: "decltype(auto)",
+                       tree.GNUAutoType: '__auto_type'}
+            return "{} {}".format(auto_kw[type(current_type.keyword)], current_expr)
 
         raise NotImplementedError(current_type)
 
@@ -541,7 +555,8 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_QualType(self, node: tree.QualType):
         # west const
-        if isinstance(node.type, tree.BuiltinType):
+        if isinstance(node.type, (tree.BuiltinType, tree.RecordType,
+                                           tree.AutoType)):
             if node.qualifiers:
                 self.write(node.qualifiers, " ")
             self.write(node.type)
@@ -818,7 +833,7 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_CXXTemporaryObjectExpr(self, node: tree.CXXTemporaryObjectExpr):
         self.write(node.type, "(")
-        self.comma_list(node.subnodes)
+        self.comma_list(node.args)
         self.write(")")
 
     def visit_DeclOrExpr(self, node: tree.DeclOrExpr):
@@ -842,10 +857,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("goto", node.target, ";")
 
     def visit_CXXForRangeStmt(self, node: tree.CXXForRangeStmt):
-        assert len(node.subnodes) == 7
-        self.write("for (", node.subnodes[-2])
-        self.write(": ", node.subnodes[0], ")\n")
-        self.write(node.subnodes[-1])
+        self.write("for (", node.decl)
+        self.write(": ", node.range, ")\n")
+        self.write(node.body)
 
     def visit_WhileStmt(self, node: tree.WhileStmt):
         self.write("while (", node.cond, ")")

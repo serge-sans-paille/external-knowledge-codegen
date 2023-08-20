@@ -136,6 +136,22 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Inner.push_back(fullType(Ctx, TypedefTy->getDecl()->getUnderlyingType()));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
+  else if(auto * UsingTy = dyn_cast<UsingType>(Ty)) {
+    Ret["name"] = UsingTy->getFoundDecl()->getName();
+  }
+  else if(auto * AutoTy = dyn_cast<AutoType>(Ty)) {
+    switch(AutoTy->getKeyword()) {
+      case AutoTypeKeyword::Auto:
+        Ret["keyword"] = "auto";
+        break;
+      case AutoTypeKeyword::DecltypeAuto:
+        Ret["keyword"] = "decltype(auto)";
+        break;
+      case AutoTypeKeyword::GNUAutoType:
+        Ret["keyword"] = "__auto_type";
+        break;
+    }
+  }
   else if(auto * RecordTy = dyn_cast<RecordType>(Ty)) {
     Ret["decl"] = llvm::json::Object({{"name", RecordTy->getDecl()->getName()}});
   }

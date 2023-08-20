@@ -67,3 +67,22 @@ class with_virtual_destructor {
   virtual ~with_virtual_destructor();
 };
 
+
+class access_spec {
+  public:
+    int i;
+  private:
+    int j;
+  protected:
+    int k;
+  private:
+};
+
+
+struct S {
+  S() { }  // User defined constructor makes S non-POD.
+  ~S() { } // User defined destructor makes it non-trivial.
+};
+void test() {
+  const S &s_ref = S(); // Requires a CXXBindTemporaryExpr.
+}

@@ -486,33 +486,33 @@ class Parser(object):
             p = r"^[^:]*:([^{]*){"
             temp = re.search(p, s).group(1)
             bases = temp.replace("\\n", "")
-        subnodes = self.parse_subnodes(node)
+        inner_nodes = self.parse_subnodes(node)
 
         # specific support for anonymous record through indirect field
-        if subnodes:
+        if inner_nodes:
             indirect_field_names = {n['name'] for n in node['inner']
                                     if n['kind'] == 'IndirectFieldDecl'}
             anonymous_records = [n for n in node['inner']
                                  if n['kind'] == 'CXXRecordDecl'
                                  if 'name' not in n]
 
-            for subnode in subnodes:
-                if not isinstance(subnode, tree.CXXRecordDecl):
+            for inner_node in inner_nodes:
+                if not isinstance(inner_node, tree.CXXRecordDecl):
                     continue
-                if subnode.name not in self.anonymous_types.values():
+                if inner_node.name not in self.anonymous_types.values():
                     continue
-                field_names = {field.name for field in subnode.subnodes
+                field_names = {field.name for field in inner_node.decls
                                if isinstance(field, tree.FieldDecl)}
 
                 # Force the record name to empty to correctly represent indirect
                 # fields.
                 if field_names.issubset(indirect_field_names):
-                    subnode.name = ""
+                    inner_node.name = ""
 
 
         return tree.CXXRecordDecl(name=name, kind=kind, bases=bases,
                                   complete_definition=complete_definition,
-                                  subnodes=subnodes)
+                                  decls=inner_nodes)
 
     @parse_debug
     def parse_RecordDecl(self, node) -> tree.RecordDecl:
@@ -610,10 +610,9 @@ class Parser(object):
     @parse_debug
     def parse_AccessSpecDecl(self, node) -> tree.AccessSpecDecl:
         assert node['kind'] == "AccessSpecDecl"
-        access_spec = node['access']
-        subnodes = self.parse_subnodes(node)
-
-        return tree.AccessSpecDecl(access_spec=access_spec, subnodes=subnodes)
+        access = node['access']
+        access_spec = getattr(tree, access.capitalize())()
+        return tree.AccessSpecDecl(access_spec=access_spec)
 
     @parse_debug
     def parse_CXXMethodDecl(self, node) -> tree.CXXMethodDecl:
@@ -987,6 +986,19 @@ class Parser(object):
             return qual_type
 
     @parse_debug
+    def parse_AutoType(self, node) -> tree.AutoType:
+        assert node['kind'] == "AutoType"
+        keyword = node['keyword']
+        if keyword == "auto":
+            keyword = tree.Auto()
+        elif keyword == "decltype(auto)":
+            keyword = tree.DecltypeAuto()
+        elif keyword == "__auto_type":
+            keyword = tree.GNUAutoType()
+
+        return tree.AutoType(keyword=keyword)
+
+    @parse_debug
     def parse_QualType(self, node) -> tree.QualType:
         assert node['kind'] == "QualType"
         type_, = self.parse_subnodes(node)
@@ -1169,9 +1181,8 @@ class Parser(object):
     @parse_debug
     def parse_CXXBindTemporaryExpr(self, node) -> tree.CXXBindTemporaryExpr:
         assert node['kind'] == "CXXBindTemporaryExpr"
-        subnodes = self.parse_subnodes(node)
-        assert len(subnodes) > 0
-        return tree.CXXBindTemporaryExpr(subnodes=subnodes)
+        expr, = self.parse_subnodes(node)
+        return tree.CXXBindTemporaryExpr(expr=expr)
 
     @parse_debug
     def parse_ImplicitCastExpr(self, node) -> tree.ImplicitCastExpr:
@@ -1324,10 +1335,9 @@ class Parser(object):
     @parse_debug
     def parse_CXXTemporaryObjectExpr(self, node) -> tree.CXXTemporaryObjectExpr:
         assert node['kind'] == "CXXTemporaryObjectExpr"
-        type_ = node['type']['qualType']
-        subnodes = self.parse_subnodes(node)
-        # assert len(subnodes) > 0
-        return tree.CXXTemporaryObjectExpr(type=type_, subnodes=subnodes)
+        type_ = self.parse_node(self.type_informations[node['id']])
+        args = self.parse_subnodes(node)
+        return tree.CXXTemporaryObjectExpr(type=type_, args=args)
 
     @parse_debug
     def parse_CXXFunctionalCastExpr(self, node) -> tree.CXXFunctionalCastExpr:
@@ -1418,8 +1428,17 @@ class Parser(object):
     @parse_debug
     def parse_CXXForRangeStmt(self, node) -> tree.CXXForRangeStmt:
         assert node['kind'] == "CXXForRangeStmt"
-        subnodes = self.parse_subnodes(node)
-        return tree.CXXForRangeStmt(subnodes=subnodes)
+        # range is not explicit, one need to dive through the implicitly generated begin statement
+        range_ = self.parse_node(node['inner'][1]['inner'][0]['inner'][0])
+        decl_stmt = self.parse_node(node['inner'][6])
+        body =  self.parse_node(node['inner'][7])
+        assert isinstance(decl_stmt, tree.DeclStmt)
+        if len(decl_stmt.decls) != 1:
+            raise NotImplementedError()
+        decl, = decl_stmt.decls
+        decl.init_mode = ''
+        decl.init = None
+        return tree.CXXForRangeStmt(decl=decl, range=range_, body=body)
 
     @parse_debug
     def parse_BuiltinType(self, node) -> tree.BuiltinType:

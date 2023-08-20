@@ -17,3 +17,9 @@ void bar() {
   reinterpret_cast<long *>(&i);
 }
 
+
+struct X { X(int, float); };
+
+X create_X() {
+  return X(1, 3.14f); // creates a CXXTemporaryObjectExpr
+};
