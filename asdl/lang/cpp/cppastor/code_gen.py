@@ -963,7 +963,23 @@ class SourceGenerator(ExplicitNodeVisitor):
         pass
 
     def visit_CXXConversionDecl(self, node: tree.CXXConversionDecl):
-        self.write(node.name,  node.subnodes[0])
+        if node.inline:
+            self.write("inline ")
+
+        self.write(node.name)
+        self.write("()")
+
+        if node.const:
+            self.write(" const")
+
+        if node.exception:
+            self.write(" ", node.exception)
+
+        if node.body:
+            self.write(node.body)
+        else:
+            self.write(";")
+        self.newline(extra=1)
 
     def visit_EmptyDecl(self, node: tree.EmptyDecl):
         self.write(";")

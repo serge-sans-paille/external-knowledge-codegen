@@ -1524,9 +1524,33 @@ class Parser(object):
     @parse_debug
     def parse_CXXConversionDecl(self, node) -> tree.CXXConversionDecl:
         assert node['kind'] == "CXXConversionDecl"
-        name = self.get_node_source_code(node).split("{")[0]
-        subnodes = self.parse_subnodes(node)
-        return tree.CXXConversionDecl(name=name, subnodes=subnodes)
+        name = node['name']
+        body, args, inits, method_attrs = self.parse_function_inner(node)
+        assert not inits
+        assert not args
+
+        type_info = self.type_informations[node['id']]
+        inline = "inline" if node.get('inline') else None
+
+        exception = None
+        exception_spec = type_info.get('exception_spec')
+        if exception_spec:
+            if exception_spec.get('isDynamic'):
+                exception = tree.Throw(args=exception_spec.get('inner', []))
+            elif exception_spec.get('isBasic'):
+                repr_ = exception_spec.get('expr_repr')
+                exception = tree.NoExcept(repr=repr_)
+
+        const = type_info.get('isconst')
+        if const:
+            const = "const"
+
+
+        return tree.CXXConversionDecl(name=name,
+                                      inline=inline,
+                                      body=body, exception=exception,
+                                      # method specific keywords
+                                      const=const)
 
     @parse_debug
     def parse_EmptyDecl(self, node) -> tree.EmptyDecl:
