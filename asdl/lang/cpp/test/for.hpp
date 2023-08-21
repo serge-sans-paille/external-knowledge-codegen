@@ -16,6 +16,24 @@ void for_decl() {
   for(int k; int i = 0;);
 }
 
+struct s {};
+class c {};
+using u = s;
+typedef s t;
+
+void for_multi_decl() {
+  for(int i = 0, j=1;;);
+  for(int i = 0, *j;;);
+  for(const int i = 0, *j;;);
+  for(int i = 0, * const j = nullptr;;);
+  for(int i = 0, j[2] = {1,3};;);
+  for(int i = 0, (*j)(float);;);
+  for(s i, j;;);
+  for(c i, *j, k[2];;);
+  for(t i, *j, k[2];;);
+  for(u const i = {}, *j, k[2];;);
+}
+
 void for_break() {
   for(;;) break;
 }

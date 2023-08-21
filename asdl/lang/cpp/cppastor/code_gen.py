@@ -24,6 +24,7 @@ from cpplang import tree
 import math
 import re
 import sys
+import copy
 
 from .op_util import get_op_symbol, get_op_precedence, Precedence
 from .node_util import ExplicitNodeVisitor
@@ -836,10 +837,50 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.comma_list(node.args)
         self.write(")")
 
+    def anonymize_type(self, prev_type, *, lvl=0):
+        if isinstance(prev_type, (tree.BuiltinType, tree.RecordType, tree.TypedefType)):
+            return tree.BuiltinType(name="")
+        if isinstance(prev_type, tree.ParenType):
+            return tree.ParenType(type=self.anonymize_type(prev_type.type,
+                                                             lvl=lvl+1))
+        if isinstance(prev_type, tree.FunctionProtoType):
+            return tree.FunctionProtoType(return_type=self.anonymize_type(prev_type.return_type,
+                                                             lvl=lvl+1),
+                                          parameter_types=prev_type.parameter_types)
+        if isinstance(prev_type, tree.ConstantArrayType):
+            return tree.ConstantArrayType(type=self.anonymize_type(prev_type.type, lvl=lvl+1),
+                                          size=prev_type.size)
+        if isinstance(prev_type, tree.PointerType):
+            return tree.PointerType(type=self.anonymize_type(prev_type.type,
+                                                             lvl=lvl+1))
+        if isinstance(prev_type, tree.QualType):
+            decay = (lvl != 0) or isinstance(prev_type.type, (tree.BuiltinType,))
+            return tree.QualType(qualifiers="" if decay else prev_type.qualifiers,
+                                 type=self.anonymize_type(prev_type.type,
+                                                          lvl=lvl+1))
+        raise NotImplementedError(prev_type)
+
+
+    def anonymize_decl(self, decl):
+        assert isinstance(decl, tree.VarDecl)
+        new_decl = copy.copy(decl)
+        new_decl.type = self.anonymize_type(decl.type)
+        return new_decl
+
+    def anonymize_types(self, decls):
+        return [self.anonymize_decl(decl) for decl in decls]
+
+    def visit_DeclsOrExpr(self, node: tree.DeclsOrExpr):
+        if node.decls:
+            fst_decl, *other_decls = node.decls
+            other_decls = self.anonymize_types(other_decls)
+            self.comma_list([fst_decl] + other_decls)
+        else:
+            self.write(node.expr)
+
     def visit_DeclOrExpr(self, node: tree.DeclOrExpr):
         if node.decl:
-            # FIXME: handle multiple declarations
-            self.write(node.decl[0])
+            self.write(node.decl)
         else:
             self.write(node.expr)
 

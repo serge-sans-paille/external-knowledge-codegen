@@ -764,9 +764,8 @@ class Parser(object):
         cond, *subnodes = self.parse_subnodes(node)
         if node.get('hasVar'):
             assert isinstance(cond, tree.DeclStmt)
-            if len(cond.decls) != 1:
-                raise NotImplementedError()
-            cond = tree.DeclOrExpr(decl=cond.decls, expr=None)
+            decl, = cond.decls
+            cond = tree.DeclOrExpr(decl=decl, expr=None)
             subnodes = subnodes[1:]  # pop the implicit condition evaluation
         else:
             cond = tree.DeclOrExpr(decl=None, expr=cond)
@@ -807,13 +806,13 @@ class Parser(object):
         init, cond_decl, cond, inc, body = self.parse_subnodes(node, keep_empty=True)
 
         if isinstance(init, tree.Expression):
-            init = tree.DeclOrExpr(expr=init, decl=None)
+            init = tree.DeclsOrExpr(expr=init, decls=None)
         elif isinstance(init, tree.DeclStmt):
-            init = tree.DeclOrExpr(expr=None, decl=init.decls)
-
+            init = tree.DeclsOrExpr(expr=None, decls=init.decls)
         if cond_decl:
             assert isinstance(cond_decl, tree.DeclStmt)
-            cond = tree.DeclOrExpr(expr=None, decl=cond_decl.decls)
+            decl, = cond_decl.decls
+            cond = tree.DeclOrExpr(expr=None, decl=decl)
         elif cond:
             assert isinstance(cond, tree.Expression)
             cond = tree.DeclOrExpr(expr=cond, decl=None)
@@ -829,10 +828,8 @@ class Parser(object):
         assert node['kind'] == "WhileStmt"
         if node.get('hasVar'):
             var, cond, body = self.parse_subnodes(node)
-            assert isinstance(var, tree.DeclStmt), var
-            if len(var.decls) != 1:
-                raise NotImplementedError()
-            cond = tree.DeclOrExpr(decl=var.decls, expr=None)
+            decl, = var.decls
+            cond = tree.DeclOrExpr(decl=decl, expr=None)
         else:
             cond, body = self.parse_subnodes(node)
             cond =  tree.DeclOrExpr(decl=None, expr=cond)
