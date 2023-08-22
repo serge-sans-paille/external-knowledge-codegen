@@ -21,3 +21,11 @@ int ** constructor_pointer() {
 int * constructor_array() {
   return new int [3]{1,2,3};
 }
+
+void delete_pointer(int * p) {
+  delete p;
+}
+
+void delete_array(int * p) {
+  delete [] p;
+}

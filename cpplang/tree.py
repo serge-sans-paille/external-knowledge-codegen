@@ -713,6 +713,10 @@ class CXXNewExpr(Expression):
     attrs = ("type", "args", "is_array")
 
 
+class CXXDeleteExpr(Expression):
+    attrs = ("expr", "is_array",)
+
+
 class UnaryExprOrTypeTraitExpr(Expression):
     attrs = ("name", "expr", "type")
 

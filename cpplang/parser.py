@@ -1622,6 +1622,15 @@ class Parser(object):
         return tree.CXXNewExpr(type=type_.type, args=args, is_array=is_array)
 
     @parse_debug
+    def parse_CXXDeleteExpr(self, node) -> tree.CXXDeleteExpr:
+        assert node['kind'] == "CXXDeleteExpr"
+        expr, = self.parse_subnodes(node)
+        is_array = node.get('isArrayAsWritten')
+        if is_array:
+            is_array = 'array'
+        return tree.CXXDeleteExpr(expr=expr, is_array=is_array)
+
+    @parse_debug
     def parse_CXXForRangeStmt(self, node) -> tree.CXXForRangeStmt:
         assert node['kind'] == "CXXForRangeStmt"
         # range is not explicit, one need to dive through the implicitly generated begin statement

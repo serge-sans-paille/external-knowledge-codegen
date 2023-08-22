@@ -980,6 +980,12 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.comma_list(node.args)
             self.write(markers[1])
 
+    def visit_CXXDeleteExpr(self, node: tree.CXXDeleteExpr):
+        self.write("delete ")
+        if node.is_array:
+            self.write('[] ')
+        self.write(node.expr)
+
     def visit_Throw(self, node: tree.Throw):
         self.write("throw(")
         self.comma_list(node.args)
