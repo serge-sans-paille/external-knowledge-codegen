@@ -59,7 +59,7 @@ expression = ArraySubscriptExpr(expression base, expression index)
            | CXXDeleteExpr(expression expr, constant? is_array)
            | CXXFunctionalCastExpr(type type, expression expr)
            | CXXMemberCallExpr(expression bound_method, expression* args)
-           | CXXNewExpr(type type, expression* args, constant? is_array)
+           | CXXNewExpr(type type, expression* args, expression? placement, expression? array_size, expression? placement)
            | CXXNullPtrLiteralExpr
            | CXXOperatorCallExpr(expression left, expression op, expression right)
            | CXXReinterpretCastExpr(type type, expression expr)
