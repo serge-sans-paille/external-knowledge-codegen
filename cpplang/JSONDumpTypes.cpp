@@ -26,6 +26,13 @@
 #include "llvm/Support/raw_ostream.h"
 #include <optional>
 
+static llvm::StringRef AtomicOpToStr(clang::AtomicExpr::AtomicOp op) {
+  switch(op) {
+#define BUILTIN(ID, TYPE, ATTRS)
+#define ATOMIC_BUILTIN(ID, TYPE, ATTRS) case clang::AtomicExpr:: AO ## ID: return #ID;
+#include "clang/Basic/Builtins.def"
+  }
+}
 
 namespace clang {
 
@@ -368,6 +375,10 @@ public:
             JOS.arrayEnd();
             JOS.attributeEnd();
         }
+      }
+      else if(const auto * AE = dyn_cast<AtomicExpr>(E)) {
+        JOS.attribute("node_id", createPointerRepresentation(AE));
+        JOS.attribute("name", AtomicOpToStr(AE->getOp()));
       }
       else if(const auto * TypeidE = dyn_cast<CXXTypeidExpr>(E)) {
         if(TypeidE->isTypeOperand()) {

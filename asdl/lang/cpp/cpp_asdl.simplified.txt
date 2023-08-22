@@ -50,6 +50,7 @@ statement = BreakStmt
           | WhileStmt(declaration_or_expression cond, statement body)
 
 expression = ArraySubscriptExpr(expression base, expression index)
+           | AtomicExpr(identifier name, expression* args)
            | BinaryOperator(constant opcode, expression lhs, expression rhs)
            | CStyleCastExpr(type type, expression expr)
            | CXXBindTemporaryExpr(expression expr)

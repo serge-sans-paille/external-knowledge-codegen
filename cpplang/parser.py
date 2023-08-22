@@ -1421,6 +1421,18 @@ class Parser(object):
         return tree.ArraySubscriptExpr(base=base, index=index)
 
     @parse_debug
+    def parse_AtomicExpr(self, node) -> tree.AtomicExpr:
+        assert node['kind'] == "AtomicExpr"
+        name = self.attr_informations[node['id']]['name']
+        args = self.parse_subnodes(node)
+        # for some reason, inner args are not listed in the syntactic order
+        if name.startswith("__atomic_compare_exchange"):
+            args = args[:1] + args[2:3] + args[4:] + args[1:4:2]
+        else:
+            args = args[:1] + args[2:] + args[1:2]
+        return tree.AtomicExpr(name=name, args=args)
+
+    @parse_debug
     def parse_ParenExpr(self, node) -> tree.ParenExpr:
         assert node['kind'] == "ParenExpr"
         expr, = self.parse_subnodes(node)
