@@ -80,6 +80,7 @@ expression = ArraySubscriptExpr(expression base, expression index)
            | ImplicitValueInitExpr
            | InitListExpr(expression* values)
            | IntegerLiteral(type type, identifier value)
+           | LambdaExpr(parameter* parameters, statement body)
            | MaterializeTemporaryExpr(expression expr)
            | MemberExpr(identifier name, identifier op, expression? expr)
            | ParenExpr(expression expr)

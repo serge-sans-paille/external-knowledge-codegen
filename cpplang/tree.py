@@ -641,6 +641,10 @@ class UserDefinedLiteral(Expression):
     attrs = ("suffix", "expr",)
 
 
+class LambdaExpr(Expression):
+    attrs = ("parameters", "body",)
+
+
 class ReferenceTypeExpression(Expression):
     attrs = ("type",)
 

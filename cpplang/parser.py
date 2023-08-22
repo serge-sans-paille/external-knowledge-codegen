@@ -1062,6 +1062,27 @@ class Parser(object):
         return tree.FloatingLiteral(type=type_, value=value)
 
     @parse_debug
+    def parse_LambdaExpr(self, node) -> tree.LambdaExpr:
+        assert node['kind'] == "LambdaExpr"
+        # Lambda are parsed as an implicit class, dig into it to find the call operator
+        cxx_record = node['inner'][0]
+        cxx_methods = cxx_record['inner']
+        for cxx_method in cxx_methods:
+            if cxx_method['name'] == "operator()":
+                call_method = cxx_method
+                break
+        else:
+            raise ValueError("expecting at least a call operator for a lambda")
+
+        call_method = self.parse_node(cxx_method)
+
+        parameters = call_method.parameters
+        body = call_method.body
+        assert body
+
+        return tree.LambdaExpr(parameters=parameters, body=body)
+
+    @parse_debug
     def parse_CharacterLiteral(self, node) -> tree.CharacterLiteral:
         assert node['kind'] == "CharacterLiteral"
         value = node['value']

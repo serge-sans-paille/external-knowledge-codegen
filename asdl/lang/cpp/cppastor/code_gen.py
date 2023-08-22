@@ -601,6 +601,16 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_UserDefinedLiteral(self, node: tree.UserDefinedLiteral):
         self.write(node.expr, " ", node.suffix)
 
+    def visit_LambdaExpr(self, node: tree.LambdaExpr):
+        self.write("[")
+        # TODO: capture list
+        self.write("](")
+        self.comma_list(node.parameters)
+        self.write(")")
+        # TODO: trailing return type
+        self.write(node.body)
+
+
     def visit_CXXNullPtrLiteralExpr(self, node: tree.CXXNullPtrLiteralExpr):
         self.write("nullptr")
 
