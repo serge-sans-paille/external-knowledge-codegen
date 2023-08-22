@@ -759,6 +759,20 @@ class Parser(object):
         return tree.CompoundStmt(stmts=self.as_statements(inner_nodes))
 
     @parse_debug
+    def parse_CXXTryStmt(self, node) -> tree.CXXTryStmt:
+        assert node['kind'] == "CXXTryStmt"
+        body, *handlers = self.parse_subnodes(node)
+        return tree.CXXTryStmt(body=self.as_statement(body),
+                               handlers=self.as_statements(handlers))
+
+    @parse_debug
+    def parse_CXXCatchStmt(self, node) -> tree.CXXCatchStmt:
+        assert node["kind"] == "CXXCatchStmt"
+        decl, body = self.parse_subnodes(node, keep_empty=True)
+        return tree.CXXCatchStmt(decl= decl or None,
+                                 body=body)
+
+    @parse_debug
     def parse_IfStmt(self, node) -> tree.IfStmt:
         assert node['kind'] == "IfStmt"
         cond, *subnodes = self.parse_subnodes(node)
@@ -876,6 +890,15 @@ class Parser(object):
         assert node['kind'] == "DefaultStmt"
         child, = self.parse_subnodes(node)
         return tree.DefaultStmt(stmt=self.as_statement(child))
+
+    def parse_CXXThrowExpr(self, node) -> tree.CXXThrowExpr:
+        assert node['kind'] == "CXXThrowExpr"
+        inner_nodes = self.parse_subnodes(node)
+        if inner_nodes:
+            expr, = inner_nodes
+        else:
+            expr = None
+        return tree.CXXThrowExpr(expr=expr)
 
     def parse_CXXThisExpr(self, node) -> tree.CXXThisExpr:
         assert node['kind'] == "CXXThisExpr"
@@ -1005,7 +1028,7 @@ class Parser(object):
     @parse_debug
     def parse_VarDecl(self, node) -> tree.VarDecl:
         assert node['kind'] == "VarDecl"
-        name = node['name']
+        name = node.get('name', '') # Can be nonexistent in exception handlers
         implicit = node.get('isImplicit')
         referenced = node.get('isReferenced')
         if referenced:
