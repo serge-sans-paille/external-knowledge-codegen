@@ -563,6 +563,7 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_IntegerLiteral(self, node: tree.IntegerLiteral):
         suffixes = {
+                'user-defined-literal': '',
                 'unsigned int': 'u',
                 'long': 'l',
                 'unsigned long': 'ul',
@@ -571,10 +572,18 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.value + suffixes.get(node.type.name, ''))
 
     def visit_FloatingLiteral(self, node: tree.FloatingLiteral):
-        suffixes = {'float': 'f', 'long double': 'l'}
+        suffixes = {'user-defined-literal': '',
+                    'float': 'f',
+                    'long double': 'l'}
         # FIXME: we may loose precision by choosing this format
-        self.write('{:g}{}'.format(float(node.value),
-                                   suffixes.get(node.type.name, '')))
+        svalue = '{:g}'.format(float(node.value))
+
+        # Force a dot to distinguish with IntegerLiteral
+        if node.type.name == 'user-defined-literal':
+            if re.match(r'^\d+$', svalue):
+                svalue += '.'
+
+        self.write(svalue + suffixes.get(node.type.name, ''))
 
     def visit_CharacterLiteral(self, node: tree.CharacterLiteral):
         if node.value.isprintable():
@@ -588,6 +597,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_StringLiteral(self, node: tree.StringLiteral):
         self.write(node.value)
+
+    def visit_UserDefinedLiteral(self, node: tree.UserDefinedLiteral):
+        self.write(node.expr, " ", node.suffix)
 
     def visit_CXXNullPtrLiteralExpr(self, node: tree.CXXNullPtrLiteralExpr):
         self.write("nullptr")

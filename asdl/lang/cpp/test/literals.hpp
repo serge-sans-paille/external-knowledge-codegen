@@ -32,3 +32,8 @@ void cxx() {
   false;
   nullptr;
 }
+
+double operator""_Z(long double);
+
+auto x = 1._Z;
+auto y = 1.2_Z;

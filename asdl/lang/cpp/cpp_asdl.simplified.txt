@@ -86,6 +86,7 @@ expression = ArraySubscriptExpr(expression base, expression index)
            | StringLiteral(constant value)
            | UnaryExprOrTypeTraitExpr(identifier name, expression? expr, type? type)
            | UnaryOperator(constant opcode, constant postfix, expression expr)
+           | UserDefinedLiteral(constant suffix, expression expr)
 
 parameter = ParmVarDecl(type type, identifier? name, expression? default)
 

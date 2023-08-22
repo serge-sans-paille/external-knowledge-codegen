@@ -1041,7 +1041,7 @@ class Parser(object):
     @parse_debug
     def parse_DeclRefExpr(self, node) -> tree.DeclRefExpr:
         assert node['kind'] == "DeclRefExpr"
-        name = self.get_node_source_code(node)+node['referencedDecl']['name']
+        name = node['referencedDecl']['name']
         kind = node['referencedDecl']['kind']
         return tree.DeclRefExpr(name=name, kind=kind)
 
@@ -1055,7 +1055,9 @@ class Parser(object):
     @parse_debug
     def parse_FloatingLiteral(self, node) -> tree.FloatingLiteral:
         assert node['kind'] == "FloatingLiteral"
-        value = node['value']
+        value = node['value'].lower()  # turns 'E' into 'e'
+        if '.' not in value:
+            value += '.'
         type_ = self.parse_node(self.type_informations[node['id']])
         return tree.FloatingLiteral(type=type_, value=value)
 
@@ -1070,6 +1072,19 @@ class Parser(object):
         assert node['kind'] == "StringLiteral"
         value = node['value']
         return tree.StringLiteral(value=value)
+
+    @parse_debug
+    def parse_UserDefinedLiteral(self, node) -> tree.UserDefinedLiteral:
+        assert node['kind'] == "UserDefinedLiteral"
+        func, expr = self.parse_subnodes(node)
+        operator_name = func.expr.name
+        assert operator_name.startswith('operator""')
+        suffix = operator_name[len('operator""'):]
+
+        if isinstance(expr, (tree.FloatingLiteral, tree.IntegerLiteral)):
+            expr.type.name = 'user-defined-literal'
+
+        return tree.UserDefinedLiteral(suffix=suffix, expr=expr)
 
     @parse_debug
     def parse_CXXNullPtrLiteralExpr(self, node) -> tree.CXXNullPtrLiteralExpr:

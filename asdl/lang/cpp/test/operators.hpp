@@ -4,4 +4,6 @@ class foo {
   inline operator float() {
     return {};
   }
+
+  foo operator+(const foo &) const;
 };

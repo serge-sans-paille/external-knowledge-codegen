@@ -637,6 +637,10 @@ class ElementValueArrayInitializer(Expression):
     attrs = ("initializer",)
 
 
+class UserDefinedLiteral(Expression):
+    attrs = ("suffix", "expr",)
+
+
 class ReferenceTypeExpression(Expression):
     attrs = ("type",)
 
