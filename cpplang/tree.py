@@ -288,6 +288,14 @@ class ReferenceType(Type):
     attrs = ("arguments", "sub_type",)
 
 
+class TypeOfExprType(Type):
+    attrs = ("repr",)
+
+
+class DecltypeType(Type):
+    attrs = ("repr",)
+
+
 class TypeArgument(Node):
     attrs = ("type", "pattern_type",)
 
@@ -525,6 +533,10 @@ class UsingDirectiveDecl(Declaration):
 
 class DeclStmt(Statement):
     attrs = ("decls",)
+
+
+class StaticAssertDecl(Declaration):
+    attrs = ("cond", "message",)
 
 
 class VarDecl(Declaration):

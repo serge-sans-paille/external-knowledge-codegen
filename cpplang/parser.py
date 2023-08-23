@@ -987,6 +987,18 @@ class Parser(object):
         #return tree.Namespace(name=name, subnodes=subnodes)
 
     @parse_debug
+    def parse_StaticAssertDecl(self, node) -> tree.StaticAssertDecl:
+        assert node['kind'] == "StaticAssertDecl"
+        inner_nodes = self.parse_subnodes(node)
+        if len(inner_nodes) == 1:
+            cond, = inner_nodes
+            message = None
+        else:
+            cond, message = inner_nodes
+            message = message.value
+        return tree.StaticAssertDecl(cond=cond, message=message)
+
+    @parse_debug
     def parse_UsingDirectiveDecl(self, node) -> tree.UsingDirectiveDecl:
         assert node['kind'] == "UsingDirectiveDecl"
         name = (self.get_node_source_code(node).replace('using namespace','').strip()
@@ -1520,6 +1532,16 @@ class Parser(object):
     def parse_RecordType(self, node) -> tree.RecordType:
         assert node['kind'] == "RecordType"
         return tree.RecordType(name=node['decl']['name'])
+
+    @parse_debug
+    def parse_TypeOfExprType(self, node) -> tree.TypeOfExprType:
+        assert node['kind'] == "TypeOfExprType"
+        return tree.TypeOfExprType(repr=node["expr_repr"])
+
+    @parse_debug
+    def parse_DecltypeType(self, node) -> tree.DecltypeType:
+        assert node['kind'] == "DecltypeType"
+        return tree.DecltypeType(repr=node["expr_repr"])
 
     @parse_debug
     def parse_VectorType(self, node) -> tree.VectorType:

@@ -492,6 +492,12 @@ class SourceGenerator(ExplicitNodeVisitor):
                        tree.GNUAutoType: '__auto_type'}
             return "{} {}".format(auto_kw[type(current_type.keyword)], current_expr)
 
+        if isinstance(current_type, tree.TypeOfExprType):
+            return "__typeof__ {} {}".format(current_type.repr, current_expr)
+
+        if isinstance(current_type, tree.DecltypeType):
+            return "decltype({}) {}".format(current_type.repr, current_expr)
+
         raise NotImplementedError(current_type)
 
     def visit_TypedefDecl(self, node: tree.TypedefDecl):
@@ -926,6 +932,12 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_ContinueStmt(self, node: tree.ContinueStmt):
         self.write("continue;")
         self.newline(extra=1)
+
+    def visit_StaticAssertDecl(self, node: tree.StaticAssertDecl):
+        self.write("static_assert(", node.cond)
+        if node.message is not None:
+            self.write(', ', node.message)
+        self.write(");")
 
     def visit_EnumConstantDecl(self, node: tree.EnumConstantDecl):
         if node.init is None:
