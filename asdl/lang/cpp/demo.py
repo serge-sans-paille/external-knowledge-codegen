@@ -2,11 +2,12 @@
 
 import argparse
 import colorama
+import json
 import os
 import re
 import subprocess
 import sys
-from typing import List
+from typing import (Dict, List, Set, Tuple)
 
 import cppastor
 import cpplang
@@ -131,16 +132,21 @@ def preprocess_code(cpp_code):
     return "\n".join(lines_in)
 
 
-def roundtrip(cpp_code, filepath, check_hypothesis=False, fail_on_error=False, member=False,
-         debug=False):
+def roundtrip(cpp_code: str = None, filepath: str = None,
+              compile_command: Dict[str, str] = None,
+              check_hypothesis=False, fail_on_error=False, member=False, debug=False):
 
     # get the (domain-specific) cpp AST of the example Cpp code snippet
     # if debug:
     #     print(f'Cpp code: \n{cpp_code}')
     if member:
-        cpp_ast = cpplang.parse.parse_member_declaration(cpp_code)
+        cpp_ast = cpplang.parse.parse_member_declaration(
+            s=cpp_code, filepath=filepath, compile_command=compile_command,
+            debug=debug)
     else:
-        cpp_ast = cpplang.parse.parse(cpp_code, debug=debug, filepath=filepath)
+        cpp_ast = cpplang.parse.parse(
+            s=cpp_code, filepath=filepath, compile_command=compile_command,
+            debug=debug)
     # convert the cpp AST into general-purpose ASDL AST used by tranX
     asdl_ast = cpp_ast_to_asdl_ast(cpp_ast, grammar)
     if debug:
@@ -158,6 +164,10 @@ def roundtrip(cpp_code, filepath, check_hypothesis=False, fail_on_error=False, m
     # get the surface code snippets from the original Python AST,
     # the reconstructed AST and the AST generated using actions
     # they should be the same
+    if cpp_code is None and compile_command is not None:
+        cpp_file_name = compile_command["arguments"][-1]
+        with open(cpp_file_name, "r") as f:
+            cpp_code = f.read()
     src0 = removeComments(preprocess_code(cpp_code))
     simp0 = simplify(src0)
     src1 = removeComments(cppastor.to_source(cpp_ast))
@@ -247,12 +257,12 @@ cpp_code = [
 
 
 def check_filepath(filepath: str,
-                  check_hypothesis: bool = False,
-                  fail_on_error=False,
-                  member=False,
-                  number: int = 0,
-                  total: int = 0,
-                  debug: bool = False):
+                   check_hypothesis: bool = False,
+                   fail_on_error=False,
+                   member=False,
+                   number: int = 0,
+                   total: int = 0,
+                   debug: bool = False):
     if (filepath.endswith(".cpp") or filepath.endswith(".cc") or filepath.endswith(".h")
             or filepath.endswith(".i") or filepath.endswith(".ii")
             or filepath.endswith(".hpp")):
@@ -283,6 +293,39 @@ def check_filepath(filepath: str,
                 return False
     else:
         return None
+
+
+def check_compile_commands_db(compile_commands: List[Dict[str, str]],
+                              check_hypothesis: bool = False,
+                              fail_on_error=False,
+                              debug: bool = False):
+    for number, compile_command in enumerate(compile_commands, start=1):
+        cprint(bcolors.ENDC,
+               f"\n−−−−−−−−−−\nTesting Cpp file {number:5d}/{len(compile_commands):5d} "
+               f"{bcolors.MAGENTA}{compile_command}",
+               file=sys.stderr)
+        try:
+            if not roundtrip(compile_command=compile_command,
+                             check_hypothesis=check_hypothesis,
+                             fail_on_error=fail_on_error,
+                             member=False,
+                             debug=debug):
+                cprint(bcolors.RED,
+                       f"**Warn**{bcolors.ENDC} Test failed for "
+                       f"file: {bcolors.MAGENTA}{compile_command}",
+                       file=sys.stderr)
+                return False
+            else:
+                cprint(bcolors.GREEN,
+                       f"Success for file: {bcolors.MAGENTA}{compile_command}",
+                       file=sys.stderr)
+                # return True
+        except UnicodeDecodeError:
+            cprint(bcolors.RED,
+                   f"Error: Cannot decode file as UTF-8. Ignoring: "
+                   f"{compile_command}", file=sys.stderr)
+            return False
+    return True
 
 
 def stats(nb_ok: int, nb_ko: int, ignored: List[str]):
@@ -326,6 +369,12 @@ if __name__ == '__main__':
                             action='store_true',
                             help='If set, the hypothesis parse tree will be '
                             'tested.')
+    arg_parser.add_argument('-d', '--dir', default='test',
+                            type=str,
+                            help='Set the files in the given dir to be tested.')
+    arg_parser.add_argument('--db', default=None, type=str,
+                            help=('Set the compile_commands.json daabase listing the '
+                                  'files to analyze.'))
     arg_parser.add_argument('-F', '--fail_on_error', default=False,
                             action='store_true',
                             help=('If set, exit at first error. Otherwise, '
@@ -348,9 +397,6 @@ if __name__ == '__main__':
     arg_parser.add_argument('-f', '--file', action='append',
                             type=str,
                             help='Set the given file to be tested.')
-    arg_parser.add_argument('-d', '--dir', default='test',
-                            type=str,
-                            help='Set the files in the given dir to be tested.')
     args = arg_parser.parse_args()
 
     fail_on_error = args.fail_on_error
@@ -365,7 +411,9 @@ if __name__ == '__main__':
     ]
 
     files = None
-    if args.list:
+    if args.db:
+        pass
+    elif args.list:
         files = filepaths
     elif args.file:
         files = args.file
@@ -375,25 +423,33 @@ if __name__ == '__main__':
     if args.debug:
         print(files)
 
-    filtered_files = [f for f in files if f not in exclusions]
+    if files:
+        filtered_files = [f for f in files if f not in exclusions]
 
-    total = len(filtered_files)
-    for test_num, filepath in enumerate(filtered_files, start=1):
-        test_result = check_filepath(filepath,
-                                    check_hypothesis=check_hypothesis,
-                                    fail_on_error=fail_on_error,
-                                    member=args.member,
-                                    number=test_num,
-                                    total=total,
-                                    debug=args.debug)
-        if test_result is not None:
-            if test_result:
-                nb_ok = nb_ok + 1
+        total = len(filtered_files)
+        for test_num, filepath in enumerate(filtered_files, start=1):
+            test_result = check_filepath(filepath,
+                                         check_hypothesis=check_hypothesis,
+                                         fail_on_error=fail_on_error,
+                                         member=args.member,
+                                         number=test_num,
+                                         total=total,
+                                         debug=args.debug)
+            if test_result is not None:
+                if test_result:
+                    nb_ok = nb_ok + 1
+                else:
+                    nb_ko = nb_ko + 1
+                    if fail_on_error:
+                        stats(nb_ok, nb_ko, ignored)
+                        exit(1)
             else:
-                nb_ko = nb_ko + 1
-                if fail_on_error:
-                    stats(nb_ok, nb_ko, ignored)
-                    exit(1)
-        else:
-            ignored.append(filepath)
-    stats(nb_ok, nb_ko, ignored)
+                ignored.append(filepath)
+        stats(nb_ok, nb_ko, ignored)
+    elif args.db:
+        with open(args.db) as json_file:
+            compile_commands = json.load(json_file)
+            check_compile_commands_db(compile_commands,
+                                      check_hypothesis,
+                                      fail_on_error,
+                                      debug=args.debug)

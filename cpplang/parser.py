@@ -1,10 +1,11 @@
+import copy
 import json
 import re
 import shutil
 import subprocess
 import sys
 import os
-from typing import (List, Set, Tuple)
+from typing import (Dict, List, Set, Tuple)
 
 
 
@@ -126,10 +127,105 @@ class Parser(object):
                             set(('+', '-')),
                             set(('*', '/', '%'))]
 
-    def __init__(self, cpp_code, filepath=None):
+    def __init__(self, cpp_code: str = None, filepath: str = None,
+                 compile_command: Dict[str, str] = None):
+        """
+        Initialize the parser. Either cpp_code or compile_command must be not None.
+        Depending on which one, a different init function is called
+        """
+        self.type_informations = {}
+        self.asm_informations = {}
+        self.attr_informations = {}
+        self.stack = []
+        self.debug = False
+        self.anonymous_types = {}
+        self.parsed_gotos = {}
+        self.parsed_labels = {}
+        if cpp_code is not None:
+            self._init_direct(cpp_code, filepath)
+        elif compile_command is not None:
+            self._init_compile_commands(compile_command)
+
+    def _init_compile_commands(self, compile_command: Dict[str, str]):
+        """
+        Initialize the parser using the command given by the external
+        compile_commands.json database
+        """
+        workdir = compile_command["directory"]
+        if "command" in compile_command:
+            # split he command into its arguments
+            compile_command["arguments"] = compile_command["command"].split(" ")
+        arguments = copy.copy(compile_command["arguments"])
+
+        if arguments[0].endswith("cc"):
+            arguments[1:1] =["-x", "c"]
+        elif arguments[0].endswith("c++"):
+            arguments[1:1] =["-x", "c++"]
+        arguments[0] = shutil.which("clang")
+        # remove -o /foo/bar.o from command. We will read the standard output stream
+        if "-o" in arguments:
+            i = arguments.index("-o")
+            arguments = arguments[:i] + arguments[i+2:]
+
+        arguments.remove("-c")
+        filepath = arguments[-1]
+        preprocess_command = copy.copy(arguments)
+        preprocess_command.insert(-1, "-E")
         try:
             self.filepath = filepath
-            # TODO replace in commandss below the include path by thosee given by the
+            preprocess = subprocess.run(
+                preprocess_command,
+                capture_output=True,
+                check=True,
+                cwd=workdir)
+        except subprocess.CalledProcessError as e:
+            print(f"While handling {self.filepath},\n")
+            print(f"Preprocessing error {e.returncode}:\n{e.stderr.decode()}",
+                  file=sys.stderr)
+            raise
+        preprocess_stdout_data = preprocess.stdout
+        # if ENABLE_DEBUG_SUPPORT:
+        #     print(f"\npreprocess_stdout_data:\n{preprocess_stdout_data.decode()}\n",
+        #           file=sys.stderr)
+        preprocess_stderr_data = preprocess.stderr
+        arguments.pop()
+        arguments.extend([f"-fplugin={plugin_path}", "-fsyntax-only", "-"])
+        # if ENABLE_DEBUG_SUPPORT:
+        #     print(f"process_command:\n{' '.join(process_command)}\n\n", file=sys.stderr)
+        try:
+            p = subprocess.run(
+                arguments,
+                capture_output=True,
+                input=preprocess_stdout_data,
+                check=True,
+                cwd=workdir)
+        except subprocess.CalledProcessError as e:
+            print(f"While handling {self.filepath},\n")
+            print(f"Parsing error {e.returncode}:\n{e.stderr.decode()}",
+                  file=sys.stderr)
+            print(f"    command was:\n{' '.join(arguments)}", file=sys.stderr)
+            raise
+        stdout_data = p.stdout
+        # if ENABLE_DEBUG_SUPPORT:
+        #     print(f"stdout_data:\n{stdout_data.decode()}\n\n", file=sys.stderr)
+        stderr_data = p.stdout
+        # print(stderr_data.decode(), file=sys.stderr)
+        try:
+            self.tu = json.loads(stdout_data.decode())
+        except json.decoder.JSONDecodeError as e:
+            print(f"\npreprocess_stdout_data:\n{preprocess_stdout_data.decode()}\n",
+                  file=sys.stderr)
+            print(f"json decode error on output of:\n{arguments}\n\n", file=sys.stderr)
+            raise
+        self.source_code = preprocess_stdout_data.decode()
+
+    def _init_direct(self, cpp_code: str, filepath: str = None):
+        """
+        Initialize the parser by using compiled commands  forged internally
+        """
+        try:
+            self.filepath = filepath
+            # TODO replace in commands below the include path by those given by the
             # C++ project build system
             preprocess = subprocess.run(
                 preprocess_command,
@@ -170,14 +266,6 @@ class Parser(object):
         stderr_data = p.stdout
         # print(stderr_data.decode(), file=sys.stderr)
         self.tu = json.loads(stdout_data.decode())
-        self.type_informations = {}
-        self.asm_informations = {}
-        self.attr_informations = {}
-        self.stack = []
-        self.debug = False
-        self.anonymous_types = {}
-        self.parsed_gotos = {}
-        self.parsed_labels = {}
         self.source_code = preprocess_stdout_data.decode()
 
 # ------------------------------------------------------------------------------
