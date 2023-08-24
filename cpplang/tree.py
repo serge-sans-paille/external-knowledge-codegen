@@ -693,6 +693,10 @@ class AtomicExpr(Expression):
     attrs = ("name", "args")
 
 
+class StmtExpr(Expression):
+    attrs = ("stmt",)
+
+
 class MethodReference(Primary):
     attrs = ("expression", "method", "type_arguments")
 

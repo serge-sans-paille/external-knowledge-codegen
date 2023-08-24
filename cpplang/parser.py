@@ -1421,6 +1421,12 @@ class Parser(object):
         return tree.ArraySubscriptExpr(base=base, index=index)
 
     @parse_debug
+    def parse_StmtExpr(self, node) -> tree.StmtExpr:
+        assert node['kind'] == "StmtExpr"
+        stmt, = self.parse_subnodes(node)
+        return tree.StmtExpr(stmt=stmt)
+
+    @parse_debug
     def parse_AtomicExpr(self, node) -> tree.AtomicExpr:
         assert node['kind'] == "AtomicExpr"
         name = self.attr_informations[node['id']]['name']

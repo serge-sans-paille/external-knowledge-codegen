@@ -263,6 +263,9 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_ExprWithCleanups(self, node: tree.ExprWithCleanups):
         self.write(node.expr)
 
+    def visit_StmtExpr(self, node: tree.StmtExpr):
+        self.write("(", node.stmt, ")")
+
     def visit_DeclRefExpr(self, node: tree.DeclRefExpr):
         if node.name.startswith("operator"):
             self.write(node.name.replace("operator", "", 1))
