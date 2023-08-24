@@ -4,17 +4,17 @@ identifier, int, string, constant
 cu = TranslationUnit(statement* stmts)
 
 declaration = AccessSpecDecl(access_spec access_spec)
-            | CXXConstructorDecl(identifier name, constant? noexcept, default_mode? defaulted, statement? body, parameter* parameters, cxx_ctor_initializer* initializers)
-            | CXXConversionDecl(identifier name, constant? inline, exception_spec? exception, constant? const, statement? body)
-            | CXXDestructorDecl(identifier name, constant? noexcept, constant? virtual, default_mode? defaulted, statement? body)
-            | CXXMethodDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, exception_spec? exception, constant? virtual, constant? const, default_mode? defaulted, method_attr* method_attrs, constant? ref_qualifier, statement? body, parameter* parameters)
+            | CXXConstructorDecl(identifier name, constant? noexcept, default_mode? defaulted, statement? body, attribute* attributes, parameter* parameters, cxx_ctor_initializer* initializers)
+            | CXXConversionDecl(identifier name, constant? inline, exception_spec? exception, constant? const, statement? body, attribute* attributes)
+            | CXXDestructorDecl(identifier name, constant? noexcept, constant? virtual, default_mode? defaulted, statement? body, attribute* attributes)
+            | CXXMethodDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, exception_spec? exception, constant? virtual, constant? const, default_mode? defaulted, method_attr* method_attributes, constant? ref_qualifier, statement? body, attribute* attributes, parameter* parameters)
             | CXXRecordDecl(identifier name, identifier kind, base* bases, constant complete, declaration* decls)
             | ClassTemplateDecl(statement* subnodes)
             | EmptyDecl
             | EnumDecl(identifier? name, enum_field* fields)
             | FieldDecl(identifier name, type type, expression? init, attribute* attributes)
             | FriendDecl(identifier type)
-            | FunctionDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, exception_spec? exception, statement? body, parameter* parameters)
+            | FunctionDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, exception_spec? exception, statement? body, attribute* attributes, parameter* parameters)
             | FunctionTemplateDecl(statement* subnodes)
             | NamespaceDecl(identifier name, statement* subnodes)
             | NonTypeTemplateParmDecl(identifier name, identifier type, statement* subnodes)
@@ -126,8 +126,32 @@ constrained_expression = ConstrainedExpression(expression expr, constant constra
 
 attribute = AlignedAttr(expression? size)
           | AliasAttr(identifier aliasee)
+          | AllocAlignAttr(constant index)
+          | AllocSizeAttr(constant size, constant? nmemb)
+          | AlwaysInlineAttr
+          | AnyX86InterruptAttr
           | CleanupAttr(identifier func)
+          | ColdAttr
+          | ConstAttr
+          | ConstructorAttr(constant? priority)
           | DeprecatedAttr(constant? msg)
+          | DestructorAttr(constant? priority)
+          | ErrorAttr(constant msg)
+          | FlattenAttr
+          | FormatAttr(identifier archetype, constant fmt_index, constant vargs_index)
+          | FormatArgAttr(constant fmt_index)
+          | GNUInlineAttr
+          | HotAttr
+          | IFuncAttr(identifier name)
+          | LeafAttr
+          | MallocAttr
+          | NoInlineAttr
+          | NoInstrumentFunctionAttr
+          | NoProfileFunctionAttr
+          | NoReturnAttr
+          | NoSanitizeAttr(constant* options)
+          | NoSplitStackAttr
+          | NonNullAttr(constant* indices)
           | PackedAttr
           | RetainAttr
           | SectionAttr(constant section)

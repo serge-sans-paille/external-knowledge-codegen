@@ -11,68 +11,171 @@ class TranslationUnit(Node):
 class Import(Node):
     attrs = ("path", "static", "wildcard")
 
-
-class OverrideAttr(Node):
+class Attr(Node):
     attrs = ()
 
 
-class FinalAttr(Node):
+class OverrideAttr(Attr):
     attrs = ()
 
 
-class AlignedAttr(Node):
+class FinalAttr(Attr):
+    attrs = ()
+
+
+class AlignedAttr(Attr):
     attrs = ("size",)
 
 
-class AliasAttr(Node):
+class AllocAlignAttr(Attr):
+    attrs = ("index",)
+
+
+class AlwaysInlineAttr(Attr):
+    attrs = ()
+
+
+class ColdAttr(Attr):
+    attrs = ()
+
+
+class ConstAttr(Attr):
+    attrs = ()
+
+
+class ConstructorAttr(Attr):
+    attrs = ("priority",)
+
+
+class DestructorAttr(Attr):
+    attrs = ("priority",)
+
+
+class ErrorAttr(Attr):
+    attrs = ("msg",)
+
+
+class FlattenAttr(Attr):
+    attrs = ()
+
+
+class FormatAttr(Attr):
+    attrs = ("archetype", "fmt_index", "vargs_index",)
+
+
+class FormatArgAttr(Attr):
+    attrs = ("fmt_index",)
+
+
+class GNUInlineAttr(Attr):
+    attrs = ()
+
+
+class HotAttr(Attr):
+    attrs = ()
+
+
+class IFuncAttr(Attr):
+    attrs = ("name",)
+
+
+class AnyX86InterruptAttr(Attr):
+    attrs = ()
+
+
+class LeafAttr(Attr):
+    attrs = ()
+
+
+class MallocAttr(Attr):
+    attrs = ()
+
+
+class RestrictAttr(Attr):
+    attrs = ()
+
+
+class NoInstrumentFunctionAttr(Attr):
+    attrs = ()
+
+
+class NoInlineAttr(Attr):
+    attrs = ()
+
+
+class NoReturnAttr(Attr):
+    attrs = ()
+
+
+class NonNullAttr(Attr):
+    attrs = ("indices",)
+
+
+class NoProfileFunctionAttr(Attr):
+    attrs = ()
+
+
+class NoSanitizeAttr(Attr):
+    attrs = ("options",)
+
+
+class NoSplitStackAttr(Attr):
+    attrs = ()
+
+
+class AllocSizeAttr(Attr):
+    attrs = ("size", "nmemb")
+
+
+class AliasAttr(Attr):
     attrs = ("aliasee",)
 
 
-class CleanupAttr(Node):
+class CleanupAttr(Attr):
     attrs = ("func",)
 
 
-class DeprecatedAttr(Node):
+class DeprecatedAttr(Attr):
     attrs = ("msg",)
 
 
-class UnavailableAttr(Node):
+class UnavailableAttr(Attr):
     attrs = ("msg",)
 
 
-class PackedAttr(Node):
+class PackedAttr(Attr):
     attrs = ()
 
 
-class RetainAttr(Node):
+class RetainAttr(Attr):
     attrs = ()
 
 
-class SectionAttr(Node):
+class SectionAttr(Attr):
     attrs = ("section",)
 
 
-class TLSModelAttr(Node):
+class TLSModelAttr(Attr):
     attrs = ("tls_model",)
 
 
-class UsedAttr(Node):
+class UsedAttr(Attr):
     attrs = ()
 
 
-class UnusedAttr(Node):
+class UnusedAttr(Attr):
     attrs = ()
 
 
-class UninitializedAttr(Node):
+class UninitializedAttr(Attr):
     attrs = ()
 
 
-class VisibilityAttr(Node):
+class VisibilityAttr(Attr):
     attrs = ("visibility",)
 
 
-class WeakAttr(Node):
+class WeakAttr(Attr):
     attrs = ()
 
 
@@ -156,7 +259,7 @@ class RecordDecl(TypeDeclaration):
 
 
 class CXXConstructorDecl(Declaration):
-    attrs = ("name", "noexcept", "defaulted", "body", "parameters", "initializers",)
+    attrs = ("name", "noexcept", "defaulted", "body", "attributes", "parameters", "initializers",)
 
 
 class CXXCtorInitializer(Node):
@@ -164,7 +267,7 @@ class CXXCtorInitializer(Node):
 
 
 class CXXDestructorDecl(Declaration):
-    attrs = ("name", "noexcept", "virtual", "defaulted", "body",)
+    attrs = ("name", "noexcept", "virtual", "defaulted", "body", "attributes", )
 
 
 class AccessSpecDecl(Declaration):
@@ -355,14 +458,14 @@ class Member(NonEmptyDeclaration):
 class CXXMethodDecl(Declaration):
     attrs = ("name", "return_type", "storage", "variadic", "inline",
              "exception",
-             "virtual", "const", "defaulted", "method_attrs", "ref_qualifier",
-             "body", "parameters",)
+             "virtual", "const", "defaulted", "method_attributes", "ref_qualifier",
+             "body", "attributes", "parameters",)
 
 
 class FunctionDecl(Declaration):
     attrs = ("name", "return_type", "storage", "variadic", "inline",
              "exception",
-             "body", "parameters")
+             "body", "attributes", "parameters")
 
 class Throw(Node):
     attrs = ("args",)
@@ -898,7 +1001,7 @@ class ImplicitValueInitExpr(Node):
 
 
 class CXXConversionDecl(Declaration):
-    attrs = ("name", "inline", "exception", "const", "body",)
+    attrs = ("name", "inline", "exception", "const", "body", "attributes", )
 
 # ------------------------------------------------------------------------------
 

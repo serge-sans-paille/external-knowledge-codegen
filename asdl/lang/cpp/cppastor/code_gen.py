@@ -291,6 +291,97 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_AliasAttr(self, node: tree.AliasAttr):
         self.write("__attribute__((alias(\"", node.aliasee, "\")))")
 
+    def visit_AllocAlignAttr(self, node: tree.AllocAlignAttr):
+        self.write("__attribute__((alloc_align(", node.index, ")))")
+
+    def visit_AlwaysInlineAttr(self, node: tree.AlwaysInlineAttr):
+        self.write("__attribute__((always_inline))")
+
+    def visit_ColdAttr(self, node: tree.ColdAttr):
+        self.write("__attribute__((cold))")
+
+    def visit_ConstAttr(self, node: tree.ConstAttr):
+        self.write("__attribute__((const))")
+
+    def visit_ConstructorAttr(self, node: tree.ConstructorAttr):
+        self.write("__attribute__((constructor")
+        if node.priority is not None:
+            self.write("(", node.priority, ")")
+        self.write("))")
+
+    def visit_DestructorAttr(self, node: tree.DestructorAttr):
+        self.write("__attribute__((destructor")
+        if node.priority is not None:
+            self.write("(", node.priority, ")")
+        self.write("))")
+
+    def visit_ErrorAttr(self, node: tree.ErrorAttr):
+        self.write("__attribute__((error(\"", node.msg, "\")))")
+
+    def visit_FlattenAttr(self, node: tree.FlattenAttr):
+        self.write("__attribute__((flatten))")
+
+    def visit_FormatAttr(self, node: tree.FormatAttr):
+        self.write("__attribute__((format(",
+                   node.archetype, ", ",
+                   node.fmt_index, ", ",
+                   node.vargs_index, ")))")
+
+    def visit_FormatArgAttr(self, node: tree.FormatArgAttr):
+        self.write("__attribute__((format_arg(", node.fmt_index, ")))")
+
+    def visit_GNUInlineAttr(self, node: tree.GNUInlineAttr):
+        self.write("__attribute__((gnu_inline))")
+
+    def visit_HotAttr(self, node: tree.HotAttr):
+        self.write("__attribute__((hot))")
+
+    def visit_IFuncAttr(self, node: tree.IFuncAttr):
+        self.write("__attribute__((ifunc(\"", node.name, "\")))")
+
+    def visit_AnyX86InterruptAttr(self, node: tree.AnyX86InterruptAttr):
+        self.write("__attribute__((interrupt))")
+
+    def visit_LeafAttr(self, node: tree.LeafAttr):
+        self.write("__attribute__((leaf))")
+
+    def visit_MallocAttr(self, node: tree.MallocAttr):
+        self.write("__attribute__((malloc))")
+
+    def visit_NoInstrumentFunctionAttr(self, node: tree.NoInstrumentFunctionAttr):
+        self.write("__attribute__((no_instrument_function))")
+
+    def visit_NoInlineAttr(self, node: tree.NoInlineAttr):
+        self.write("__attribute__((noinline))")
+
+    def visit_NoReturnAttr(self, node: tree.NoReturnAttr):
+        self.write("__attribute__((noreturn))")
+
+    def visit_NonNullAttr(self, node: tree.NonNullAttr):
+        self.write("__attribute__((nonnull")
+        if node.indices:
+            self.write("(")
+            self.comma_list(node.indices)
+            self.write(")")
+        self.write("))")
+
+    def visit_NoSplitStackAttr(self, node: tree.NoSplitStackAttr):
+        self.write("__attribute__((no_split_stack))")
+
+    def visit_NoProfileFunctionAttr(self, node: tree.NoProfileFunctionAttr):
+        self.write("__attribute__((no_profile_instrument_function))")
+
+    def visit_NoSanitizeAttr(self, node: tree.NoSanitizeAttr):
+        self.write("__attribute__((no_sanitize(",
+                   ", ".join(map('"{}"'.format, node.options)),
+                   ")))")
+
+    def visit_AllocSizeAttr(self, node: tree.AllocSizeAttr):
+        self.write("__attribute__((alloc_size(", node.size)
+        if node.nmemb is not None:
+            self.write(", ", node.nmemb)
+        self.write(")))")
+
     def visit_CleanupAttr(self, node: tree.CleanupAttr):
         self.write("__attribute__((cleanup(", node.func, ")))")
 
@@ -938,8 +1029,11 @@ class SourceGenerator(ExplicitNodeVisitor):
         if getattr(node, 'exception', None):
             self.write(" ", node.exception)
 
-        if getattr(node, 'method_attrs', None):
-            self.space_list(node.method_attrs)
+        if getattr(node, 'method_attributes', None):
+            self.space_list(node.method_attributes, trailing=True)
+
+        if getattr(node, 'attributes', None):
+            self.space_list(node.attributes, trailing=True)
 
         if getattr(node, 'initializers', None):
             self.write(" : ")
