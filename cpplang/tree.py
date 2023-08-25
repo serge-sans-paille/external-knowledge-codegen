@@ -148,7 +148,7 @@ class PackageDeclaration(NonEmptyDeclaration):
 
 
 class CXXRecordDecl(TypeDeclaration):
-    attrs = ("kind", "bases", "complete_definition", "decls",)
+    attrs = ("kind", "bases", "complete", "decls",)
 
 
 class RecordDecl(TypeDeclaration):
@@ -353,13 +353,16 @@ class Member(NonEmptyDeclaration):
 
 
 class CXXMethodDecl(Declaration):
-    attrs = ("name", "return_type", "virtual", "noexcept", "const", "defaulted",
-             "method_attrs", "ref_qualifier", "body", "parameters",)
+    attrs = ("name", "return_type", "storage", "variadic", "inline",
+             "exception",
+             "virtual", "const", "defaulted", "method_attrs", "ref_qualifier",
+             "body", "parameters",)
 
 
 class FunctionDecl(Declaration):
     attrs = ("name", "return_type", "storage", "variadic", "inline",
-             "exception", "body", "parameters")
+             "exception",
+             "body", "parameters")
 
 class Throw(Node):
     attrs = ("args",)
@@ -634,6 +637,14 @@ class ElementValueArrayInitializer(Expression):
     attrs = ("initializer",)
 
 
+class UserDefinedLiteral(Expression):
+    attrs = ("suffix", "expr",)
+
+
+class LambdaExpr(Expression):
+    attrs = ("parameters", "body",)
+
+
 class ReferenceTypeExpression(Expression):
     attrs = ("type",)
 
@@ -875,7 +886,7 @@ class ImplicitValueInitExpr(Node):
 
 
 class CXXConversionDecl(Declaration):
-    attrs = ("name", "subnodes",)
+    attrs = ("name", "inline", "exception", "const", "body",)
 
 # ------------------------------------------------------------------------------
 
@@ -902,6 +913,10 @@ class CStyleCastExpr(Node):
 
 class FriendDecl(Declaration):
     attrs = ("type",)
+
+
+class Base(Node):
+    attrs = ("name", "access_spec",)
 
 
 class CXXStdInitializerListExpr(Node):

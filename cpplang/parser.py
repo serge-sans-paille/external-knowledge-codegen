@@ -564,16 +564,18 @@ class Parser(object):
             self.anonymous_types[where] = name
 
         kind = node['tagUsed']
-        complete_definition = ('complete_definition'
-                               if ('completeDefinition' in node
-                                   and node['completeDefinition'])
-                               else '')
-        bases = ""
-        if "bases" in node:
-            s = self.get_node_source_code(node)
-            p = r"^[^:]*:([^{]*){"
-            temp = re.search(p, s).group(1)
-            bases = temp.replace("\\n", "")
+        complete = node.get('completeDefinition', '') and 'complete'
+
+        bases = []
+        for base in node.get('bases', ()):
+            written_access = base['writtenAccess']
+            if written_access == 'none':
+                access_type = type(None)
+            else:
+                access_type = getattr(tree, written_access.capitalize())
+            bases.append(tree.Base(access_spec=access_type(),
+                                   name=base['type']['qualType']))
+
         inner_nodes = self.parse_subnodes(node)
 
         # specific support for anonymous record through indirect field
@@ -599,7 +601,7 @@ class Parser(object):
 
 
         return tree.CXXRecordDecl(name=name, kind=kind, bases=bases,
-                                  complete_definition=complete_definition,
+                                  complete=complete,
                                   decls=inner_nodes)
 
     @parse_debug
@@ -712,15 +714,26 @@ class Parser(object):
         body, args, inits, method_attrs = self.parse_function_inner(node)
         assert not inits
 
-        return_type = self.parse_node(self.type_informations[node['id']]).return_type
+        type_info = self.type_informations[node['id']]
+        return_type = self.parse_node(type_info).return_type
+        variadic = "..." if node['type']['qualType'].endswith('...)') else None
+        inline = "inline" if node.get('inline') else None
+        storage = node.get('storageClass')
 
-        noexcept = None
+        exception = None
+        exception_spec = type_info.get('exception_spec')
+        if exception_spec:
+            if exception_spec.get('isDynamic'):
+                exception = tree.Throw(args=exception_spec.get('inner', []))
+            elif exception_spec.get('isBasic'):
+                repr_ = exception_spec.get('expr_repr')
+                exception = tree.NoExcept(repr=repr_)
 
-        const = self.type_informations[node['id']].get('isconst')
+        const = type_info.get('isconst')
         if const:
             const = "const"
 
-        ref_qualifier = self.type_informations[node['id']].get('ref_qualifier')
+        ref_qualifier = type_info.get('ref_qualifier')
         if ref_qualifier == "LValue":
             ref_qualifier = "&"
         elif ref_qualifier == "RValue":
@@ -734,12 +747,15 @@ class Parser(object):
 
         defaulted = self.parse_default(node)
 
-        return tree.CXXMethodDecl(name=name, return_type=return_type, virtual=virtual,
-                                  noexcept=noexcept, const=const,
-                                  defaulted=defaulted,
+        return tree.CXXMethodDecl(name=name, return_type=return_type,
+                                  variadic=variadic, parameters=args,
+                                  inline=inline, storage=storage,
+                                  virtual=virtual,
+                                  body=body, exception=exception,
+                                  # method specific keywords
+                                  const=const, defaulted=defaulted,
                                   method_attrs=method_attrs,
-                                  ref_qualifier=ref_qualifier,
-                                  body=body, parameters=args)
+                                  ref_qualifier=ref_qualifier)
 
     @parse_debug
     def parse_FunctionDecl(self, node) -> tree.FunctionDecl:
@@ -1025,7 +1041,7 @@ class Parser(object):
     @parse_debug
     def parse_DeclRefExpr(self, node) -> tree.DeclRefExpr:
         assert node['kind'] == "DeclRefExpr"
-        name = self.get_node_source_code(node)+node['referencedDecl']['name']
+        name = node['referencedDecl']['name']
         kind = node['referencedDecl']['kind']
         return tree.DeclRefExpr(name=name, kind=kind)
 
@@ -1039,9 +1055,32 @@ class Parser(object):
     @parse_debug
     def parse_FloatingLiteral(self, node) -> tree.FloatingLiteral:
         assert node['kind'] == "FloatingLiteral"
-        value = node['value']
+        value = node['value'].lower()  # turns 'E' into 'e'
+        if '.' not in value:
+            value += '.'
         type_ = self.parse_node(self.type_informations[node['id']])
         return tree.FloatingLiteral(type=type_, value=value)
+
+    @parse_debug
+    def parse_LambdaExpr(self, node) -> tree.LambdaExpr:
+        assert node['kind'] == "LambdaExpr"
+        # Lambda are parsed as an implicit class, dig into it to find the call operator
+        cxx_record = node['inner'][0]
+        cxx_methods = cxx_record['inner']
+        for cxx_method in cxx_methods:
+            if cxx_method['name'] == "operator()":
+                call_method = cxx_method
+                break
+        else:
+            raise ValueError("expecting at least a call operator for a lambda")
+
+        call_method = self.parse_node(cxx_method)
+
+        parameters = call_method.parameters
+        body = call_method.body
+        assert body
+
+        return tree.LambdaExpr(parameters=parameters, body=body)
 
     @parse_debug
     def parse_CharacterLiteral(self, node) -> tree.CharacterLiteral:
@@ -1054,6 +1093,19 @@ class Parser(object):
         assert node['kind'] == "StringLiteral"
         value = node['value']
         return tree.StringLiteral(value=value)
+
+    @parse_debug
+    def parse_UserDefinedLiteral(self, node) -> tree.UserDefinedLiteral:
+        assert node['kind'] == "UserDefinedLiteral"
+        func, expr = self.parse_subnodes(node)
+        operator_name = func.expr.name
+        assert operator_name.startswith('operator""')
+        suffix = operator_name[len('operator""'):]
+
+        if isinstance(expr, (tree.FloatingLiteral, tree.IntegerLiteral)):
+            expr.type.name = 'user-defined-literal'
+
+        return tree.UserDefinedLiteral(suffix=suffix, expr=expr)
 
     @parse_debug
     def parse_CXXNullPtrLiteralExpr(self, node) -> tree.CXXNullPtrLiteralExpr:
@@ -1508,9 +1560,33 @@ class Parser(object):
     @parse_debug
     def parse_CXXConversionDecl(self, node) -> tree.CXXConversionDecl:
         assert node['kind'] == "CXXConversionDecl"
-        name = self.get_node_source_code(node).split("{")[0]
-        subnodes = self.parse_subnodes(node)
-        return tree.CXXConversionDecl(name=name, subnodes=subnodes)
+        name = node['name']
+        body, args, inits, method_attrs = self.parse_function_inner(node)
+        assert not inits
+        assert not args
+
+        type_info = self.type_informations[node['id']]
+        inline = "inline" if node.get('inline') else None
+
+        exception = None
+        exception_spec = type_info.get('exception_spec')
+        if exception_spec:
+            if exception_spec.get('isDynamic'):
+                exception = tree.Throw(args=exception_spec.get('inner', []))
+            elif exception_spec.get('isBasic'):
+                repr_ = exception_spec.get('expr_repr')
+                exception = tree.NoExcept(repr=repr_)
+
+        const = type_info.get('isconst')
+        if const:
+            const = "const"
+
+
+        return tree.CXXConversionDecl(name=name,
+                                      inline=inline,
+                                      body=body, exception=exception,
+                                      # method specific keywords
+                                      const=const)
 
     @parse_debug
     def parse_EmptyDecl(self, node) -> tree.EmptyDecl:

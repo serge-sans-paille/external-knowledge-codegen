@@ -37,6 +37,15 @@ class with_inheritance : base {
   with_inheritance(int i) : base(i) {}
 };
 
+class with_public_inheritance : public base {
+};
+
+class with_protected_inheritance : protected base {
+};
+
+class with_private_inheritance : private base {
+};
+
 class with_copy_ctor {
   with_copy_ctor(const with_copy_ctor &);
 };
