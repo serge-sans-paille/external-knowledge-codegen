@@ -402,8 +402,44 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_RetainAttr(self, node: tree.RetainAttr):
         self.write("__attribute__((retain)))")
 
+    def visit_PatchableFunctionEntryAttr(self, node: tree.PatchableFunctionEntryAttr):
+        self.write("__attribute__(patchable_function_entry(", node.count)
+        if node.offset is not None:
+            self.write(", ", node.offset)
+        self.write(")))")
+
     def visit_SectionAttr(self, node: tree.SectionAttr):
         self.write("__attribute__((section(\"", node.section, "\")))")
+
+    def visit_PureAttr(self, node: tree.PureAttr):
+        self.write("__attribute__((pure))")
+
+    def visit_ReturnsNonNullAttr(self, node: tree.ReturnsNonNullAttr):
+        self.write("__attribute__((returns_nonnull))")
+
+    def visit_ReturnsTwiceAttr(self, node: tree.ReturnsTwiceAttr):
+        self.write("__attribute__((returns_twice))")
+
+    def visit_NoStackProtectorAttr(self, node: tree.NoStackProtectorAttr):
+        self.write("__attribute__((no_stack_protector))")
+
+    def visit_TargetAttr(self, node: tree.TargetAttr):
+        self.write("__attribute__((__target__(", node.desc, ")))")
+
+    def visit_TargetClonesAttr(self, node: tree.TargetClonesAttr):
+        self.write("__attribute__((target_clones(", node.desc, ")))")
+
+    def visit_WarnUnusedResultAttr(self, node: tree.WarnUnusedResultAttr):
+        self.write("__attribute__((warn_unused_result))")
+
+    def visit_SentinelAttr(self, node: tree.SentinelAttr):
+        self.write("__attribute__((sentinel")
+        if node.value is not None:
+            self.write("(", node.value)
+            if node.offset is not None:
+                self.write(", ", node.offset)
+            self.write(")")
+        self.write("))")
 
     def visit_TLSModelAttr(self, node: tree.TLSModelAttr):
         self.write("__attribute__((tls_model(\"", node.tls_model, "\")))")
@@ -422,6 +458,12 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_WeakAttr(self, node: tree.WeakAttr):
         self.write("__attribute__((weak)))")
+
+    def visit_WeakRefAttr(self, node: tree.WeakAttr):
+        self.write("__attribute__((weakref")
+        if node.name is not None:
+            self.write("(\"", node.name, "\")")
+        self.write("))")
 
     def visit_FinalAttr(self, node: tree.WeakAttr):
         self.write("final")

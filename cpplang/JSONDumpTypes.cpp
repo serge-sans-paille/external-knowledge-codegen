@@ -356,6 +356,24 @@ public:
         Indices.push_back(Arg.getSourceIndex());
       JOS.attribute("indices", std::move(Indices));
     }
+    else if(const auto * PFEA = dyn_cast<PatchableFunctionEntryAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(PFEA));
+      JOS.attribute("count", PFEA->getCount());
+      if(PFEA->getOffset() != 0)
+        JOS.attribute("offset", PFEA->getOffset());
+    }
+    else if(const auto * SentA = dyn_cast<SentinelAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(SentA));
+      if(SentA->getSentinel() != 0)
+        JOS.attribute("value", SentA->getSentinel());
+      if(SentA->getNullPos() != 0)
+        JOS.attribute("offset", SentA->getNullPos());
+    }
+    else if(const auto * WRA = dyn_cast<WeakRefAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(WRA));
+      if(!WRA->getAliasee().empty())
+        JOS.attribute("name", WRA->getAliasee());
+    }
     InnerAttrVisitor::Visit(A);
   }
 

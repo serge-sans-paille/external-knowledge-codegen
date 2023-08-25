@@ -538,7 +538,8 @@ class Parser(object):
                           'section_name', 'visibility', 'tls_model', 'name',
                           'source_index', "size_index", 'nmemb_index',
                           'priority', 'message', 'options', 'indices',
-                          'archetype', 'fmt_index', 'vargs_index',):
+                          'archetype', 'fmt_index', 'vargs_index', 'count',
+                          'offset', 'value',):
                 if field not in child:
                     continue
 
@@ -1424,6 +1425,67 @@ class Parser(object):
         return tree.NoSanitizeAttr(options=options)
 
     @parse_debug
+    def parse_WarnUnusedResultAttr(self, node) -> tree.WarnUnusedResultAttr:
+        assert node['kind'] == "WarnUnusedResultAttr"
+        return tree.WarnUnusedResultAttr()
+
+    @parse_debug
+    def parse_NoStackProtectorAttr(self, node) -> tree.NoStackProtectorAttr:
+        assert node['kind'] == "NoStackProtectorAttr"
+        return tree.NoStackProtectorAttr()
+
+    @parse_debug
+    def parse_TargetAttr(self, node) -> tree.TargetAttr:
+        assert node['kind'] == "TargetAttr"
+        # There are so many ways to describe a target...
+        desc = self.get_node_source_code(node)
+        desc = re.sub(r'^\s*__target__\s*\((.*)\)$', r'\1', desc)
+        return tree.TargetAttr(desc=desc)
+
+    @parse_debug
+    def parse_TargetClonesAttr(self, node) -> tree.TargetClonesAttr:
+        assert node['kind'] == "TargetClonesAttr"
+        # There are so many ways to describe a target...
+        desc = self.get_node_source_code(node)
+        desc = re.sub(r'^\s*target_clones\s*\((.*)\)$', r'\1', desc)
+        return tree.TargetClonesAttr(desc=desc)
+
+    @parse_debug
+    def parse_PatchableFunctionEntryAttr(self, node) -> tree.PatchableFunctionEntryAttr:
+        assert node['kind'] == "PatchableFunctionEntryAttr"
+        count = str(self.attr_informations[node['id']]['count'])
+        offset = self.attr_informations[node['id']].get('offset')
+        if offset is not None:
+            offset = str(offset)
+        return tree.PatchableFunctionEntryAttr(count=count, offset=offset)
+
+    @parse_debug
+    def parse_SentinelAttr(self, node) -> tree.SentinelAttr:
+        assert node['kind'] == "SentinelAttr"
+        value = self.attr_informations.get(node['id'], {}).get('value')
+        offset = self.attr_informations.get(node['id'], {}).get('offset')
+        if value is not None or offset is not None:
+            value = str(value or 0)
+        if offset is not None:
+            offset = str(offset)
+        return tree.SentinelAttr(value=value, offset=offset)
+
+    @parse_debug
+    def parse_PureAttr(self, node) -> tree.PureAttr:
+        assert node['kind'] == "PureAttr"
+        return tree.PureAttr()
+
+    @parse_debug
+    def parse_ReturnsNonNullAttr(self, node) -> tree.ReturnsNonNullAttr:
+        assert node['kind'] == "ReturnsNonNullAttr"
+        return tree.ReturnsNonNullAttr()
+
+    @parse_debug
+    def parse_ReturnsTwiceAttr(self, node) -> tree.ReturnsTwiceAttr:
+        assert node['kind'] == "ReturnsTwiceAttr"
+        return tree.ReturnsTwiceAttr()
+
+    @parse_debug
     def parse_UsedAttr(self, node) -> tree.UsedAttr:
         assert node['kind'] == "UsedAttr"
         if node.get('implicit'):
@@ -1444,6 +1506,12 @@ class Parser(object):
     @parse_debug
     def parse_WeakAttr(self, node) -> tree.WeakAttr:
         assert node['kind'] == "WeakAttr"
+        return tree.WeakAttr()
+
+    @parse_debug
+    def parse_WeakRefAttr(self, node) -> tree.WeakRefAttr:
+        assert node['kind'] == "WeakRefAttr"
+        name = self.attr_informations.get(node['id'], {}).get('name')
         return tree.WeakAttr()
 
     @parse_debug
