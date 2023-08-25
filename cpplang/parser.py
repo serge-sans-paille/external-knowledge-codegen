@@ -414,7 +414,8 @@ class Parser(object):
         end = node.get('range', {}).get('end', {}).get('offset')
         if begin is None or end is None:
             return ''
-        return self.source_code[begin:end]
+        end_offset = node['range']['end']['tokLen']
+        return self.source_code[begin:end + end_offset]
 # ------------------------------------------------------------------------------
 # ---- Parsing methods ----
 
@@ -640,7 +641,22 @@ class Parser(object):
                 attrs.append(inner_node)
             else:
                 raise NotImplementedError(inner_node)
-        return body, args, init, method_attrs, attrs
+
+        exception = None
+        exception_spec = type_info.get('exception_spec')
+        if exception_spec:
+            if exception_spec.get('isDynamic'):
+                exception = tree.Throw(args=exception_spec.get('inner', []))
+            elif exception_spec.get('isNoThrow'):
+                exception = tree.NoThrow()
+            elif exception_spec.get('isBasic'):
+                # Unfortunately there might be implicit noexcept attributes
+                # And I cannot find a way to check if it's implicit or not...
+                if 'noexcept' in self.get_node_source_code(node):
+                    repr_ = exception_spec.get('expr_repr')
+                    exception = tree.NoExcept(repr=repr_)
+
+        return body, args, init, method_attrs, attrs, exception
 
     @parse_debug
     def parse_CXXConstructorDecl(self, node) -> tree.CXXConstructorDecl:
@@ -650,7 +666,7 @@ class Parser(object):
 
         name = node['name']
 
-        body, args, inits, method_attrs, attrs = self.parse_function_inner(node)
+        body, args, inits, method_attrs, attrs, exception = self.parse_function_inner(node)
 
         assert not method_attrs
 
@@ -658,7 +674,7 @@ class Parser(object):
 
         defaulted = self.parse_default(node)
 
-        return tree.CXXConstructorDecl(name=name, noexcept=noexcept,
+        return tree.CXXConstructorDecl(name=name, exception=exception,
                                        attributes=attrs,
                                        defaulted=defaulted, body=body,
                                        parameters=args, initializers=inits)
@@ -691,16 +707,14 @@ class Parser(object):
         if virtual:
             virtual = "virtual"
 
-        body, args, inits, method_attrs, attrs = self.parse_function_inner(node)
+        body, args, inits, method_attrs, attrs, exception = self.parse_function_inner(node)
         assert not args
         assert not inits
         assert not method_attrs
 
-        noexcept = None
-
         defaulted = self.parse_default(node)
 
-        return tree.CXXDestructorDecl(name=name, noexcept=noexcept,
+        return tree.CXXDestructorDecl(name=name, exception=exception,
                                       attributes=attrs,
                                       virtual=virtual,
                                       defaulted=defaulted, body=body)
@@ -729,7 +743,7 @@ class Parser(object):
             return None
 
         name = node['name']
-        body, args, inits, method_attrs, attrs = self.parse_function_inner(node)
+        body, args, inits, method_attrs, attrs, exception = self.parse_function_inner(node)
         assert not inits
 
         type_info = self.type_informations[node['id']]
@@ -737,15 +751,6 @@ class Parser(object):
         variadic = "..." if node['type']['qualType'].endswith('...)') else None
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
-
-        exception = None
-        exception_spec = type_info.get('exception_spec')
-        if exception_spec:
-            if exception_spec.get('isDynamic'):
-                exception = tree.Throw(args=exception_spec.get('inner', []))
-            elif exception_spec.get('isBasic'):
-                repr_ = exception_spec.get('expr_repr')
-                exception = tree.NoExcept(repr=repr_)
 
         const = type_info.get('isconst')
         if const:
@@ -789,16 +794,7 @@ class Parser(object):
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
 
-        exception = None
-        exception_spec = type_info.get('exception_spec')
-        if exception_spec:
-            if exception_spec.get('isDynamic'):
-                exception = tree.Throw(args=exception_spec.get('inner', []))
-            elif exception_spec.get('isBasic'):
-                repr_ = exception_spec.get('expr_repr')
-                exception = tree.NoExcept(repr=repr_)
-
-        body, args, inits, method_attrs, attrs = self.parse_function_inner(node)
+        body, args, inits, method_attrs, attrs, exception = self.parse_function_inner(node)
         assert not inits
         assert not method_attrs
 
@@ -1736,26 +1732,16 @@ class Parser(object):
     def parse_CXXConversionDecl(self, node) -> tree.CXXConversionDecl:
         assert node['kind'] == "CXXConversionDecl"
         name = node['name']
-        body, args, inits, method_attrs, attrs = self.parse_function_inner(node)
+        body, args, inits, method_attrs, attrs, exception = self.parse_function_inner(node)
         assert not inits
         assert not args
 
         type_info = self.type_informations[node['id']]
         inline = "inline" if node.get('inline') else None
 
-        exception = None
-        exception_spec = type_info.get('exception_spec')
-        if exception_spec:
-            if exception_spec.get('isDynamic'):
-                exception = tree.Throw(args=exception_spec.get('inner', []))
-            elif exception_spec.get('isBasic'):
-                repr_ = exception_spec.get('expr_repr')
-                exception = tree.NoExcept(repr=repr_)
-
         const = type_info.get('isconst')
         if const:
             const = "const"
-
 
         return tree.CXXConversionDecl(name=name,
                                       inline=inline,

@@ -99,6 +99,9 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
             ExceptionSpec["inner"] = llvm::json::Value(std::move(Inner));
           }
           break;
+        case ExceptionSpecificationType::EST_NoThrow:
+          ExceptionSpec["isNoThrow"] = true;
+          break;
         case ExceptionSpecificationType::EST_NoexceptFalse:
         case ExceptionSpecificationType::EST_NoexceptTrue:
         case ExceptionSpecificationType::EST_DependentNoexcept:

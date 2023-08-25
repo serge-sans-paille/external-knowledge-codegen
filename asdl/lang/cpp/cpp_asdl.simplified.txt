@@ -4,9 +4,9 @@ identifier, int, string, constant
 cu = TranslationUnit(statement* stmts)
 
 declaration = AccessSpecDecl(access_spec access_spec)
-            | CXXConstructorDecl(identifier name, constant? noexcept, default_mode? defaulted, statement? body, attribute* attributes, parameter* parameters, cxx_ctor_initializer* initializers)
+            | CXXConstructorDecl(identifier name, exception_spec? exception, default_mode? defaulted, statement? body, attribute* attributes, parameter* parameters, cxx_ctor_initializer* initializers)
             | CXXConversionDecl(identifier name, constant? inline, exception_spec? exception, constant? const, statement? body, attribute* attributes)
-            | CXXDestructorDecl(identifier name, constant? noexcept, constant? virtual, default_mode? defaulted, statement? body, attribute* attributes)
+            | CXXDestructorDecl(identifier name, exception_spec? exception, constant? virtual, default_mode? defaulted, statement? body, attribute* attributes)
             | CXXMethodDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, exception_spec? exception, constant? virtual, constant? const, default_mode? defaulted, method_attr* method_attributes, constant? ref_qualifier, statement? body, attribute* attributes, parameter* parameters)
             | CXXRecordDecl(identifier name, identifier kind, base* bases, constant complete, declaration* decls)
             | ClassTemplateDecl(statement* subnodes)
@@ -178,6 +178,7 @@ method_attr = FinalAttr
 
 exception_spec = Throw(identifier* args)
                | NoExcept(constant? repr)
+               | NoThrow
 
 exception_handler = CXXCatchStmt(declaration? decl, statement body)
 

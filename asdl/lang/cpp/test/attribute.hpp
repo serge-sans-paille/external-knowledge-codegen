@@ -115,3 +115,5 @@ void* f33 (void*) __attribute__ ((nonnull));
 void* f34 (void*) __attribute__ ((nonnull(1)));
 
 void* f35 (void*) __attribute__ ((noreturn));
+
+void* f36 (void*) __attribute__ ((nothrow));
