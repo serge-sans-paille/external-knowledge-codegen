@@ -1089,6 +1089,13 @@ class Parser(object):
         return tree.FloatingLiteral(type=type_, value=value)
 
     @parse_debug
+    def parse_ImaginaryLiteral(self, node) -> tree.ImaginaryLiteral:
+        assert node['kind'] == "ImaginaryLiteral"
+        type_ = self.parse_node(self.type_informations[node['id']])
+        float_, = self.parse_subnodes(node)
+        return tree.ImaginaryLiteral(type=type_, value=float_.value)
+
+    @parse_debug
     def parse_LambdaExpr(self, node) -> tree.LambdaExpr:
         assert node['kind'] == "LambdaExpr"
         # Lambda are parsed as an implicit class, dig into it to find the call operator
@@ -1920,6 +1927,12 @@ class Parser(object):
         size = str(node['size'])
         type_, = self.parse_subnodes(node)
         return tree.ConstantArrayType(type=type_, size=size)
+
+    @parse_debug
+    def parse_ComplexType(self, node) -> tree.ComplexType:
+        assert node['kind'] == "ComplexType"
+        type_, = self.parse_subnodes(node)
+        return tree.ComplexType(type=type_)
 
     @parse_debug
     def parse_ElaboratedType(self, node) -> tree.ElaboratedType:

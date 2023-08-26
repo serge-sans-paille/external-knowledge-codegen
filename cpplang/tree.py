@@ -393,6 +393,9 @@ class TypedefType(Node):
 class ElaboratedType(Node):
     attrs = ("type", "qualifiers", )
 
+class ComplexType(Node):
+    attrs = ("type",)
+
 class FunctionProtoType(Node):
     attrs = ("return_type", "parameter_types",)
 
@@ -909,6 +912,10 @@ class IntegerLiteral(Literal):
 
 
 class FloatingLiteral(Literal):
+    attrs = ("type",)
+
+
+class ImaginaryLiteral(Literal):
     attrs = ("type",)
 
 

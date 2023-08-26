@@ -540,6 +540,10 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_type_helper(self, current_expr, current_type):
         if isinstance(current_type, tree.BuiltinType):
             return "{} {}".format(current_type.name, current_expr)
+
+        if isinstance(current_type, tree.ComplexType):
+            return "_Complex " + self.visit_type_helper(current_expr, current_type.type)
+
         if isinstance(current_type, tree.ElaboratedType):
             if isinstance(current_type.type, tree.RecordType):
                 return"struct " + self.visit_type_helper(current_expr, current_type.type)
@@ -626,6 +630,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_BuiltinType(self, node: tree.BuiltinType):
         self.write(node.name)
+
+    def visit_ComplexType(self, node: tree.ComplexType):
+        self.write("_Complex ", node.type)
 
     def visit_ElaboratedType(self, node: tree.BuiltinType):
         if node.qualifiers:
@@ -715,7 +722,8 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_FloatingLiteral(self, node: tree.FloatingLiteral):
         suffixes = {'user-defined-literal': '',
                     'float': 'f',
-                    'long double': 'l'}
+                    '__float128': 'q',
+                    'long double': 'L'}
         # FIXME: we may loose precision by choosing this format
         svalue = '{:g}'.format(float(node.value))
 
@@ -725,6 +733,15 @@ class SourceGenerator(ExplicitNodeVisitor):
                 svalue += '.'
 
         self.write(svalue + suffixes.get(node.type.name, ''))
+
+    def visit_ImaginaryLiteral(self, node: tree.ImaginaryLiteral):
+        suffixes = {'float': 'fi',
+                    'double': 'i',
+                    'long double': 'Li'}
+        # FIXME: we may loose precision by choosing this format,
+        # see visit_FloatingLiteral
+        svalue = '{:g}'.format(float(node.value))
+        self.write(svalue + suffixes.get(node.type.type.name, ''))
 
     def visit_CharacterLiteral(self, node: tree.CharacterLiteral):
         if node.value.isprintable():
