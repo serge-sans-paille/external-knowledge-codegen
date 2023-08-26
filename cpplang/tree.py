@@ -830,6 +830,14 @@ class UnaryOperator(Expression):
     attrs = ("opcode", "expr", "postfix",)
 
 
+class BinaryConditionalOperator(Expression):
+    attrs = ("cond", "false_expr")
+
+
+class OpaqueValueExpr(Expression):
+    attrs = ("expr",)
+
+
 class ConditionalOperator(Expression):
     attrs = ("cond", "true_expr", "false_expr")
 

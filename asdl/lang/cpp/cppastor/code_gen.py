@@ -781,12 +781,18 @@ class SourceGenerator(ExplicitNodeVisitor):
         else:
             self.write(node.opcode, node.expr)
 
+    def visit_BinaryConditionalOperator(self, node: tree.BinaryConditionalOperator):
+        self.write(node.cond, "? :", node.false_expr)
+
     def visit_ConditionalOperator(self, node: tree.ConditionalOperator):
         self.write(node.cond, "?", node.true_expr, ":",
                    node.false_expr)
 
     def visit_ArraySubscriptExpr(self, node: tree.ArraySubscriptExpr):
         self.write(node.base, "[", node.index, "]")
+
+    def visit_OpaqueValueExpr(self, node: tree.OpaqueValueExpr):
+        self.write(node.expr)
 
     def visit_AtomicExpr(self, node: tree.AtomicExpr):
         self.write(node.name, "(")

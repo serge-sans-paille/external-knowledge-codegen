@@ -1639,6 +1639,12 @@ class Parser(object):
         return tree.UnaryOperator(opcode=opcode, expr=expr, postfix=postfix)
 
     @parse_debug
+    def parse_BinaryConditionalOperator(self, node) -> tree.BinaryConditionalOperator:
+        assert node['kind'] == "BinaryConditionalOperator"
+        cond, _, _, false_expr = self.parse_subnodes(node)
+        return tree.BinaryConditionalOperator(cond=cond, false_expr=false_expr)
+
+    @parse_debug
     def parse_ConditionalOperator(self, node) -> tree.ConditionalOperator:
         assert node['kind'] == "ConditionalOperator"
         cond, true_expr, false_expr = self.parse_subnodes(node)
@@ -1650,6 +1656,12 @@ class Parser(object):
         assert node['kind'] == "ArraySubscriptExpr"
         base, index = self.parse_subnodes(node)
         return tree.ArraySubscriptExpr(base=base, index=index)
+
+    @parse_debug
+    def parse_OpaqueValueExpr(self, node) -> tree.OpaqueValueExpr:
+        assert node['kind'] == "OpaqueValueExpr"
+        expr, = self.parse_subnodes(node)
+        return tree.OpaqueValueExpr(expr=expr)
 
     @parse_debug
     def parse_StmtExpr(self, node) -> tree.StmtExpr:
