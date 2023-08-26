@@ -710,7 +710,11 @@ class CXXBindTemporaryExpr(Expression):
 
 
 class CXXNewExpr(Expression):
-    attrs = ("type", "args", "is_array")
+    attrs = ("type", "args", "placement", "array_size")
+
+
+class CXXDeleteExpr(Expression):
+    attrs = ("expr", "is_array",)
 
 
 class UnaryExprOrTypeTraitExpr(Expression):

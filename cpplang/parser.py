@@ -1616,10 +1616,31 @@ class Parser(object):
     def parse_CXXNewExpr(self, node) -> tree.CXXNewExpr:
         assert node['kind'] == "CXXNewExpr"
         args = self.parse_subnodes(node)
+
+        if node.get("isArray"):
+            array_size, *args = args
+        else:
+            array_size = None
+
+        if node.get("isPlacement"):
+            args, placement = args[:-1], args[-1]
+        else:
+            placement = None
+
         type_ = self.parse_node(self.type_informations[node['id']])
         assert isinstance(type_, tree.PointerType)
-        is_array = "array" if node.get("isArray") else None
-        return tree.CXXNewExpr(type=type_.type, args=args, is_array=is_array)
+        return tree.CXXNewExpr(type=type_.type, args=args,
+                               array_size=array_size,
+                               placement=placement)
+
+    @parse_debug
+    def parse_CXXDeleteExpr(self, node) -> tree.CXXDeleteExpr:
+        assert node['kind'] == "CXXDeleteExpr"
+        expr, = self.parse_subnodes(node)
+        is_array = node.get('isArrayAsWritten')
+        if is_array:
+            is_array = 'array'
+        return tree.CXXDeleteExpr(expr=expr, is_array=is_array)
 
     @parse_debug
     def parse_CXXForRangeStmt(self, node) -> tree.CXXForRangeStmt:

@@ -968,17 +968,26 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("}")
 
     def visit_CXXNewExpr(self, node: tree.CXXNewExpr):
-        markers = "[]" if node.is_array else "()"
-        self.write("new ", node.type, markers[0])
-        if node.is_array:
-            size, *initializers = node.args
-            self.write(size, markers[1])
-            if initializers:
-                initializer, = initializers
+        markers = "[]" if node.array_size else "()"
+        self.write("new ")
+        if node.placement:
+            self.write("(", node.placement, ") ")
+        self.write( node.type, markers[0])
+        if node.array_size:
+            self.write(node.array_size, markers[1])
+            if node.args:
+                assert len(node.args) == 1
+                initializer, = node.args
                 self.write(initializer)
         else:
             self.comma_list(node.args)
             self.write(markers[1])
+
+    def visit_CXXDeleteExpr(self, node: tree.CXXDeleteExpr):
+        self.write("delete ")
+        if node.is_array:
+            self.write('[] ')
+        self.write(node.expr)
 
     def visit_Throw(self, node: tree.Throw):
         self.write("throw(")
