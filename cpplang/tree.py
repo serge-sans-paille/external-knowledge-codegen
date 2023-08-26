@@ -778,6 +778,10 @@ class DeclRefExpr(Expression):
     attrs = ("name", "kind",)
 
 
+class AddrLabelExpr(Expression):
+    attrs = ("name",)
+
+
 class ElementValueArrayInitializer(Expression):
     attrs = ("initializer",)
 
@@ -962,6 +966,10 @@ class CXXReinterpretCastExpr(Expression):
 
 class NullStmt(Statement):
     attrs = ()
+
+
+class IndirectGotoStmt(Statement):
+    attrs = ("expr",)
 
 
 class Cast(Primary):

@@ -12,3 +12,10 @@ void jump_loop() {
 target:
   2;
 }
+
+void local_label() {
+foo:
+  void *ptr;
+  ptr = &&foo;
+  goto *ptr;
+}

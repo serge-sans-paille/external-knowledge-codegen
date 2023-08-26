@@ -1012,6 +1012,16 @@ class Parser(object):
         child, = self.parse_subnodes(node)
         return tree.DefaultStmt(stmt=self.as_statement(child))
 
+    def parse_AddrLabelExpr(self, node) -> tree.AddrLabelExpr:
+        assert node['kind'] == 'AddrLabelExpr'
+        name = node['name']
+        return tree.AddrLabelExpr(name=name)
+
+    def parse_IndirectGotoStmt(self, node) -> tree.IndirectGotoStmt:
+        assert node['kind'] == 'IndirectGotoStmt'
+        expr, = self.parse_subnodes(node)
+        return tree.IndirectGotoStmt(expr=expr)
+
     def parse_CXXThrowExpr(self, node) -> tree.CXXThrowExpr:
         assert node['kind'] == "CXXThrowExpr"
         inner_nodes = self.parse_subnodes(node)

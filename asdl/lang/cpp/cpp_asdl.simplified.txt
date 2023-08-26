@@ -41,6 +41,7 @@ statement = BreakStmt
           | GCCAsmStmt(constant string, constrained_expression* output_operands, constrained_expression* input_operands, constant* clobbers, constant* labels)
           | GotoStmt(identifier target)
           | IfStmt(declaration_or_expression cond, statement true_body, statement? false_body)
+          | IndirectGotoStmt(expression expr)
           | LabelStmt(identifier name, statement stmt)
           | NullStmt
           | OverrideAttr
@@ -49,7 +50,8 @@ statement = BreakStmt
           | TypeRef(identifier name)
           | WhileStmt(declaration_or_expression cond, statement body)
 
-expression = ArraySubscriptExpr(expression base, expression index)
+expression = AddrLabelExpr(identifier name)
+           | ArraySubscriptExpr(expression base, expression index)
            | AtomicExpr(identifier name, expression* args)
            | BinaryOperator(constant opcode, expression lhs, expression rhs)
            | CStyleCastExpr(type type, expression expr)

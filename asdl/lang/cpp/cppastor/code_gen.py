@@ -496,6 +496,12 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_ExprStmt(self, node: tree.ExprStmt):
         self.write(node.expr, ";")
 
+    def visit_IndirectGotoStmt(self, node: tree.IndirectGotoStmt):
+        self.write("goto *", node.expr, ";")
+
+    def visit_AddrLabelExpr(self, node: tree.AddrLabelExpr):
+        self.write("&&", node.name)
+
     def visit_ConstrainedExpression(self, node: tree.ConstrainedExpression):
         self.write('"', node.constraint, '"', "(", node.expr, ")")
 
