@@ -785,6 +785,18 @@ class PredefinedExpr(Expression):
     attrs = ("name",)
 
 
+class OffsetOfExpr(Expression):
+    attrs = ("type", "kinds",)
+
+
+class OffsetOfField(Node):
+    attrs = ("name",)
+
+
+class OffsetOfArray(Node):
+    attrs = ("index",)
+
+
 class AddrLabelExpr(Expression):
     attrs = ("name",)
 

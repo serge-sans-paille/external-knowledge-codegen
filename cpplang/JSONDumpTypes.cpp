@@ -457,6 +457,43 @@ public:
         JOS.attribute("node_id", createPointerRepresentation(AE));
         JOS.attribute("name", AtomicOpToStr(AE->getOp()));
       }
+      else if(const auto * OOE = dyn_cast<OffsetOfExpr>(E)) {
+        JOS.attribute("node_id", createPointerRepresentation(OOE));
+
+        JOS.attributeBegin("expr_inner");
+        JOS.arrayBegin();
+
+        JOS.objectBegin();
+        Visit(OOE->getTypeSourceInfo()->getType());
+        JOS.objectEnd();
+
+        for(int i = 0; i < OOE->getNumComponents(); ++i) {
+          JOS.objectBegin();
+          OffsetOfNode ON = OOE->getComponent(i);
+          switch(ON.getKind()) {
+            case OffsetOfNode::Array:
+              JOS.attributeBegin("kind");
+              JOS.value(llvm::json::Value("OffsetOfArray"));
+              break;
+            case OffsetOfNode::Field:
+              JOS.attributeBegin("field");
+              JOS.value(llvm::json::Value(ON.getFieldName()->getName()));
+              JOS.attributeEnd();
+              JOS.attributeBegin("kind");
+              JOS.value(llvm::json::Value("OffsetOfField"));
+              break;
+            default:
+              OOE->dump();
+              assert(false && "not implemented yet offsetof kind");
+          }
+          JOS.attributeEnd();
+          JOS.objectEnd();
+        }
+
+        JOS.arrayEnd();
+
+        JOS.attributeEnd();
+      }
       else if(const auto * TypeidE = dyn_cast<CXXTypeidExpr>(E)) {
         if(TypeidE->isTypeOperand()) {
           JOS.attribute("node_id", createPointerRepresentation(E));

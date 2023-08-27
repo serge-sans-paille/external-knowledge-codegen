@@ -868,6 +868,20 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_PredefinedExpr(self, node: tree.PredefinedExpr):
         self.write(node.name)
 
+    def visit_OffsetOfExpr(self, node: tree.OffsetOfExpr):
+        # FIXME: should be "offsetof" but offset of is a macro
+        self.write("__builtin_offsetof(", node.type, ", ")
+        for i, kind in enumerate(node.kinds):
+            if isinstance(kind, tree.OffsetOfField) and i:
+                self.write(".")
+            self.write(kind)
+
+    def visit_OffsetOfField(self, node: tree.OffsetOfField):
+        self.write(node.name)
+
+    def visit_OffsetOfArray(self, node: tree.OffsetOfArray):
+        self.write("[", node.index, "]")
+
     def visit_MemberExpr(self, node: tree.MemberExpr):
         if node.expr:
             self.write(node.expr, node.op, node.name)

@@ -89,6 +89,7 @@ expression = AddrLabelExpr(identifier name)
            | LambdaExpr(parameter* parameters, statement body)
            | MaterializeTemporaryExpr(expression expr)
            | MemberExpr(identifier name, identifier op, expression? expr)
+           | OffsetOfExpr(type type, offsetof_kind* kinds)
            | OpaqueValueExpr(expression expr)
            | ParenExpr(expression expr)
            | PredefinedExpr(identifier name)
@@ -196,6 +197,9 @@ method_attr = FinalAttr
 exception_spec = Throw(identifier* args)
                | NoExcept(constant? repr)
                | NoThrow
+
+offsetof_kind = OffsetOfField(identifier name)
+              | OffsetOfArray(expression index)
 
 exception_handler = CXXCatchStmt(declaration? decl, statement body)
 

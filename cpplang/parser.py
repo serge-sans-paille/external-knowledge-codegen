@@ -134,6 +134,7 @@ class Parser(object):
         Depending on which one, a different init function is called
         """
         self.type_informations = {}
+        self.expr_informations = {}
         self.asm_informations = {}
         self.attr_informations = {}
         self.stack = []
@@ -393,16 +394,16 @@ class Parser(object):
         #return (isinstance(self.tokens.look(i), Annotation)
                 #and self.tokens.look(i + 1).value == 'interface')
 
-    def parse_subnodes(self, node, *, keep_empty=False):
-        if 'inner' in node:
-            assert len(node['inner']) > 0
-            result = [self.parse_node(c) for c in node['inner']]
-            if keep_empty:
-                return result
-            else:
-                return [c for c in result if c is not None]
-        else:
+    def parse_subnodes(self, node, *, keep_empty=False, key='inner'):
+        subnodes = node.get(key)
+        if subnodes is None:
             return []
+        assert len(subnodes) > 0
+        result = [self.parse_node(c) for c in subnodes]
+        if keep_empty:
+            return result
+        else:
+            return [c for c in result if c is not None]
 
     def collect_comment(self, node) -> str:
         if node['kind'] == 'TextComment':
@@ -475,7 +476,7 @@ class Parser(object):
             or ('range' in node and 'spellingLoc' in node['range']['begin'] and 'includedFrom' in node['range']['begin']['spellingLoc'])
             ):
             return None
-        elif ((len(self.stack) == 0 and node['loc'] and 'file' in node['loc']
+        elif ((len(self.stack) == 0 and node.get('loc') and 'file' in node['loc']
              and node['loc']['file'] == "<stdin>")
                 or len(self.stack) > 0):
             self.stack.append(node)
@@ -509,6 +510,11 @@ class Parser(object):
                 self.type_informations[child['node_id']] = inner_child
             if 'inner' in child:
                 self.parse_type_summary(child['inner'])
+            if 'expr_inner' in child:
+                assert 'node_inner' not in child
+                self.stack.append(child)
+                self.expr_informations[child['node_id']] = self.parse_subnodes(child, key='expr_inner')
+                self.stack.pop()
             if 'asm_string' in child:
                 asm_infos = {'asm_string': child['asm_string']}
 
@@ -1021,6 +1027,23 @@ class Parser(object):
         assert node['kind'] == 'AddrLabelExpr'
         name = node['name']
         return tree.AddrLabelExpr(name=name)
+
+    def parse_OffsetOfExpr(self, node) -> tree.OffsetOfExpr:
+        assert node['kind'] == 'OffsetOfExpr'
+        expr_infos = self.expr_informations[node['id']]
+        type_, *kinds = expr_infos
+        inner_nodes = iter(self.parse_subnodes(node))
+        for kind in kinds:
+            if isinstance(kind, tree.OffsetOfArray):
+                kind.index = next(inner_nodes)
+        return tree.OffsetOfExpr(type=type_, kinds=kinds)
+
+    def parse_OffsetOfField(self, node) -> tree.OffsetOfField:
+        return tree.OffsetOfField(name=node['field'])
+
+    def parse_OffsetOfArray(self, node) -> tree.OffsetOfArray:
+        # the actual index is set in the caller
+        return tree.OffsetOfArray(index=None)
 
     def parse_IndirectGotoStmt(self, node) -> tree.IndirectGotoStmt:
         assert node['kind'] == 'IndirectGotoStmt'
