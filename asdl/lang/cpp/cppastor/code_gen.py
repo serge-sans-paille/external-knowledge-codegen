@@ -862,6 +862,9 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_BreakStmt(self, node: tree.BreakStmt):
         self.write("break;\n")
 
+    def visit_PredefinedExpr(self, node: tree.PredefinedExpr):
+        self.write(node.name)
+
     def visit_MemberExpr(self, node: tree.MemberExpr):
         if node.expr:
             self.write(node.expr, node.op, node.name)

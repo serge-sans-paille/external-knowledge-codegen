@@ -781,6 +781,10 @@ class DeclRefExpr(Expression):
     attrs = ("name", "kind",)
 
 
+class PredefinedExpr(Expression):
+    attrs = ("name",)
+
+
 class AddrLabelExpr(Expression):
     attrs = ("name",)
 

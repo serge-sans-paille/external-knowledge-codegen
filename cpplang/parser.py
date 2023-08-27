@@ -1027,6 +1027,10 @@ class Parser(object):
         expr, = self.parse_subnodes(node)
         return tree.IndirectGotoStmt(expr=expr)
 
+    def parse_PredefinedExpr(self, node) -> tree.PredefinedExpr:
+        assert node['kind'] == 'PredefinedExpr'
+        return tree.PredefinedExpr(name=node['name'])
+
     def parse_CXXThrowExpr(self, node) -> tree.CXXThrowExpr:
         assert node['kind'] == "CXXThrowExpr"
         inner_nodes = self.parse_subnodes(node)

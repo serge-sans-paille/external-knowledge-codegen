@@ -17,3 +17,9 @@ int expr_stmt() {
 void conditional_with_opitted_operands(int x, int y) {
   x ? : y;
 }
+
+void predefined() {
+  __PRETTY_FUNCTION__;
+  __func__;
+    __FUNCTION__;
+}
