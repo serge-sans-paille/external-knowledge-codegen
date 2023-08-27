@@ -647,6 +647,11 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_ArraySubscriptExpr(self, node: tree.ArraySubscriptExpr):
         self.write(node.base, "[", node.index, "]")
 
+    def visit_AtomicExpr(self, node: tree.AtomicExpr):
+        self.write(node.name, "(")
+        self.comma_list(node.args)
+        self.write(")")
+
     def visit_DeclStmt(self, node: tree.DeclStmt):
         # FIXME: could be improved to support multiple decl in one statement
         for decl in node.decls:

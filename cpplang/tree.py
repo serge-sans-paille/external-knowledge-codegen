@@ -689,6 +689,10 @@ class ArraySubscriptExpr(Expression):
     attrs = ("base", "index",)
 
 
+class AtomicExpr(Expression):
+    attrs = ("name", "args")
+
+
 class MethodReference(Primary):
     attrs = ("expression", "method", "type_arguments")
 
