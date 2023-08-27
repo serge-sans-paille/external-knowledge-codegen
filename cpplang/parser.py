@@ -999,8 +999,13 @@ class Parser(object):
 
     def parse_CaseStmt(self, node) -> tree.CaseStmt:
         assert node['kind'] == "CaseStmt"
-        pattern, child = self.parse_subnodes(node)
-        return tree.CaseStmt(pattern=pattern,
+        inner_nodes = self.parse_subnodes(node)
+        if len(inner_nodes) == 3:
+            pattern, pattern_end, child = inner_nodes
+        else:
+            pattern, child = inner_nodes
+            pattern_end = None
+        return tree.CaseStmt(pattern=pattern, pattern_end=pattern_end,
                              stmt=self.as_statement(child))
 
     def parse_BreakStmt(self, node) -> tree.BreakStmt:

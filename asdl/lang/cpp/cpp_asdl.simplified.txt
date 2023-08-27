@@ -29,7 +29,7 @@ declaration = AccessSpecDecl(access_spec access_spec)
 statement = BreakStmt
           | CXXForRangeStmt(declaration decl, expression range, statement body)
           | CXXTryStmt(statement body, exception_handler* handlers)
-          | CaseStmt(expression pattern, statement stmt)
+          | CaseStmt(expression pattern, expression? pattern_end, statement stmt)
           | CompoundStmt(statement* stmts)
           | ContinueStmt
           | DeclStmt(declaration* decls)

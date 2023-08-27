@@ -756,7 +756,7 @@ class CatchClauseParameter(NonEmptyDeclaration):
 
 
 class CaseStmt(Statement):
-    attrs = ("pattern", "stmt",)
+    attrs = ("pattern", "pattern_end", "stmt",)
 
 
 class ForControl(Node):

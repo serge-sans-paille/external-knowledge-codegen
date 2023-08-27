@@ -854,7 +854,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("switch (", node.cond, ")\n", node.body)
 
     def visit_CaseStmt(self, node: tree.CaseStmt):
-        self.write("case ", node.pattern, ":\n", node.stmt)
+        self.write("case ", node.pattern)
+        if node.pattern_end:
+            self.write(" ... ", node.pattern_end)
+        self.write(":\n", node.stmt)
 
     def visit_BreakStmt(self, node: tree.BreakStmt):
         self.write("break;\n")

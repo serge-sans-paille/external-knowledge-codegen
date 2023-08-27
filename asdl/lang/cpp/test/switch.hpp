@@ -58,3 +58,10 @@ void duff_device(short* to, short* from, int count) {
     } while (--n > 0);
   }
 }
+
+void range(int n) {
+  switch(n) {
+    case 1 ... 10:
+      break;
+  }
+}
