@@ -12,7 +12,7 @@ from typing import (Dict, List, Set, Tuple)
 from . import util
 from . import tree
 
-ENABLE_DEBUG_SUPPORT = True
+ENABLE_DEBUG_SUPPORT = False
 
 preprocess_command = [
     shutil.which("clang"), "-x", "c++", "-std=c++14",
