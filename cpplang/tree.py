@@ -630,7 +630,7 @@ class ReturnStmt(Statement):
 
 
 class NamespaceDecl(Declaration):
-    attrs = ("name", "subnodes",)
+    attrs = ("name", "decls",)
 
 
 class UsingDirectiveDecl(Declaration):
