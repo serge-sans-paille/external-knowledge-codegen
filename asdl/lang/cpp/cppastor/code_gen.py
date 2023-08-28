@@ -121,6 +121,7 @@ class SourceGenerator(ExplicitNodeVisitor):
                 of attribute lookups).
             """
             for item in params:
+                assert item is not None
                 if isinstance(item, Node):
                     visit(item)
                 elif callable(item):
