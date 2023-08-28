@@ -410,11 +410,11 @@ class Parser(object):
         return " ".join([self.collect_comment(subnode) for subnode in node['inner']])
 
     def get_node_source_code(self, node) -> str:
-        if ('range' not in node or 'begin' not in node['range']
-                or 'offset' not in node['range']['begin']):
+        begin = node.get('range', {}).get('begin', {}).get('offset')
+        end = node.get('range', {}).get('end', {}).get('offset')
+        if begin is None or end is None:
             return ''
-        return self.source_code[
-            node['range']['begin']['offset']:node['range']['end']['offset']].strip()
+        return self.source_code[begin:end]
 # ------------------------------------------------------------------------------
 # ---- Parsing methods ----
 
