@@ -9,3 +9,7 @@ void foo() {
   alignof(1 + 3);
   (1 + 2) * 3;
 }
+
+int bar() {
+  return ({int X = 4; X;});
+}

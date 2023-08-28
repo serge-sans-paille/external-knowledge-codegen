@@ -534,11 +534,14 @@ class Parser(object):
                                                                      [])]
 
             for field in ('aliasee', 'cleanup_function', 'deprecation_message',
-                          'section_name', 'visibility', 'tls_model', 'name'):
+                          'section_name', 'visibility', 'tls_model', 'name',
+                          'source_index', "size_index", 'nmemb_index',
+                          'priority', 'message', 'options', 'indices',
+                          'archetype', 'fmt_index', 'vargs_index',):
                 if field not in child:
                     continue
 
-                self.attr_informations[child['node_id']] = {field: child[field]}
+                self.attr_informations.setdefault(child['node_id'], {})[field] = child[field]
 
 
     @parse_debug
@@ -611,7 +614,14 @@ class Parser(object):
     def parse_function_inner(self, node):
         inner_nodes = self.parse_subnodes(node)
 
-        body, args, init, method_attrs = None, [], [], []
+
+        body, args, init, method_attrs, attrs = None, [], [], [], []
+
+        type_info = self.type_informations[node['id']]
+        noreturn = type_info.get('isNoReturn')
+        if noreturn:
+            attrs.append(tree.NoReturnAttr())
+
         for inner_node in inner_nodes:
             if isinstance(inner_node, tree.ParmVarDecl):
                 args.append(inner_node)
@@ -622,9 +632,15 @@ class Parser(object):
             elif isinstance(inner_node, tree.CompoundStmt):
                 assert body is None
                 body = inner_node
+            elif isinstance(inner_node, tree.RestrictAttr):
+                # This is actually a MallocAttr, but clang represent it as a
+                # RestrictAttr
+                attrs.append(tree.MallocAttr())
+            elif isinstance(inner_node, tree.Attr):
+                attrs.append(inner_node)
             else:
                 raise NotImplementedError(inner_node)
-        return body, args, init, method_attrs
+        return body, args, init, method_attrs, attrs
 
     @parse_debug
     def parse_CXXConstructorDecl(self, node) -> tree.CXXConstructorDecl:
@@ -634,7 +650,7 @@ class Parser(object):
 
         name = node['name']
 
-        body, args, inits, method_attrs = self.parse_function_inner(node)
+        body, args, inits, method_attrs, attrs = self.parse_function_inner(node)
 
         assert not method_attrs
 
@@ -643,6 +659,7 @@ class Parser(object):
         defaulted = self.parse_default(node)
 
         return tree.CXXConstructorDecl(name=name, noexcept=noexcept,
+                                       attributes=attrs,
                                        defaulted=defaulted, body=body,
                                        parameters=args, initializers=inits)
 
@@ -674,7 +691,7 @@ class Parser(object):
         if virtual:
             virtual = "virtual"
 
-        body, args, inits, method_attrs = self.parse_function_inner(node)
+        body, args, inits, method_attrs, attrs = self.parse_function_inner(node)
         assert not args
         assert not inits
         assert not method_attrs
@@ -684,6 +701,7 @@ class Parser(object):
         defaulted = self.parse_default(node)
 
         return tree.CXXDestructorDecl(name=name, noexcept=noexcept,
+                                      attributes=attrs,
                                       virtual=virtual,
                                       defaulted=defaulted, body=body)
 
@@ -711,7 +729,7 @@ class Parser(object):
             return None
 
         name = node['name']
-        body, args, inits, method_attrs = self.parse_function_inner(node)
+        body, args, inits, method_attrs, attrs = self.parse_function_inner(node)
         assert not inits
 
         type_info = self.type_informations[node['id']]
@@ -752,9 +770,10 @@ class Parser(object):
                                   inline=inline, storage=storage,
                                   virtual=virtual,
                                   body=body, exception=exception,
+                                  attributes=attrs,
                                   # method specific keywords
                                   const=const, defaulted=defaulted,
-                                  method_attrs=method_attrs,
+                                  method_attributes=method_attrs,
                                   ref_qualifier=ref_qualifier)
 
     @parse_debug
@@ -779,11 +798,12 @@ class Parser(object):
                 repr_ = exception_spec.get('expr_repr')
                 exception = tree.NoExcept(repr=repr_)
 
-        body, args, inits, method_attrs = self.parse_function_inner(node)
+        body, args, inits, method_attrs, attrs = self.parse_function_inner(node)
         assert not inits
         assert not method_attrs
 
         return tree.FunctionDecl(name=name, return_type=return_type,
+                                 attributes=attrs,
                                  variadic=variadic, parameters=args,
                                  inline=inline, storage=storage,
                                  body=body, exception=exception)
@@ -1212,6 +1232,21 @@ class Parser(object):
                             tls=tls)
 
     @parse_debug
+    def parse_AllocAlignAttr(self, node) -> tree.AllocAlignAttr:
+        assert node['kind'] == "AllocAlignAttr"
+        index = str(self.attr_informations[node['id']]['source_index'])
+        return tree.AllocAlignAttr(index=index)
+
+    @parse_debug
+    def parse_AllocSizeAttr(self, node) -> tree.AllocSizeAttr:
+        assert node['kind'] == "AllocSizeAttr"
+        size = str(self.attr_informations[node['id']]['size_index'])
+        nmemb = self.attr_informations[node['id']].get('nmemb_index')
+        if nmemb is not None:
+            nmemb = str(nmemb)
+        return tree.AllocSizeAttr(size=size, nmemb=nmemb)
+
+    @parse_debug
     def parse_AlignedAttr(self, node) -> tree.AlignedAttr:
         assert node['kind'] == "AlignedAttr"
         inner_nodes = self.parse_subnodes(node)
@@ -1226,6 +1261,48 @@ class Parser(object):
         assert node['kind'] == "AliasAttr"
         aliasee = self.attr_informations[node['id']]['aliasee']
         return tree.AliasAttr(aliasee=aliasee)
+
+    @parse_debug
+    def parse_AlwaysInlineAttr(self, node) -> tree.AlwaysInlineAttr:
+        assert node['kind'] == "AlwaysInlineAttr"
+        return tree.AlwaysInlineAttr()
+
+    @parse_debug
+    def parse_ColdAttr(self, node) -> tree.ColdAttr:
+        assert node['kind'] == "ColdAttr"
+        return tree.ColdAttr()
+
+    @parse_debug
+    def parse_ConstAttr(self, node) -> tree.ConstAttr:
+        assert node['kind'] == "ConstAttr"
+        return tree.ConstAttr()
+
+    @parse_debug
+    def parse_ConstructorAttr(self, node) -> tree.ConstructorAttr:
+        assert node['kind'] == "ConstructorAttr"
+        priority = self.attr_informations.get(node['id'], {}).get('priority')
+        if priority is not None:
+            priority = str(priority)
+        return tree.ConstructorAttr(priority=priority)
+
+    @parse_debug
+    def parse_DestructorAttr(self, node) -> tree.DestructorAttr:
+        assert node['kind'] == "DestructorAttr"
+        priority = self.attr_informations.get(node['id'], {}).get('priority')
+        if priority is not None:
+            priority = str(priority)
+        return tree.DestructorAttr(priority=priority)
+
+    @parse_debug
+    def parse_ErrorAttr(self, node) -> tree.ErrorAttr:
+        assert node['kind'] == "ErrorAttr"
+        message = self.attr_informations[node['id']]['message']
+        return tree.ErrorAttr(msg=message)
+
+    @parse_debug
+    def parse_FlattenAttr(self, node) -> tree.FlattenAttr:
+        assert node['kind'] == "FlattenAttr"
+        return tree.FlattenAttr()
 
     @parse_debug
     def parse_CleanupAttr(self, node) -> tree.CleanupAttr:
@@ -1273,8 +1350,88 @@ class Parser(object):
         return tree.FinalAttr()
 
     @parse_debug
+    def parse_FormatAttr(self, node) -> tree.FormatAttr:
+        assert node['kind'] == "FormatAttr"
+        archetype = self.attr_informations[node['id']]['archetype']
+        fmt_index = str(self.attr_informations[node['id']]['fmt_index'])
+        vargs_index = str(self.attr_informations[node['id']]['vargs_index'])
+        return tree.FormatAttr(archetype=archetype, fmt_index=fmt_index,
+                               vargs_index=vargs_index)
+
+    @parse_debug
+    def parse_FormatArgAttr(self, node) -> tree.FormatArgAttr:
+        assert node['kind'] == "FormatArgAttr"
+        fmt_index = str(self.attr_informations[node['id']]['fmt_index'])
+        return tree.FormatArgAttr(fmt_index=fmt_index)
+
+    @parse_debug
+    def parse_GNUInlineAttr(self, node) -> tree.GNUInlineAttr:
+        assert node['kind'] == "GNUInlineAttr"
+        return tree.GNUInlineAttr()
+
+    @parse_debug
+    def parse_HotAttr(self, node) -> tree.HotAttr:
+        assert node['kind'] == "HotAttr"
+        return tree.HotAttr()
+
+    @parse_debug
+    def parse_IFuncAttr(self, node) -> tree.IFuncAttr:
+        assert node['kind'] == "IFuncAttr"
+        name = self.attr_informations[node['id']]['name']
+        return tree.IFuncAttr(name=name)
+
+    @parse_debug
+    def parse_AnyX86InterruptAttr(self, node) -> tree.AnyX86InterruptAttr:
+        assert node['kind'] == "AnyX86InterruptAttr"
+        return tree.AnyX86InterruptAttr()
+
+    @parse_debug
+    def parse_LeafAttr(self, node) -> tree.LeafAttr:
+        assert node['kind'] == "LeafAttr"
+        return tree.LeafAttr()
+
+    @parse_debug
+    def parse_RestrictAttr(self, node) -> tree.RestrictAttr:
+        assert node['kind'] == "RestrictAttr"
+        return tree.RestrictAttr()
+
+    @parse_debug
+    def parse_NoInstrumentFunctionAttr(self, node) -> tree.NoInstrumentFunctionAttr:
+        assert node['kind'] == "NoInstrumentFunctionAttr"
+        return tree.NoInstrumentFunctionAttr()
+
+    @parse_debug
+    def parse_NoInlineAttr(self, node) -> tree.NoInlineAttr:
+        assert node['kind'] == "NoInlineAttr"
+        return tree.NoInlineAttr()
+
+    @parse_debug
+    def parse_NonNullAttr(self, node) -> tree.NonNullAttr:
+        assert node['kind'] == "NonNullAttr"
+        indices = list(map(str,self.attr_informations[node['id']]['indices']))
+        return tree.NonNullAttr(indices=indices)
+
+    @parse_debug
+    def parse_NoSplitStackAttr(self, node) -> tree.NoSplitStackAttr:
+        assert node['kind'] == "NoSplitStackAttr"
+        return tree.NoSplitStackAttr()
+
+    @parse_debug
+    def parse_NoProfileFunctionAttr(self, node) -> tree.NoProfileFunctionAttr:
+        assert node['kind'] == "NoProfileFunctionAttr"
+        return tree.NoProfileFunctionAttr()
+
+    @parse_debug
+    def parse_NoSanitizeAttr(self, node) -> tree.NoSanitizeAttr:
+        assert node['kind'] == "NoSanitizeAttr"
+        options = self.attr_informations[node['id']]['options']
+        return tree.NoSanitizeAttr(options=options)
+
+    @parse_debug
     def parse_UsedAttr(self, node) -> tree.UsedAttr:
         assert node['kind'] == "UsedAttr"
+        if node.get('implicit'):
+            return None
         return tree.UsedAttr()
 
     @parse_debug
@@ -1419,6 +1576,12 @@ class Parser(object):
         assert node['kind'] == "ArraySubscriptExpr"
         base, index = self.parse_subnodes(node)
         return tree.ArraySubscriptExpr(base=base, index=index)
+
+    @parse_debug
+    def parse_StmtExpr(self, node) -> tree.StmtExpr:
+        assert node['kind'] == "StmtExpr"
+        stmt, = self.parse_subnodes(node)
+        return tree.StmtExpr(stmt=stmt)
 
     @parse_debug
     def parse_AtomicExpr(self, node) -> tree.AtomicExpr:
@@ -1573,7 +1736,7 @@ class Parser(object):
     def parse_CXXConversionDecl(self, node) -> tree.CXXConversionDecl:
         assert node['kind'] == "CXXConversionDecl"
         name = node['name']
-        body, args, inits, method_attrs = self.parse_function_inner(node)
+        body, args, inits, method_attrs, attrs = self.parse_function_inner(node)
         assert not inits
         assert not args
 
@@ -1596,6 +1759,7 @@ class Parser(object):
 
         return tree.CXXConversionDecl(name=name,
                                       inline=inline,
+                                      attributes=attrs,
                                       body=body, exception=exception,
                                       # method specific keywords
                                       const=const)

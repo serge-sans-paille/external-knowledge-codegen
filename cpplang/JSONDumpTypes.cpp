@@ -67,6 +67,8 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
 
     if(FunctionProtoTy->isConst())
       Ret["isconst"] = true;
+    if(FunctionProtoTy->getExtInfo().getNoReturn())
+      Ret["isNoReturn"] = true;
     switch(FunctionProtoTy->getRefQualifier()) {
       case RefQualifierKind::RQ_None:
         break;
@@ -301,6 +303,55 @@ public:
     else if(const auto * VA = dyn_cast<VisibilityAttr>(A)) {
       JOS.attribute("node_id", createPointerRepresentation(VA));
       JOS.attribute("visibility", VisibilityAttr::ConvertVisibilityTypeToStr(VA->getVisibility()));
+    }
+    else if(const auto * AAA = dyn_cast<AllocAlignAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(AAA));
+      JOS.attribute("source_index", AAA->getParamIndex().getSourceIndex());
+    }
+    else if(const auto * ASA = dyn_cast<AllocSizeAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(ASA));
+      JOS.attribute("size_index", ASA->getElemSizeParam().getSourceIndex());
+      if(ASA->getNumElemsParam().isValid())
+        JOS.attribute("nmemb_index", ASA->getNumElemsParam().getSourceIndex());
+    }
+    else if(const auto * ConsA = dyn_cast<ConstructorAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(ConsA));
+      if(ConsA->getPriority() != ConstructorAttr::DefaultPriority)
+        JOS.attribute("priority", ConsA->getPriority());
+    }
+    else if(const auto * DesA = dyn_cast<DestructorAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(DesA));
+      if(DesA->getPriority() != DestructorAttr::DefaultPriority)
+        JOS.attribute("priority", DesA->getPriority());
+    }
+    else if(const auto * EA = dyn_cast<ErrorAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(EA));
+      JOS.attribute("message", EA->getUserDiagnostic());
+    }
+    else if(const auto * FA = dyn_cast<FormatAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(FA));
+      JOS.attribute("archetype", FA->getType()->getName());
+      JOS.attribute("fmt_index", FA->getFormatIdx());
+      JOS.attribute("vargs_index", FA->getFirstArg());
+    }
+    else if(const auto * FAA = dyn_cast<FormatArgAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(FAA));
+      JOS.attribute("fmt_index", FAA->getFormatIdx().getSourceIndex());
+    }
+    else if(const auto * IFA = dyn_cast<IFuncAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(IFA));
+      JOS.attribute("name", IFA->getResolver());
+    }
+    else if(const auto * NSA = dyn_cast<NoSanitizeAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(NSA));
+      JOS.attribute("options", llvm::json::Array(NSA->sanitizers()));
+    }
+    else if(const auto * NNA = dyn_cast<NonNullAttr>(A)) {
+      JOS.attribute("node_id", createPointerRepresentation(NNA));
+      llvm::json::Array Indices;
+      for(auto const& Arg : NNA->args())
+        Indices.push_back(Arg.getSourceIndex());
+      JOS.attribute("indices", std::move(Indices));
     }
     InnerAttrVisitor::Visit(A);
   }
