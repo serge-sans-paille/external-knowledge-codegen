@@ -1093,9 +1093,9 @@ class Parser(object):
 
     def parse_ConstantExpr(self, node) -> tree.ConstantExpr:
         assert node['kind'] == "ConstantExpr"
-        value = node['value']
+        result = node.get('value')
         expr, = self.parse_subnodes(node)
-        return tree.ConstantExpr(value=value, expr=expr)
+        return tree.ConstantExpr(expr=expr, result=result)
 
     @parse_debug
     def parse_DeclRefExpr(self, node) -> tree.DeclRefExpr:

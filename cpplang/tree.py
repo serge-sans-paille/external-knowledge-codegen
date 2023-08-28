@@ -960,7 +960,7 @@ class MemberExpr(Primary):
 
 
 class ConstantExpr(Primary):
-    attrs = ("value", "expr",)
+    attrs = ("expr", "result",)
 
 
 class CXXMemberCallExpr(Primary):

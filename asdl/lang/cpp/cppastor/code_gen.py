@@ -889,7 +889,7 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write(node.name)
 
     def visit_ConstantExpr(self, node: tree.ConstantExpr):
-        self.write(node.value)
+        self.write(node.result or node.expr)
 
     def visit_DefaultStmt(self, node: tree.DefaultStmt):
         self.write("default:\n", node.stmt)
