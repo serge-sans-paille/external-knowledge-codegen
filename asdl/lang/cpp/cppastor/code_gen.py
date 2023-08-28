@@ -549,6 +549,12 @@ class SourceGenerator(ExplicitNodeVisitor):
                 return"struct " + self.visit_type_helper(current_expr, current_type.type)
             else:
                 return self.visit_type_helper(current_expr, current_type.type)
+        if isinstance(current_type, tree.FunctionNoProtoType):
+            argument_types = ', '.join(self.visit_type_helper("", ty)
+                                       for ty in parameter_types)
+            return self.visit_type_helper(
+                    "{}()".format(current_expr),
+                    current_type.return_type)
         if isinstance(current_type, tree.FunctionProtoType):
             parameter_types = current_type.parameter_types or []
             argument_types = ', '.join(self.visit_type_helper("", ty)
@@ -645,6 +651,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(node.type, tree.RecordType):
             self.write("struct ")
         self.write(node.type)
+
+    def visit_FunctionProtoType(self, node: tree.FunctionNoProtoType):
+        raise NotImplementedError("FunctionNoProtoType")
 
     def visit_FunctionProtoType(self, node: tree.FunctionProtoType):
         self.write(node.return_type, "(")
@@ -995,6 +1004,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(prev_type, tree.ParenType):
             return tree.ParenType(type=self.anonymize_type(prev_type.type,
                                                              lvl=lvl+1))
+        if isinstance(prev_type, tree.FunctionNoProtoType):
+            raise NotImplementedError("FunctionNoProtoType")
+
         if isinstance(prev_type, tree.FunctionProtoType):
             return tree.FunctionProtoType(return_type=self.anonymize_type(prev_type.return_type,
                                                              lvl=lvl+1),
@@ -1097,7 +1109,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         if getattr(node, 'virtual', None):
             self.write("virtual ")
 
-        if hasattr(node, 'return_type'):
+        if getattr(node, 'return_type', None):
             self.write(node.return_type, " ")
 
         self.write(node.name)

@@ -1980,11 +1980,19 @@ class Parser(object):
         return tree.DecayedType(type=type_)
 
     @parse_debug
+    def parse_FunctionNoProtoType(self, node) -> tree.FunctionNoProtoType:
+        assert node['kind'] == "FunctionNoProtoType"
+        args = self.parse_subnodes(node)
+        assert not args
+        return tree.FunctionNoProtoType()
+
+    @parse_debug
     def parse_FunctionProtoType(self, node) -> tree.FunctionProtoType:
         assert node['kind'] == "FunctionProtoType"
         return_type, *parameter_types = self.parse_subnodes(node)
         return tree.FunctionProtoType(return_type=return_type,
                                       parameter_types=parameter_types)
+
     @parse_debug
     def parse_TypedefType(self, node) -> tree.TypedefType:
         assert node['kind'] == "TypedefType"

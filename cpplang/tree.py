@@ -396,6 +396,9 @@ class ElaboratedType(Node):
 class ComplexType(Node):
     attrs = ("type",)
 
+class FunctionNoProtoType(Node):
+    attrs = ()
+
 class FunctionProtoType(Node):
     attrs = ("return_type", "parameter_types",)
 

@@ -58,6 +58,12 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Inner.push_back(fullType(Ctx, ConstantArrayTy->getElementType()));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
+  else if(auto * FunctionNoProtoTy = dyn_cast<FunctionNoProtoType>(Ty)) {
+    if(FunctionNoProtoTy->isConst())
+      Ret["isconst"] = true;
+    if(FunctionNoProtoTy->getExtInfo().getNoReturn())
+      Ret["isNoReturn"] = true;
+  }
   else if(auto * FunctionProtoTy = dyn_cast<FunctionProtoType>(Ty)) {
     llvm::json::Array Inner;
     Inner.push_back(fullType(Ctx, FunctionProtoTy->getReturnType()));
