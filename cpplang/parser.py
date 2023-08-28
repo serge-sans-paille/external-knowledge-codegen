@@ -140,8 +140,6 @@ class Parser(object):
         self.stack = []
         self.debug = False
         self.anonymous_types = {}
-        self.parsed_gotos = {}
-        self.parsed_labels = {}
         if cpp_code is not None:
             self._init_direct(cpp_code, filepath)
         elif compile_command is not None:
@@ -622,7 +620,6 @@ class Parser(object):
     def parse_function_inner(self, node):
         inner_nodes = self.parse_subnodes(node)
 
-
         body, args, init, method_attrs, attrs = None, [], [], [], []
 
         type_info = self.type_informations[node['id']]
@@ -791,12 +788,10 @@ class Parser(object):
     @parse_debug
     def parse_FunctionDecl(self, node) -> tree.FunctionDecl:
         assert node['kind'] == "FunctionDecl"
-        self.parsed_gotos.clear()
-        self.parsed_labels.clear()
 
         name = node['name']
         type_info = self.type_informations[node['id']]
-        return_type = self.parse_node(type_info).return_type
+        return_type = getattr(self.parse_node(type_info), 'return_type', None)
         variadic = "..." if node['type']['qualType'].endswith('...)') else None
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
@@ -923,23 +918,15 @@ class Parser(object):
     def parse_LabelStmt(self, node) -> tree.LabelStmt:
         assert node['kind'] == "LabelStmt"
         name = node['name']
-        decl_id = node['declId']
-        self.parsed_labels[decl_id] = name
         child, = self.parse_subnodes(node)
-        for target_id, goto in self.parsed_gotos.items():
-            if target_id == decl_id:
-                goto.target = name
         return tree.LabelStmt(name=name,
                               stmt=self.as_statement(child))
 
     @parse_debug
     def parse_GotoStmt(self, node) -> tree.LabelStmt:
         assert node['kind'] == "GotoStmt"
-        decl_id = node['targetLabelDeclId']
-        target = self.parsed_labels.get(decl_id)
-        tnode = tree.GotoStmt(target=target)
-        self.parsed_gotos[decl_id] = tnode
-        return tnode
+        target = self.get_node_source_code(node).replace('goto', '', 1).strip()
+        return tree.GotoStmt(target=target)
 
     @parse_debug
     def parse_ForStmt(self, node) -> tree.ForStmt:
