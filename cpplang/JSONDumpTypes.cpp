@@ -138,6 +138,9 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Inner.push_back(fullType(Ctx, ReferenceTy->getPointeeType()));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
+  else if(auto* TemplateTypeParmTy = dyn_cast<TemplateTypeParmType>(Ty)) {
+    Ret["name"] = TemplateTypeParmTy->getIdentifier()->getName();
+  }
   else if(auto * ParenTy = dyn_cast<ParenType>(Ty)) {
     llvm::json::Array Inner;
     Inner.push_back(fullType(Ctx, ParenTy->getInnerType()));
@@ -224,6 +227,11 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Ret["qualifiers"] = SQT.Quals.getAsString();
     llvm::json::Array Inner;
     Inner.push_back(fullType(Ctx, SQT.Ty));
+    Ret["inner"] = llvm::json::Value(std::move(Inner));
+  }
+  else if(auto* SubstTemplateTypeParmTy = dyn_cast<SubstTemplateTypeParmType>(Ty)) {
+    llvm::json::Array Inner;
+    Inner.push_back(fullType(Ctx, SubstTemplateTypeParmTy->getReplacementType()));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
   else {
