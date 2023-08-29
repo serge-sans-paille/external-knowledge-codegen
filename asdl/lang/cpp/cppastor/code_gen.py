@@ -1095,6 +1095,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.comma_list(node.args)
         self.write(")")
 
+    def visit_NoThrow(self, node: tree.Throw):
+        self.write("__attribute__((nothrow))")
+
     def visit_NoExcept(self, node: tree.NoExcept):
         self.write("noexcept")
         if node.repr:

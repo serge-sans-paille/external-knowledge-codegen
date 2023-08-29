@@ -259,7 +259,7 @@ class RecordDecl(TypeDeclaration):
 
 
 class CXXConstructorDecl(Declaration):
-    attrs = ("name", "noexcept", "defaulted", "body", "attributes", "parameters", "initializers",)
+    attrs = ("name", "exception", "defaulted", "body", "attributes", "parameters", "initializers",)
 
 
 class CXXCtorInitializer(Node):
@@ -267,7 +267,7 @@ class CXXCtorInitializer(Node):
 
 
 class CXXDestructorDecl(Declaration):
-    attrs = ("name", "noexcept", "virtual", "defaulted", "body", "attributes", )
+    attrs = ("name", "exception", "virtual", "defaulted", "body", "attributes", )
 
 
 class AccessSpecDecl(Declaration):
@@ -473,6 +473,8 @@ class Throw(Node):
 class NoExcept(Node):
     attrs = ("repr",)
 
+class NoThrow(Node):
+    attrs = ()
 
 class ClassTemplateDecl(Declaration):
     attrs = ("subnodes",)
