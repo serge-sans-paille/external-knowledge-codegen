@@ -117,3 +117,39 @@ void* f34 (void*) __attribute__ ((nonnull(1)));
 void* f35 (void*) __attribute__ ((noreturn));
 
 void* f36 (void*) __attribute__ ((nothrow));
+
+void* f37 (void*) __attribute__ ((patchable_function_entry(0)));
+void* f38 (void*) __attribute__ ((patchable_function_entry(4, 2)));
+
+void* f39 (void*) __attribute__ ((pure));
+
+void* f40 (void*) __attribute__ ((returns_nonnull));
+
+void* f41 (void*) __attribute__ ((returns_twice));
+
+void* f42 (void*) __attribute__ ((section("foo")));
+
+void* f43 (void*, ...) __attribute__ ((sentinel));
+void* f44 (void*, ...) __attribute__ ((sentinel(1)));
+void* f45 (void*, ...) __attribute__ ((sentinel(2, 1)));
+
+int f46 (int) __attribute__ ((no_stack_protector));
+
+int f47 () __attribute__ ((__target__ ("sse3")));
+
+int f48 () __attribute__ ((target_clones("default", "arch=x86-64", "arch=x86-64-v2", "arch=x86-64-v3", "arch=x86-64-v4")));
+
+int f49 () __attribute__ ((unused));
+
+int f50 () __attribute__ ((used));
+
+int f51 () __attribute__ ((retain));
+
+int f52 () __attribute__((visibility("protected")));
+
+int f53 () __attribute__((warn_unused_result));
+
+int f54 () __attribute__((weak));
+
+// static int f55 () __attribute__((weakref)) __attribute__((alias("f53"))); // dumped as weakref + alias
+// static int f56 () __attribute__((weakref("f53"))); // dumped as weakref + alias

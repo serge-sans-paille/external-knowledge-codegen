@@ -83,7 +83,43 @@ class AnyX86InterruptAttr(Attr):
     attrs = ()
 
 
+class PatchableFunctionEntryAttr(Attr):
+    attrs = ("count", "offset",)
+
+
+class PureAttr(Attr):
+    attrs = ()
+
+
+class ReturnsNonNullAttr(Attr):
+    attrs = ()
+
+
+class ReturnsTwiceAttr(Attr):
+    attrs = ()
+
+
+class NoStackProtectorAttr(Attr):
+    attrs = ()
+
+
+class TargetAttr(Attr):
+    attrs = ("desc",)
+
+
+class TargetClonesAttr(Attr):
+    attrs = ("desc",)
+
+
+class SentinelAttr(Attr):
+    attrs = ("value", "offset",)
+
+
 class LeafAttr(Attr):
+    attrs = ()
+
+
+class WarnUnusedResultAttr(Attr):
     attrs = ()
 
 
@@ -177,6 +213,10 @@ class VisibilityAttr(Attr):
 
 class WeakAttr(Attr):
     attrs = ()
+
+
+class WeakRefAttr(Attr):
+    attrs = ("name",)
 
 
 class Documented(Node):

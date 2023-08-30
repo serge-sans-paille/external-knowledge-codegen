@@ -151,17 +151,27 @@ attribute = AlignedAttr(expression? size)
           | NoReturnAttr
           | NoSanitizeAttr(constant* options)
           | NoSplitStackAttr
+          | NoStackProtectorAttr
           | NonNullAttr(constant* indices)
           | PackedAttr
+          | PatchableFunctionEntryAttr(constant count, constant? offset)
+          | PureAttr
           | RetainAttr
+          | ReturnsNonNullAttr
+          | ReturnsTwiceAttr
           | SectionAttr(constant section)
+          | SentinelAttr(constant? value, constant? offset)
+          | TargetAttr(constant desc)
+          | TargetClonesAttr(constant desc)
           | TLSModelAttr(constant tls_model)
           | UnavailableAttr(constant? msg)
           | UninitializedAttr
           | UnusedAttr
           | UsedAttr
           | VisibilityAttr(constant visibility)
+          | WarnUnusedResultAttr
           | WeakAttr
+          | WeakRefAttr(identifier? name)
 
 base = Base(identifier name, access_spec? access_spec)
 
