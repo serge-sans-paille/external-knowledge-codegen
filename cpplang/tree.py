@@ -787,9 +787,6 @@ class ExpressionStmt(Statement):
 class GCCAsmStmt(Statement):
     attrs = ("string", "output_operands", "input_operands", "clobbers", "labels",)
 
-class ExprWithCleanups(Node):
-    attrs = ("expr",)
-
 class ConstrainedExpression(Node):
     attrs = ("expr", "constraint")
 
@@ -983,6 +980,11 @@ class UnaryExprOrTypeTraitExpr(Expression):
 
 class ImplicitCastExpr(Expression):
     attrs = ("type", "expr",)
+
+
+class ExprWithCleanups(Expression):
+    attrs = ("expr",)
+
 
 # ------------------------------------------------------------------------------
 
