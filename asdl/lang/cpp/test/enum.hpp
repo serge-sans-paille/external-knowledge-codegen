@@ -23,6 +23,10 @@ enum renamed {
   Some
 };
 
+// Usage
+renamed xxx;
+renamed yyy = Some;
+
 // Note: the following definitions will not result in exactly the same code generated,
 // they will look like an enum definition followed by an object declaratoin of that enum's type.
 // TODO: support for types definition in object definitions, maybe by checking `TagType::isBeingDefined()`?
