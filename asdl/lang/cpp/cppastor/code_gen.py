@@ -606,6 +606,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(current_type, tree.DecltypeType):
             return "decltype({}) {}".format(current_type.repr, current_expr)
 
+        if isinstance(current_type, tree.EnumType):
+            return "{} {}".format(current_type.name, current_expr)
+
         raise NotImplementedError(current_type)
 
     def visit_TypedefDecl(self, node: tree.TypedefDecl):
