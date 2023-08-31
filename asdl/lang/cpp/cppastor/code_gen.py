@@ -496,6 +496,12 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_ExprStmt(self, node: tree.ExprStmt):
         self.write(node.expr, ";")
 
+    def visit_IndirectGotoStmt(self, node: tree.IndirectGotoStmt):
+        self.write("goto *", node.expr, ";")
+
+    def visit_AddrLabelExpr(self, node: tree.AddrLabelExpr):
+        self.write("&&", node.name)
+
     def visit_ConstrainedExpression(self, node: tree.ConstrainedExpression):
         self.write('"', node.constraint, '"', "(", node.expr, ")")
 
@@ -534,6 +540,10 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_type_helper(self, current_expr, current_type):
         if isinstance(current_type, tree.BuiltinType):
             return "{} {}".format(current_type.name, current_expr)
+
+        if isinstance(current_type, tree.ComplexType):
+            return "_Complex " + self.visit_type_helper(current_expr, current_type.type)
+
         if isinstance(current_type, tree.ElaboratedType):
             if isinstance(current_type.type, tree.RecordType):
                 return"struct " + self.visit_type_helper(current_expr, current_type.type)
@@ -624,6 +634,9 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_BuiltinType(self, node: tree.BuiltinType):
         self.write(node.name)
 
+    def visit_ComplexType(self, node: tree.ComplexType):
+        self.write("_Complex ", node.type)
+
     def visit_ElaboratedType(self, node: tree.BuiltinType):
         if node.qualifiers:
             raise NotImplementedError()
@@ -712,7 +725,8 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_FloatingLiteral(self, node: tree.FloatingLiteral):
         suffixes = {'user-defined-literal': '',
                     'float': 'f',
-                    'long double': 'l'}
+                    '__float128': 'q',
+                    'long double': 'L'}
         # FIXME: we may loose precision by choosing this format
         svalue = '{:g}'.format(float(node.value))
 
@@ -722,6 +736,15 @@ class SourceGenerator(ExplicitNodeVisitor):
                 svalue += '.'
 
         self.write(svalue + suffixes.get(node.type.name, ''))
+
+    def visit_ImaginaryLiteral(self, node: tree.ImaginaryLiteral):
+        suffixes = {'float': 'fi',
+                    'double': 'i',
+                    'long double': 'Li'}
+        # FIXME: we may loose precision by choosing this format,
+        # see visit_FloatingLiteral
+        svalue = '{:g}'.format(float(node.value))
+        self.write(svalue + suffixes.get(node.type.type.name, ''))
 
     def visit_CharacterLiteral(self, node: tree.CharacterLiteral):
         if node.value.isprintable():
@@ -778,12 +801,18 @@ class SourceGenerator(ExplicitNodeVisitor):
         else:
             self.write(node.opcode, node.expr)
 
+    def visit_BinaryConditionalOperator(self, node: tree.BinaryConditionalOperator):
+        self.write(node.cond, "? :", node.false_expr)
+
     def visit_ConditionalOperator(self, node: tree.ConditionalOperator):
         self.write(node.cond, "?", node.true_expr, ":",
                    node.false_expr)
 
     def visit_ArraySubscriptExpr(self, node: tree.ArraySubscriptExpr):
         self.write(node.base, "[", node.index, "]")
+
+    def visit_OpaqueValueExpr(self, node: tree.OpaqueValueExpr):
+        self.write(node.expr)
 
     def visit_AtomicExpr(self, node: tree.AtomicExpr):
         self.write(node.name, "(")
@@ -828,10 +857,16 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("switch (", node.cond, ")\n", node.body)
 
     def visit_CaseStmt(self, node: tree.CaseStmt):
-        self.write("case ", node.pattern, ":\n", node.stmt)
+        self.write("case ", node.pattern)
+        if node.pattern_end:
+            self.write(" ... ", node.pattern_end)
+        self.write(":\n", node.stmt)
 
     def visit_BreakStmt(self, node: tree.BreakStmt):
         self.write("break;\n")
+
+    def visit_PredefinedExpr(self, node: tree.PredefinedExpr):
+        self.write(node.name)
 
     def visit_MemberExpr(self, node: tree.MemberExpr):
         if node.expr:

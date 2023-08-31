@@ -393,6 +393,9 @@ class TypedefType(Node):
 class ElaboratedType(Node):
     attrs = ("type", "qualifiers", )
 
+class ComplexType(Node):
+    attrs = ("type",)
+
 class FunctionProtoType(Node):
     attrs = ("return_type", "parameter_types",)
 
@@ -753,7 +756,7 @@ class CatchClauseParameter(NonEmptyDeclaration):
 
 
 class CaseStmt(Statement):
-    attrs = ("pattern", "stmt",)
+    attrs = ("pattern", "pattern_end", "stmt",)
 
 
 class ForControl(Node):
@@ -776,6 +779,14 @@ class Expression(Node):
 
 class DeclRefExpr(Expression):
     attrs = ("name", "kind",)
+
+
+class PredefinedExpr(Expression):
+    attrs = ("name",)
+
+
+class AddrLabelExpr(Expression):
+    attrs = ("name",)
 
 
 class ElementValueArrayInitializer(Expression):
@@ -824,6 +835,14 @@ class CompoundAssignOperator(Expression):
 
 class UnaryOperator(Expression):
     attrs = ("opcode", "expr", "postfix",)
+
+
+class BinaryConditionalOperator(Expression):
+    attrs = ("cond", "false_expr")
+
+
+class OpaqueValueExpr(Expression):
+    attrs = ("expr",)
 
 
 class ConditionalOperator(Expression):
@@ -900,6 +919,10 @@ class FloatingLiteral(Literal):
     attrs = ("type",)
 
 
+class ImaginaryLiteral(Literal):
+    attrs = ("type",)
+
+
 class StringLiteral(Literal):
     attrs = ()
 
@@ -962,6 +985,10 @@ class CXXReinterpretCastExpr(Expression):
 
 class NullStmt(Statement):
     attrs = ()
+
+
+class IndirectGotoStmt(Statement):
+    attrs = ("expr",)
 
 
 class Cast(Primary):

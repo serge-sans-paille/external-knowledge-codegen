@@ -999,8 +999,13 @@ class Parser(object):
 
     def parse_CaseStmt(self, node) -> tree.CaseStmt:
         assert node['kind'] == "CaseStmt"
-        pattern, child = self.parse_subnodes(node)
-        return tree.CaseStmt(pattern=pattern,
+        inner_nodes = self.parse_subnodes(node)
+        if len(inner_nodes) == 3:
+            pattern, pattern_end, child = inner_nodes
+        else:
+            pattern, child = inner_nodes
+            pattern_end = None
+        return tree.CaseStmt(pattern=pattern, pattern_end=pattern_end,
                              stmt=self.as_statement(child))
 
     def parse_BreakStmt(self, node) -> tree.BreakStmt:
@@ -1011,6 +1016,20 @@ class Parser(object):
         assert node['kind'] == "DefaultStmt"
         child, = self.parse_subnodes(node)
         return tree.DefaultStmt(stmt=self.as_statement(child))
+
+    def parse_AddrLabelExpr(self, node) -> tree.AddrLabelExpr:
+        assert node['kind'] == 'AddrLabelExpr'
+        name = node['name']
+        return tree.AddrLabelExpr(name=name)
+
+    def parse_IndirectGotoStmt(self, node) -> tree.IndirectGotoStmt:
+        assert node['kind'] == 'IndirectGotoStmt'
+        expr, = self.parse_subnodes(node)
+        return tree.IndirectGotoStmt(expr=expr)
+
+    def parse_PredefinedExpr(self, node) -> tree.PredefinedExpr:
+        assert node['kind'] == 'PredefinedExpr'
+        return tree.PredefinedExpr(name=node['name'])
 
     def parse_CXXThrowExpr(self, node) -> tree.CXXThrowExpr:
         assert node['kind'] == "CXXThrowExpr"
@@ -1077,6 +1096,13 @@ class Parser(object):
             value += '.'
         type_ = self.parse_node(self.type_informations[node['id']])
         return tree.FloatingLiteral(type=type_, value=value)
+
+    @parse_debug
+    def parse_ImaginaryLiteral(self, node) -> tree.ImaginaryLiteral:
+        assert node['kind'] == "ImaginaryLiteral"
+        type_ = self.parse_node(self.type_informations[node['id']])
+        float_, = self.parse_subnodes(node)
+        return tree.ImaginaryLiteral(type=type_, value=float_.value)
 
     @parse_debug
     def parse_LambdaExpr(self, node) -> tree.LambdaExpr:
@@ -1629,6 +1655,12 @@ class Parser(object):
         return tree.UnaryOperator(opcode=opcode, expr=expr, postfix=postfix)
 
     @parse_debug
+    def parse_BinaryConditionalOperator(self, node) -> tree.BinaryConditionalOperator:
+        assert node['kind'] == "BinaryConditionalOperator"
+        cond, _, _, false_expr = self.parse_subnodes(node)
+        return tree.BinaryConditionalOperator(cond=cond, false_expr=false_expr)
+
+    @parse_debug
     def parse_ConditionalOperator(self, node) -> tree.ConditionalOperator:
         assert node['kind'] == "ConditionalOperator"
         cond, true_expr, false_expr = self.parse_subnodes(node)
@@ -1640,6 +1672,12 @@ class Parser(object):
         assert node['kind'] == "ArraySubscriptExpr"
         base, index = self.parse_subnodes(node)
         return tree.ArraySubscriptExpr(base=base, index=index)
+
+    @parse_debug
+    def parse_OpaqueValueExpr(self, node) -> tree.OpaqueValueExpr:
+        assert node['kind'] == "OpaqueValueExpr"
+        expr, = self.parse_subnodes(node)
+        return tree.OpaqueValueExpr(expr=expr)
 
     @parse_debug
     def parse_StmtExpr(self, node) -> tree.StmtExpr:
@@ -1898,6 +1936,12 @@ class Parser(object):
         size = str(node['size'])
         type_, = self.parse_subnodes(node)
         return tree.ConstantArrayType(type=type_, size=size)
+
+    @parse_debug
+    def parse_ComplexType(self, node) -> tree.ComplexType:
+        assert node['kind'] == "ComplexType"
+        type_, = self.parse_subnodes(node)
+        return tree.ComplexType(type=type_)
 
     @parse_debug
     def parse_ElaboratedType(self, node) -> tree.ElaboratedType:

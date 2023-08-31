@@ -142,6 +142,11 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Inner.push_back(fullType(Ctx, PointerTy->getPointeeType()));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
+  else if(auto * ComplexTy = dyn_cast<ComplexType>(Ty)) {
+    llvm::json::Array Inner;
+    Inner.push_back(fullType(Ctx, ComplexTy->getElementType()));
+    Ret["inner"] = llvm::json::Value(std::move(Inner));
+  }
   else if(auto * TypedefTy = dyn_cast<TypedefType>(Ty)) {
     Ret["name"] = TypedefTy->getDecl()->getName();
     llvm::json::Array Inner;
