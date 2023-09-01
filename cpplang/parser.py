@@ -1153,18 +1153,28 @@ class Parser(object):
         cxx_methods = cxx_record['inner']
         for cxx_method in cxx_methods:
             if cxx_method['name'] == "operator()":
-                call_method = cxx_method
                 break
         else:
             raise ValueError("expecting at least a call operator for a lambda")
 
         call_method = self.parse_node(cxx_method)
-
         parameters = call_method.parameters
-        body = call_method.body
-        assert body
 
-        return tree.LambdaExpr(parameters=parameters, body=body)
+        inner_nodes = self.parse_subnodes(node)
+        capture_exprs = []
+        body = None
+        for inner_node in inner_nodes:
+            if isinstance(inner_node, tree.Expression):
+                capture_exprs.append(inner_node)
+            elif isinstance(inner_node, tree.Statement):
+                assert not body
+                body = inner_node
+            else:
+                raise NotImplementedError(inner_node)
+
+
+        return tree.LambdaExpr(parameters=parameters, body=body,
+                               capture_exprs=capture_exprs)
 
     @parse_debug
     def parse_CharacterLiteral(self, node) -> tree.CharacterLiteral:

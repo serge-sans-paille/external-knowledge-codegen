@@ -91,7 +91,7 @@ expression = AddrLabelExpr(identifier name)
            | ImplicitValueInitExpr
            | InitListExpr(expression* values)
            | IntegerLiteral(type type, identifier value)
-           | LambdaExpr(parameter* parameters, statement body)
+           | LambdaExpr(parameter* parameters, expression* capture_exprs, statement body)
            | MaterializeTemporaryExpr(expression expr)
            | MemberExpr(identifier name, identifier op, expression? expr)
            | OffsetOfExpr(type type, offsetof_kind* kinds)
