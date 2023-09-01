@@ -30,7 +30,8 @@ template_parameter = TemplateTypeParmDecl(identifier name, template_argument? de
 
 template_argument = TemplateArgument(type? type, expression? expr)
 
-statement = BreakStmt
+statement = AttributedStmt(statement stmt, attribute* attributes)
+          | BreakStmt
           | CXXForRangeStmt(declaration decl, expression range, statement body)
           | CXXTryStmt(statement body, exception_handler* handlers)
           | CaseStmt(expression pattern, expression? pattern_end, statement stmt)
@@ -103,7 +104,7 @@ expression = AddrLabelExpr(identifier name)
            | UnaryOperator(constant opcode, constant postfix, expression expr)
            | UserDefinedLiteral(constant suffix, expression expr)
 
-parameter = ParmVarDecl(type type, identifier? name, expression? default)
+parameter = ParmVarDecl(type type, identifier? name, expression? default, attribute* attributes)
 
 declarations_or_expression = DeclsOrExpr(declaration* decls, expression? expr)
 
@@ -146,6 +147,8 @@ attribute = AlignedAttr(expression? size)
           | AllocSizeAttr(constant size, constant? nmemb)
           | AlwaysInlineAttr
           | AnyX86InterruptAttr
+          | CXX11NoReturnAttr
+          | CarriesDependencyAttr
           | CleanupAttr(identifier func)
           | ColdAttr
           | ConstAttr
@@ -153,6 +156,7 @@ attribute = AlignedAttr(expression? size)
           | DeprecatedAttr(constant? msg)
           | DestructorAttr(constant? priority)
           | ErrorAttr(constant msg)
+          | FallThroughAttr
           | FlattenAttr
           | FormatAttr(identifier archetype, constant fmt_index, constant vargs_index)
           | FormatArgAttr(constant fmt_index)
@@ -160,6 +164,7 @@ attribute = AlignedAttr(expression? size)
           | HotAttr
           | IFuncAttr(identifier name)
           | LeafAttr
+          | LikelyAttr
           | MallocAttr
           | NoInlineAttr
           | NoInstrumentFunctionAttr
@@ -168,6 +173,7 @@ attribute = AlignedAttr(expression? size)
           | NoSanitizeAttr(constant* options)
           | NoSplitStackAttr
           | NoStackProtectorAttr
+          | NoUniqueAddressAttr
           | NonNullAttr(constant* indices)
           | PackedAttr
           | PatchableFunctionEntryAttr(constant count, constant? offset)
@@ -182,6 +188,7 @@ attribute = AlignedAttr(expression? size)
           | TLSModelAttr(constant tls_model)
           | UnavailableAttr(constant? msg)
           | UninitializedAttr
+          | UnlikelyAttr
           | UnusedAttr
           | UsedAttr
           | VisibilityAttr(constant visibility)
