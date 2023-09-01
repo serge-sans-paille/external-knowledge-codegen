@@ -286,8 +286,8 @@ def check_filepath(filepath: str,
             try:
                 cpp = f.read()
                 if not roundtrip(cpp, filepath, check_hypothesis=check_hypothesis,
-                            fail_on_error=fail_on_error, member=member,
-                            debug=debug):
+                                 fail_on_error=fail_on_error, member=member,
+                                 debug=debug):
                     cprint(bcolors.RED,
                            f"**Warn**{bcolors.ENDC} Test failed for "
                            f"file: {bcolors.MAGENTA}{filepath}",
@@ -326,7 +326,8 @@ def check_compile_commands_db(compile_commands: List[Dict[str, str]],
                        f"**Warn**{bcolors.ENDC} Test failed for "
                        f"file: {bcolors.MAGENTA}{compile_command}",
                        file=sys.stderr)
-                return False
+                if fail_on_error:
+                    return False
             else:
                 cprint(bcolors.GREEN,
                        f"Success for file: {bcolors.MAGENTA}{compile_command}",
