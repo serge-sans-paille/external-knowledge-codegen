@@ -558,11 +558,7 @@ class Parser(object):
         subnodes = self.parse_subnodes(node)
         return tree.TranslationUnit(stmts=self.as_statements(subnodes))
 
-    @parse_debug
-    def parse_CXXRecordDecl(self, node) -> tree.CXXRecordDecl:
-        assert node['kind'] == "CXXRecordDecl"
-        if 'isImplicit' in node and node['isImplicit']:
-            return None
+    def parse_class_inner(self, node):
         name = node.get('name')
         if name is None:
             loc = node['loc']
@@ -573,7 +569,7 @@ class Parser(object):
             name = '$_{}'.format(len(self.anonymous_types))
             self.anonymous_types[where] = name
 
-        kind = node['tagUsed']
+        kind = node.get('tagUsed')
         complete = node.get('completeDefinition', '') and 'complete'
 
         bases = []
@@ -608,11 +604,19 @@ class Parser(object):
                 # fields.
                 if field_names.issubset(indirect_field_names):
                     inner_node.name = ""
+        return name, kind, bases, complete, inner_nodes
 
+    @parse_debug
+    def parse_CXXRecordDecl(self, node) -> tree.CXXRecordDecl:
+        assert node['kind'] == "CXXRecordDecl"
+        if 'isImplicit' in node and node['isImplicit']:
+            return None
+
+        name, kind, bases, complete, decls = self.parse_class_inner(node)
 
         return tree.CXXRecordDecl(name=name, kind=kind, bases=bases,
                                   complete=complete,
-                                  decls=inner_nodes)
+                                  decls=decls)
 
     @parse_debug
     def parse_RecordDecl(self, node) -> tree.RecordDecl:
@@ -1817,7 +1821,31 @@ class Parser(object):
     @parse_debug
     def parse_ClassTemplateSpecializationDecl(self, node) -> tree.ClassTemplateSpecializationDecl:
         assert node['kind'] == "ClassTemplateSpecializationDecl"
-        return tree.ClassTemplateSpecializationDecl()
+
+
+        name, kind, bases, complete, inner_nodes = self.parse_class_inner(node)
+        if kind is None:
+            return None
+
+        decls = []
+        template_parameters = []
+        template_arguments = []
+
+        for inner_node in inner_nodes:
+            if isinstance(inner_node, tree.TemplateArgument):
+                template_arguments.append(inner_node)
+            elif isinstance(inner_node, (tree.TemplateTypeParmDecl,
+                                 tree.NonTypeTemplateParmDecl)):
+                template_parameters.append(inner_node)
+            else:
+                decls.append(inner_node)
+
+        return tree.ClassTemplateSpecializationDecl(
+                template_arguments=template_arguments,
+                template_parameters=template_parameters,
+                name=name, kind=kind, bases=bases,
+                complete=complete,
+                decls=decls)
 
 
     @parse_debug

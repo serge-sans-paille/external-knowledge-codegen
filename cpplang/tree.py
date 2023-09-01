@@ -559,8 +559,8 @@ class ClassTemplateDecl(Declaration):
     attrs = ("template_parameters", "decl",)
 
 
-class ClassTemplateSpecializationDecl(Declaration):
-    attrs = ()
+class ClassTemplateSpecializationDecl(CXXRecordDecl):
+    attrs = ("template_arguments", "template_parameters",)
 
 
 class FunctionTemplateDecl(Declaration):

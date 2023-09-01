@@ -31,3 +31,6 @@ void bar() {
   // explicit
   foot<101010, float>(1.1f);
 }
+
+
+// specialization

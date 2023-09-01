@@ -9,7 +9,7 @@ declaration = AccessSpecDecl(access_spec access_spec)
             | CXXDestructorDecl(identifier name, exception_spec? exception, constant? virtual, default_mode? defaulted, statement? body, attribute* attributes)
             | CXXMethodDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, exception_spec? exception, constant? virtual, constant? const, default_mode? defaulted, method_attr* method_attributes, constant? ref_qualifier, statement? body, attribute* attributes, parameter* parameters)
             | CXXRecordDecl(identifier name, identifier kind, base* bases, constant complete, declaration* decls)
-            | ClassTemplateSpecializationDecl
+            | ClassTemplateSpecializationDecl(template_argument* template_arguments, template_parameter* template_parameters, identifier name, identifier kind, base* bases, constant complete, declaration* decls)
             | ClassTemplateDecl(template_parameter* template_parameters, declaration decl)
             | EmptyDecl
             | EnumDecl(identifier? name, enum_field* fields)
