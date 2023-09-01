@@ -134,13 +134,12 @@ class Parser(object):
         Depending on which one, a different init function is called
         """
         self.type_informations = {}
+        self.expr_informations = {}
         self.asm_informations = {}
         self.attr_informations = {}
         self.stack = []
         self.debug = False
         self.anonymous_types = {}
-        self.parsed_gotos = {}
-        self.parsed_labels = {}
         if cpp_code is not None:
             self._init_direct(cpp_code, filepath)
         elif compile_command is not None:
@@ -393,16 +392,16 @@ class Parser(object):
         #return (isinstance(self.tokens.look(i), Annotation)
                 #and self.tokens.look(i + 1).value == 'interface')
 
-    def parse_subnodes(self, node, *, keep_empty=False):
-        if 'inner' in node:
-            assert len(node['inner']) > 0
-            result = [self.parse_node(c) for c in node['inner']]
-            if keep_empty:
-                return result
-            else:
-                return [c for c in result if c is not None]
-        else:
+    def parse_subnodes(self, node, *, keep_empty=False, key='inner'):
+        subnodes = node.get(key)
+        if subnodes is None:
             return []
+        assert len(subnodes) > 0
+        result = [self.parse_node(c) for c in subnodes]
+        if keep_empty:
+            return result
+        else:
+            return [c for c in result if c is not None]
 
     def collect_comment(self, node) -> str:
         if node['kind'] == 'TextComment':
@@ -475,7 +474,7 @@ class Parser(object):
             or ('range' in node and 'spellingLoc' in node['range']['begin'] and 'includedFrom' in node['range']['begin']['spellingLoc'])
             ):
             return None
-        elif ((len(self.stack) == 0 and node['loc'] and 'file' in node['loc']
+        elif ((len(self.stack) == 0 and node.get('loc') and 'file' in node['loc']
              and node['loc']['file'] == "<stdin>")
                 or len(self.stack) > 0):
             self.stack.append(node)
@@ -509,6 +508,11 @@ class Parser(object):
                 self.type_informations[child['node_id']] = inner_child
             if 'inner' in child:
                 self.parse_type_summary(child['inner'])
+            if 'expr_inner' in child:
+                assert 'node_inner' not in child
+                self.stack.append(child)
+                self.expr_informations[child['node_id']] = self.parse_subnodes(child, key='expr_inner')
+                self.stack.pop()
             if 'asm_string' in child:
                 asm_infos = {'asm_string': child['asm_string']}
 
@@ -615,7 +619,6 @@ class Parser(object):
 
     def parse_function_inner(self, node):
         inner_nodes = self.parse_subnodes(node)
-
 
         body, args, init, method_attrs, attrs = None, [], [], [], []
 
@@ -785,12 +788,10 @@ class Parser(object):
     @parse_debug
     def parse_FunctionDecl(self, node) -> tree.FunctionDecl:
         assert node['kind'] == "FunctionDecl"
-        self.parsed_gotos.clear()
-        self.parsed_labels.clear()
 
         name = node['name']
         type_info = self.type_informations[node['id']]
-        return_type = self.parse_node(type_info).return_type
+        return_type = getattr(self.parse_node(type_info), 'return_type', None)
         variadic = "..." if node['type']['qualType'].endswith('...)') else None
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
@@ -917,23 +918,15 @@ class Parser(object):
     def parse_LabelStmt(self, node) -> tree.LabelStmt:
         assert node['kind'] == "LabelStmt"
         name = node['name']
-        decl_id = node['declId']
-        self.parsed_labels[decl_id] = name
         child, = self.parse_subnodes(node)
-        for target_id, goto in self.parsed_gotos.items():
-            if target_id == decl_id:
-                goto.target = name
         return tree.LabelStmt(name=name,
                               stmt=self.as_statement(child))
 
     @parse_debug
     def parse_GotoStmt(self, node) -> tree.LabelStmt:
         assert node['kind'] == "GotoStmt"
-        decl_id = node['targetLabelDeclId']
-        target = self.parsed_labels.get(decl_id)
-        tnode = tree.GotoStmt(target=target)
-        self.parsed_gotos[decl_id] = tnode
-        return tnode
+        target = self.get_node_source_code(node).replace('goto', '', 1).strip()
+        return tree.GotoStmt(target=target)
 
     @parse_debug
     def parse_ForStmt(self, node) -> tree.ForStmt:
@@ -1022,6 +1015,23 @@ class Parser(object):
         name = node['name']
         return tree.AddrLabelExpr(name=name)
 
+    def parse_OffsetOfExpr(self, node) -> tree.OffsetOfExpr:
+        assert node['kind'] == 'OffsetOfExpr'
+        expr_infos = self.expr_informations[node['id']]
+        type_, *kinds = expr_infos
+        inner_nodes = iter(self.parse_subnodes(node))
+        for kind in kinds:
+            if isinstance(kind, tree.OffsetOfArray):
+                kind.index = next(inner_nodes)
+        return tree.OffsetOfExpr(type=type_, kinds=kinds)
+
+    def parse_OffsetOfField(self, node) -> tree.OffsetOfField:
+        return tree.OffsetOfField(name=node['field'])
+
+    def parse_OffsetOfArray(self, node) -> tree.OffsetOfArray:
+        # the actual index is set in the caller
+        return tree.OffsetOfArray(index=None)
+
     def parse_IndirectGotoStmt(self, node) -> tree.IndirectGotoStmt:
         assert node['kind'] == 'IndirectGotoStmt'
         expr, = self.parse_subnodes(node)
@@ -1070,9 +1080,9 @@ class Parser(object):
 
     def parse_ConstantExpr(self, node) -> tree.ConstantExpr:
         assert node['kind'] == "ConstantExpr"
-        value = node['value']
+        result = node.get('value')
         expr, = self.parse_subnodes(node)
-        return tree.ConstantExpr(value=value, expr=expr)
+        return tree.ConstantExpr(expr=expr, result=result)
 
     @parse_debug
     def parse_DeclRefExpr(self, node) -> tree.DeclRefExpr:
@@ -1957,11 +1967,19 @@ class Parser(object):
         return tree.DecayedType(type=type_)
 
     @parse_debug
+    def parse_FunctionNoProtoType(self, node) -> tree.FunctionNoProtoType:
+        assert node['kind'] == "FunctionNoProtoType"
+        args = self.parse_subnodes(node)
+        assert not args
+        return tree.FunctionNoProtoType()
+
+    @parse_debug
     def parse_FunctionProtoType(self, node) -> tree.FunctionProtoType:
         assert node['kind'] == "FunctionProtoType"
         return_type, *parameter_types = self.parse_subnodes(node)
         return tree.FunctionProtoType(return_type=return_type,
                                       parameter_types=parameter_types)
+
     @parse_debug
     def parse_TypedefType(self, node) -> tree.TypedefType:
         assert node['kind'] == "TypedefType"

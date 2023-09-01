@@ -396,6 +396,9 @@ class ElaboratedType(Node):
 class ComplexType(Node):
     attrs = ("type",)
 
+class FunctionNoProtoType(Node):
+    attrs = ()
+
 class FunctionProtoType(Node):
     attrs = ("return_type", "parameter_types",)
 
@@ -785,6 +788,18 @@ class PredefinedExpr(Expression):
     attrs = ("name",)
 
 
+class OffsetOfExpr(Expression):
+    attrs = ("type", "kinds",)
+
+
+class OffsetOfField(Node):
+    attrs = ("name",)
+
+
+class OffsetOfArray(Node):
+    attrs = ("index",)
+
+
 class AddrLabelExpr(Expression):
     attrs = ("name",)
 
@@ -948,7 +963,7 @@ class MemberExpr(Primary):
 
 
 class ConstantExpr(Primary):
-    attrs = ("value", "expr",)
+    attrs = ("expr", "result",)
 
 
 class CXXMemberCallExpr(Primary):

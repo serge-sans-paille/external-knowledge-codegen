@@ -2,6 +2,7 @@
 
 import argparse
 import colorama
+import contextlib
 import json
 import os
 import re
@@ -14,6 +15,15 @@ import cpplang
 from asdl.lang.cpp.cpp_transition_system import *
 from asdl.hypothesis import *
 
+
+@contextlib.contextmanager
+def pushd(new_dir):
+    old_dir = os.getcwd()
+    os.chdir(new_dir)
+    try:
+        yield
+    finally:
+        os.chdir(old_dir)
 
 # read in the grammar specification of Cpp SE8, defined in ASDL
 asdl_text = open('cpp_asdl.simplified.txt').read()
@@ -165,9 +175,11 @@ def roundtrip(cpp_code: str = None, filepath: str = None,
     # the reconstructed AST and the AST generated using actions
     # they should be the same
     if cpp_code is None and compile_command is not None:
-        cpp_file_name = compile_command["arguments"][-1]
-        with open(cpp_file_name, "r") as f:
-            cpp_code = f.read()
+        with pushd(compile_command["directory"]):
+            cpp_file_name = compile_command["arguments"][-1]
+            with open(cpp_file_name, "r") as f:
+                cpp_code = f.read()
+
     src0 = removeComments(preprocess_code(cpp_code))
     simp0 = simplify(src0)
     src1 = removeComments(cppastor.to_source(cpp_ast))

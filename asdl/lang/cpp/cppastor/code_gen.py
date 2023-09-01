@@ -121,6 +121,7 @@ class SourceGenerator(ExplicitNodeVisitor):
                 of attribute lookups).
             """
             for item in params:
+                assert item is not None
                 if isinstance(item, Node):
                     visit(item)
                 elif callable(item):
@@ -549,6 +550,12 @@ class SourceGenerator(ExplicitNodeVisitor):
                 return"struct " + self.visit_type_helper(current_expr, current_type.type)
             else:
                 return self.visit_type_helper(current_expr, current_type.type)
+        if isinstance(current_type, tree.FunctionNoProtoType):
+            argument_types = ', '.join(self.visit_type_helper("", ty)
+                                       for ty in parameter_types)
+            return self.visit_type_helper(
+                    "{}()".format(current_expr),
+                    current_type.return_type)
         if isinstance(current_type, tree.FunctionProtoType):
             parameter_types = current_type.parameter_types or []
             argument_types = ', '.join(self.visit_type_helper("", ty)
@@ -645,6 +652,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(node.type, tree.RecordType):
             self.write("struct ")
         self.write(node.type)
+
+    def visit_FunctionProtoType(self, node: tree.FunctionNoProtoType):
+        raise NotImplementedError("FunctionNoProtoType")
 
     def visit_FunctionProtoType(self, node: tree.FunctionProtoType):
         self.write(node.return_type, "(")
@@ -868,6 +878,20 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_PredefinedExpr(self, node: tree.PredefinedExpr):
         self.write(node.name)
 
+    def visit_OffsetOfExpr(self, node: tree.OffsetOfExpr):
+        # FIXME: should be "offsetof" but offset of is a macro
+        self.write("__builtin_offsetof(", node.type, ", ")
+        for i, kind in enumerate(node.kinds):
+            if isinstance(kind, tree.OffsetOfField) and i:
+                self.write(".")
+            self.write(kind)
+
+    def visit_OffsetOfField(self, node: tree.OffsetOfField):
+        self.write(node.name)
+
+    def visit_OffsetOfArray(self, node: tree.OffsetOfArray):
+        self.write("[", node.index, "]")
+
     def visit_MemberExpr(self, node: tree.MemberExpr):
         if node.expr:
             self.write(node.expr, node.op, node.name)
@@ -875,7 +899,7 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write(node.name)
 
     def visit_ConstantExpr(self, node: tree.ConstantExpr):
-        self.write(node.value)
+        self.write(node.result or node.expr)
 
     def visit_DefaultStmt(self, node: tree.DefaultStmt):
         self.write("default:\n", node.stmt)
@@ -981,6 +1005,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(prev_type, tree.ParenType):
             return tree.ParenType(type=self.anonymize_type(prev_type.type,
                                                              lvl=lvl+1))
+        if isinstance(prev_type, tree.FunctionNoProtoType):
+            raise NotImplementedError("FunctionNoProtoType")
+
         if isinstance(prev_type, tree.FunctionProtoType):
             return tree.FunctionProtoType(return_type=self.anonymize_type(prev_type.return_type,
                                                              lvl=lvl+1),
@@ -1083,7 +1110,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         if getattr(node, 'virtual', None):
             self.write("virtual ")
 
-        if hasattr(node, 'return_type'):
+        if getattr(node, 'return_type', None):
             self.write(node.return_type, " ")
 
         self.write(node.name)
