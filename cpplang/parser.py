@@ -1194,8 +1194,8 @@ class Parser(object):
     @parse_debug
     def parse_UsingDirectiveDecl(self, node) -> tree.UsingDirectiveDecl:
         assert node['kind'] == "UsingDirectiveDecl"
-        name = (self.get_node_source_code(node).replace('using namespace','').strip()
-                + node['nominatedNamespace']['name'])
+        name = node['nominatedNamespace']['name']
+        assert name
         return tree.UsingDirectiveDecl(name=name)
 
     @parse_debug
