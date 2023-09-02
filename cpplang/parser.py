@@ -1824,7 +1824,6 @@ class Parser(object):
     def parse_ClassTemplateSpecializationDecl(self, node) -> tree.ClassTemplateSpecializationDecl:
         assert node['kind'] == "ClassTemplateSpecializationDecl"
 
-
         name, kind, bases, complete, inner_nodes = self.parse_class_inner(node)
         if kind is None:
             return None
@@ -1843,6 +1842,36 @@ class Parser(object):
                 decls.append(inner_node)
 
         return tree.ClassTemplateSpecializationDecl(
+                template_arguments=template_arguments,
+                template_parameters=template_parameters,
+                name=name, kind=kind, bases=bases,
+                complete=complete,
+                decls=decls)
+
+
+    @parse_debug
+    def parse_ClassTemplatePartialSpecializationDecl(self, node) -> tree.ClassTemplatePartialSpecializationDecl:
+        assert node['kind'] == "ClassTemplatePartialSpecializationDecl"
+
+
+        name, kind, bases, complete, inner_nodes = self.parse_class_inner(node)
+        if kind is None:
+            return None
+
+        decls = []
+        template_parameters = []
+        template_arguments = []
+
+        for inner_node in inner_nodes:
+            if isinstance(inner_node, tree.TemplateArgument):
+                template_arguments.append(inner_node)
+            elif isinstance(inner_node, (tree.TemplateTypeParmDecl,
+                                 tree.NonTypeTemplateParmDecl)):
+                template_parameters.append(inner_node)
+            else:
+                decls.append(inner_node)
+
+        return tree.ClassTemplatePartialSpecializationDecl(
                 template_arguments=template_arguments,
                 template_parameters=template_parameters,
                 name=name, kind=kind, bases=bases,
@@ -1880,12 +1909,14 @@ class Parser(object):
         assert node['kind'] == "TemplateArgument"
         inner_nodes = self.parse_subnodes(node)
 
-        if not inner_nodes:
+        if 'value' in node:
             intty = tree.BuiltinType(name='int')
             intval = str(node['value'])
             value = tree.IntegerLiteral(type=intty, value=intval)
-        else:
+        elif inner_nodes:
             value, = inner_nodes
+        else:
+            raise NotImplementedError
 
         if isinstance(value, tree.Type):
             return tree.TemplateArgument(type=value, expr=None)
@@ -2191,9 +2222,11 @@ class Parser(object):
     def parse_TemplateSpecializationType(self, node) -> tree.TemplateSpecializationType:
         assert node['kind'] == "TemplateSpecializationType"
         inner_nodes = self.parse_subnodes(node)
-        template_args = inner_nodes[:-1]
-        type_ = inner_nodes[-1]
-        return tree.TemplateSpecializationType(type=type_,
+        template_args = [
+                inner_node for inner_node in inner_nodes
+                if isinstance(inner_node, tree.TemplateArgument)
+        ]
+        return tree.TemplateSpecializationType(name=node['templateName'],
                                                template_args=template_args)
 
 
@@ -2228,7 +2261,21 @@ class Parser(object):
     @parse_debug
     def parse_TemplateTypeParmType(self, node) -> tree.TemplateTypeParmType:
         assert node['kind'] == "TemplateTypeParmType"
-        name = node['name']
+        name = node.get('name')
+        if name is None:
+            index = node.get('index')
+            assert index is not None
+            for parent in reversed(self.stack):
+                if parent['kind'] == 'ClassTemplatePartialSpecializationDecl':
+                    break
+            else:
+                raise NotImplementedError
+            parent_inner = parent['inner']
+            parent_template_params = [
+                    n for n in parent_inner
+                    if n['kind'] == 'TemplateTypeParmDecl'
+            ]
+            name = parent_template_params[index]['name']
         return tree.TemplateTypeParmType(name=name)
 
     @parse_debug

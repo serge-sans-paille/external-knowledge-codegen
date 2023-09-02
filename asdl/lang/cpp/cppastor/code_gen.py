@@ -960,7 +960,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(">\n", node.decl)
 
     def visit_TemplateSpecializationType(self, node: tree.TemplateSpecializationType):
-        self.write(node.type, "<")
+        self.write(node.name, "<")
         self.comma_list(node.template_args)
         self.write(">")
 
@@ -980,6 +980,9 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write("}")
         self.write(";")
         self.newline(extra=1)
+
+    def visit_ClassTemplatePartialSpecializationDecl(self, node: tree.ClassTemplateSpecializationDecl):
+        self.visit_ClassTemplateSpecializationDecl(node)
 
     def visit_TemplateArgument(self, node: tree.TemplateArgument):
         if node.type:
