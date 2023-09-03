@@ -56,3 +56,14 @@ template<typename P>
 struct foo<decl<P>, bool> {
   P p;
 };
+
+template<typename T, typename P>
+struct foo<decl<P>, T> {
+  P p;
+};
+
+template<typename T, typename P>
+struct foo<T, decl<P>> {
+  template<typename S>
+  P doit(S);
+};
