@@ -373,65 +373,73 @@ class Operator(Node):
 
 
 class Type(Node):
-    attrs = ("name", "dimensions",)
-
-class AutoType(Node):
-    attrs = ("keyword",)
-
-class BuiltinType(Node):
-    attrs = ("name",)
-
-class ConstantArrayType(Node):
-    attrs = ("type", "size", )
-
-class DecayedType(Node):
-    attrs = ("type",)
-
-class TypedefType(Node):
-    attrs = ("name", "type",)
-
-class ElaboratedType(Node):
-    attrs = ("type", "qualifiers", )
-
-class ComplexType(Node):
-    attrs = ("type",)
-
-class FunctionNoProtoType(Node):
     attrs = ()
 
-class FunctionProtoType(Node):
-    attrs = ("return_type", "parameter_types",)
+class AutoType(Type):
+    attrs = ("keyword",)
 
-class LValueReferenceType(Node):
-    attrs = ("type",)
-
-class RValueReferenceType(Node):
-    attrs = ("type",)
-
-class IncompleteArrayType(Node):
-    attrs = ("type",)
-
-class ParenType(Node):
-    attrs = ("type",)
-
-class PointerType(Node):
-    attrs = ("type",)
-
-class QualType(Node):
-    attrs = ("qualifiers", "type",)
-
-class RecordType(Node):
+class BuiltinType(Type):
     attrs = ("name",)
 
-class VectorType(Node):
+class ConstantArrayType(Type):
+    attrs = ("type", "size", )
+
+class DecayedType(Type):
+    attrs = ("type",)
+
+class TypedefType(Type):
+    attrs = ("name", "type",)
+
+class ElaboratedType(Type):
+    attrs = ("type", "qualifiers", )
+
+class ComplexType(Type):
+    attrs = ("type",)
+
+class FunctionNoProtoType(Type):
+    attrs = ()
+
+class FunctionProtoType(Type):
+    attrs = ("return_type", "parameter_types",)
+
+class LValueReferenceType(Type):
+    attrs = ("type",)
+
+class RValueReferenceType(Type):
+    attrs = ("type",)
+
+class IncompleteArrayType(Type):
+    attrs = ("type",)
+
+class ParenType(Type):
+    attrs = ("type",)
+
+class PointerType(Type):
+    attrs = ("type",)
+
+class QualType(Type):
+    attrs = ("qualifiers", "type",)
+
+class RecordType(Type):
+    attrs = ("name",)
+
+class VectorType(Type):
     attrs = ("type", "size")
 
-class EnumType(Node):
+class EnumType(Type):
     attrs = ("name",)
 
 class DiamondType(Type):
     attrs = ("sub_type",)
 
+class SubstTemplateTypeParmType(Type):
+    attrs = ("type",)
+
+class TemplateTypeParmType(Type):
+    attrs = ("name",)
+
+class TemplateSpecializationType(Type):
+    attrs = ("type", "template_args",)
 
 class ReferenceType(Type):
     attrs = ("arguments", "sub_type",)
@@ -522,20 +530,29 @@ class NoExcept(Node):
 class NoThrow(Node):
     attrs = ()
 
+
 class ClassTemplateDecl(Declaration):
-    attrs = ("subnodes",)
+    attrs = ("template_parameters", "decl",)
+
+
+class ClassTemplateSpecializationDecl(Declaration):
+    attrs = ()
 
 
 class FunctionTemplateDecl(Declaration):
-    attrs = ("subnodes",)
+    attrs = ("template_parameters", "decl",)
+
+
+class TemplateArgument(Node):
+    attrs = ("type", "expr",)
 
 
 class TemplateTypeParmDecl(Declaration):
-    attrs = ("name", "subnodes",)
+    attrs = ("name", "default",)
 
 
 class NonTypeTemplateParmDecl(Declaration):
-    attrs = ("name", "type", "subnodes",)
+    attrs = ("type", "name", "default",)
 
 
 class ParmVarDecl(Declaration):
@@ -781,7 +798,7 @@ class Expression(Node):
 
 
 class DeclRefExpr(Expression):
-    attrs = ("name", "kind",)
+    attrs = ("name", "kind", "template_arguments",)
 
 
 class PredefinedExpr(Expression):

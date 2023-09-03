@@ -181,6 +181,14 @@ class SourceGenerator(ExplicitNodeVisitor):
     def comma_list(self, items, trailing=False):
         self.sep_list(", ", items, trailing)
 
+    def decl_list(self, decls):
+        for decl in decls:
+            if isinstance(decl, tree.VarDecl):
+                self.write(decl, ";")
+            else:
+                self.write(decl)
+            self.newline()
+
     def space_list(self, items, trailing=False):
         self.sep_list(" ", items, trailing)
 
@@ -209,7 +217,7 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write(" : ", base)
         if node.complete:
             self.write(" {", "\n")
-            self.space_list(node.decls)
+            self.decl_list(node.decls or ())
             self.write("}")
         self.write(";")
         self.newline(extra=1)
@@ -234,8 +242,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         if node.name is not None:
             self.write(node.name)
         self.write(" {", "\n")
-        for decl in node.decls or ():
-            self.write(decl, ";" if isinstance(decl, tree.VarDecl) else "", "\n")
+        self.decl_list(node.decls or ())
         self.write("}")
         self.newline(extra=1)
 
@@ -271,6 +278,10 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write(node.name.replace("operator", "", 1))
         else:
             self.write(node.name)
+        if node.template_arguments:
+            self.write("<")
+            self.comma_list(node.template_arguments)
+            self.write(">")
 
     def visit_MaterializeTemporaryExpr(self, node: tree.MaterializeTemporaryExpr):
         self.write(node.expr)
@@ -578,7 +589,8 @@ class SourceGenerator(ExplicitNodeVisitor):
 
             # west const
             if isinstance(qualified_type, (tree.BuiltinType, tree.RecordType,
-                                           tree.AutoType)):
+                                           tree.AutoType,
+                                           tree.TemplateTypeParmType)):
                 return "{} {}".format(current_type.qualifiers,
                                       self.visit_type_helper(current_expr,
                                                                 qualified_type))
@@ -626,6 +638,12 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(current_type, tree.EnumType):
             return "{} {}".format(current_type.name, current_expr)
 
+        if isinstance(current_type, tree.TemplateTypeParmType):
+            return "{} {}".format(current_type.name, current_expr)
+
+        if isinstance(current_type, tree.SubstTemplateTypeParmType):
+            return self.visit_type_helper(current_expr, current_type.type)
+
         raise NotImplementedError(current_type)
 
     def visit_TypedefDecl(self, node: tree.TypedefDecl):
@@ -640,6 +658,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_BuiltinType(self, node: tree.BuiltinType):
         self.write(node.name)
+
+    def visit_SubstTemplateTypeParmType(self, node: tree.SubstTemplateTypeParmType):
+        self.write(node.type)
 
     def visit_ComplexType(self, node: tree.ComplexType):
         self.write("_Complex ", node.type)
@@ -694,10 +715,13 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_TypeRef(self, node: tree.TypeRef):
         self.write(node.name)
 
+    def visit_TemplateTypeParmType(self, node: tree.TemplateTypeParmType):
+        self.write(node.name)
+
     def visit_QualType(self, node: tree.QualType):
         # west const
         if isinstance(node.type, (tree.BuiltinType, tree.RecordType,
-                                           tree.AutoType)):
+                                  tree.AutoType, tree.TemplateTypeParmType)):
             if node.qualifiers:
                 self.write(node.qualifiers, " ")
             self.write(node.type)
@@ -831,8 +855,7 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_DeclStmt(self, node: tree.DeclStmt):
         # FIXME: could be improved to support multiple decl in one statement
-        for decl in node.decls:
-            self.write(decl, ";" if isinstance(decl, tree.VarDecl) else "")
+        self.decl_list(node.decls)
 
     # ReturnStmt(expression? expression)
     def visit_ReturnStmt(self, node: tree.ReturnStmt):
@@ -905,47 +928,40 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("default:\n", node.stmt)
 
     def visit_ClassTemplateDecl(self, node: tree.ClassTemplateDecl):
-        parameters = []
-        statements = []
-        for c in node.subnodes:
-            if c.__class__.__name__ in ["TemplateTypeParmDecl",
-                                        "NonTypeTemplateParmDecl"]:
-                parameters.append(c)
-            else:
-                statements.append(c)
         self.write("template<")
-        if parameters:
-            self.comma_list(parameters)
-        self.write(">")
-        if len(statements) > 0:
-            for c in statements:
-                self.write(c)
-        else:
-            self.write(";")
-        self.newline(extra=1)
+        self.comma_list(node.template_parameters)
+        self.write(">\n", node.decl)
 
     def visit_FunctionTemplateDecl(self, node: tree.FunctionTemplateDecl):
-        parameters = []
-        statements = []
-        for c in node.subnodes:
-            if c.__class__.__name__ in ["TemplateTypeParmDecl",
-                                        "NonTypeTemplateParmDecl"]:
-                parameters.append(c)
-            else:
-                statements.append(c)
         self.write("template<")
-        if parameters:
-            self.comma_list(parameters)
+        self.comma_list(node.template_parameters)
+        self.write(">\n", node.decl)
+
+    def visit_TemplateSpecializationType(self, node: tree.TemplateSpecializationType):
+        self.write(node.type, "<")
+        self.comma_list(node.template_args)
         self.write(">")
-        for c in statements:
-            self.write(c)
-        self.newline(extra=1)
+
+    def visit_ClassTemplateSpecializationDecl(self, node: tree.ClassTemplateSpecializationDecl):
+        ...
+
+    def visit_TemplateArgument(self, node: tree.TemplateArgument):
+        if node.type:
+            self.write(node.type)
+        elif node.expr:
+            self.write(node.expr)
+        else:
+            raise ValueError("should have one field set")
 
     def visit_TemplateTypeParmDecl(self, node: tree.TemplateTypeParmDecl):
         self.write("typename", " ", node.name)
+        if node.default:
+            self.write("=", node.default)
 
     def visit_NonTypeTemplateParmDecl(self, node: tree.NonTypeTemplateParmDecl):
         self.write(node.type, " ", node.name)
+        if node.default:
+            self.write("=", node.default)
 
     def visit_FullComment(self, node: tree.FullComment):
         self.write("/** ", node.comment, "*/")
