@@ -588,7 +588,7 @@ class ParmVarDecl(Declaration):
 
 
 class FieldDecl(Declaration):
-    attrs = ("type", "name", "init", "attributes", "type_qualifier")
+    attrs = ("type", "name", "init", "bitwidth", "attributes", "type_qualifier",)
 
 
 # ------------------------------------------------------------------------------

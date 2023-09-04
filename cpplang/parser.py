@@ -1704,15 +1704,21 @@ class Parser(object):
 
         type_qualifier = "mutable" if node.get('mutable') else None # TODO: add support for const and volatile
 
-        if 'hasInClassInitializer' in node:
-            init = inner_nodes.pop()
+        if node.get('isBitfield'):
+            bitwidth = inner_nodes.pop(0)
+        else:
+            bitwidth = None
+
+        if node.get('hasInClassInitializer'):
+            init = inner_nodes.pop(0)
         else:
             init = None
 
         attributes = inner_nodes
 
-        return tree.FieldDecl(name=name, type=var_type, init=init, type_qualifier=type_qualifier,
-                              attributes=attributes)
+        return tree.FieldDecl(name=name, type=var_type, init=init,
+                              type_qualifier=type_qualifier,
+                              bitwidth=bitwidth, attributes=attributes)
 
     @parse_debug
     def parse_BinaryOperator(self, node) -> tree.BinaryOperator:
