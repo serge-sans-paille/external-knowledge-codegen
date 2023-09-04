@@ -1943,12 +1943,13 @@ class Parser(object):
     def parse_TemplateTypeParmDecl(self, node) -> tree.TemplateTypeParmDecl:
         assert node['kind'] == "TemplateTypeParmDecl"
         name = node['name']
+        tag = getattr(tree, node['tagUsed'].capitalize() + 'Tag')()
         inner_nodes = self.parse_subnodes(node)
         if inner_nodes:
             default, = inner_nodes
         else:
             default = None
-        return tree.TemplateTypeParmDecl(name=name, default=default)
+        return tree.TemplateTypeParmDecl(name=name, tag=tag, default=default)
 
     @parse_debug
     def parse_NonTypeTemplateParmDecl(self, node) -> tree.NonTypeTemplateParmDecl:

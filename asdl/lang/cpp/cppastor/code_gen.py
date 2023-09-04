@@ -993,8 +993,14 @@ class SourceGenerator(ExplicitNodeVisitor):
         else:
             raise ValueError("should have one field set")
 
+    def visit_ClassTag(self, node: tree.ClassTag):
+        self.write("class")
+
+    def visit_TypenameTag(self, node: tree.TypenameTag):
+        self.write("typename")
+
     def visit_TemplateTypeParmDecl(self, node: tree.TemplateTypeParmDecl):
-        self.write("typename", " ", node.name)
+        self.write(node.tag, " ", node.name)
         if node.default:
             self.write("=", node.default)
 
