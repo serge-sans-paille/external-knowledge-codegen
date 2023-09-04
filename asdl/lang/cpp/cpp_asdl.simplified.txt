@@ -6,8 +6,8 @@ cu = TranslationUnit(statement* stmts)
 declaration = AccessSpecDecl(access_spec access_spec)
             | CXXConstructorDecl(identifier name, exception_spec? exception, default_mode? defaulted, statement? body, attribute* attributes, parameter* parameters, cxx_ctor_initializer* initializers)
             | CXXConversionDecl(identifier name, constant? inline, exception_spec? exception, constant? const, statement? body, attribute* attributes)
-            | CXXDestructorDecl(identifier name, exception_spec? exception, constant? virtual, default_mode? defaulted, statement? body, attribute* attributes)
-            | CXXMethodDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, exception_spec? exception, constant? virtual, constant? const, default_mode? defaulted, method_attr* method_attributes, constant? ref_qualifier, statement? body, attribute* attributes, parameter* parameters)
+            | CXXDestructorDecl(identifier name, exception_spec? exception, virtual_spec? virtual, default_mode? defaulted, statement? body, attribute* attributes)
+            | CXXMethodDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, exception_spec? exception, virtual_spec? virtual, constant? const, default_mode? defaulted, method_attr* method_attributes, constant? ref_qualifier, statement? body, attribute* attributes, parameter* parameters)
             | CXXRecordDecl(identifier name, identifier kind, base* bases, constant complete, declaration* decls)
             | ClassTemplateSpecializationDecl(template_argument* template_arguments, template_parameter* template_parameters, identifier name, identifier kind, base* bases, constant complete, declaration* decls)
             | ClassTemplatePartialSpecializationDecl(template_argument* template_arguments, template_parameter* template_parameters, identifier name, identifier kind, base* bases, constant complete, declaration* decls)
@@ -199,11 +199,13 @@ attribute = AlignedAttr(expression? size)
           | WeakAttr
           | WeakRefAttr(identifier? name)
 
-base = Base(identifier name, access_spec? access_spec)
+base = Base(identifier name, access_spec? access_spec, virtual_spec? virtual)
 
 access_spec = Public
             | Protected
             | Private
+
+virtual_spec = Virtual
 
 default_mode = Default
              | Delete

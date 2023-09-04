@@ -579,7 +579,9 @@ class Parser(object):
                 access_type = type(None)
             else:
                 access_type = getattr(tree, written_access.capitalize())
+            virtual = base.get('isVirtual') and tree.Virtual()
             bases.append(tree.Base(access_spec=access_type(),
+                                   virtual=virtual,
                                    name=base['type']['qualType']))
 
         inner_nodes = self.parse_subnodes(node)
@@ -714,9 +716,7 @@ class Parser(object):
 
         name = node['name']
 
-        virtual = node.get('virtual')
-        if virtual:
-            virtual = "virtual"
+        virtual = node.get('virtual') and tree.Virtual()
 
         body, args, inits, method_attrs, attrs, exception = self.parse_function_inner(node)
         assert not args
@@ -775,9 +775,7 @@ class Parser(object):
         else:
             assert ref_qualifier is None
 
-        virtual = node.get('virtual')
-        if virtual:
-            virtual = "virtual"
+        virtual = node.get('virtual') and tree.Virtual()
 
         defaulted = self.parse_default(node)
 

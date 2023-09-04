@@ -338,6 +338,10 @@ class AccessSpecDecl(Declaration):
     attrs = ("access_spec",)
 
 
+class Virtual(Node):
+    attrs = ()
+
+
 class Public(Node):
     attrs = ()
 
@@ -1172,7 +1176,7 @@ class FriendDecl(Declaration):
 
 
 class Base(Node):
-    attrs = ("name", "access_spec",)
+    attrs = ("name", "access_spec", "virtual",)
 
 
 class CXXStdInitializerListExpr(Node):

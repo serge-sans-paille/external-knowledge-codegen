@@ -208,7 +208,12 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_Base(self, node: tree.Base):
         if node.access_spec:
             self.write(node.access_spec, " ")
+        if node.virtual:
+            self.write(node.virtual, " ")
         self.write(node.name)
+
+    def visit_Virtual(self, node: tree.Virtual):
+        self.write("virtual")
 
     def visit_CXXRecordDecl(self, node: tree.CXXRecordDecl):
         self.write(node.kind, " ", node.name)
@@ -1182,7 +1187,7 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write("inline ")
 
         if getattr(node, 'virtual', None):
-            self.write("virtual ")
+            self.write(node.virtual, " ")
 
         if getattr(node, 'return_type', None):
             self.write(node.return_type, " ")
