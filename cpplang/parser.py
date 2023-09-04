@@ -859,9 +859,20 @@ class Parser(object):
         assert node['kind'] == "ParmVarDecl"
         name = node.get('name')
         var_type = self.parse_node(self.type_informations[node['id']])
-        default, = self.parse_subnodes(node) or (None,)
+        inner_nodes = self.parse_subnodes(node)
+
+        default, attributes = None, []
+        for inner_node in inner_nodes:
+            if isinstance(inner_node, tree.Expression):
+                assert not default
+                default = inner_node
+            elif isinstance(inner_node, tree.Attr):
+                attributes.append(inner_node)
+            else:
+                raise NotImplementedError(inner_node)
+
         return tree.ParmVarDecl(name=name, type=var_type,
-                                default=default)
+                                default=default, attributes=attributes)
 
     def as_statement(self, subnode):
         if isinstance(subnode, tree.Expression):
@@ -876,6 +887,16 @@ class Parser(object):
         for i, subnode in enumerate(subnodes):
             subnodes[i] = self.as_statement(subnode)
         return subnodes
+
+    @parse_debug
+    def parse_AttributedStmt(self, node) -> tree.AttributedStmt:
+        assert node['kind'] == "AttributedStmt"
+        inner_nodes = self.parse_subnodes(node)
+        attributes = inner_nodes[:-1]
+        stmt = inner_nodes[-1]
+        return tree.AttributedStmt(stmt=self.as_statement(stmt),
+                                   attributes=attributes)
+
 
     @parse_debug
     def parse_CompoundStmt(self, node) -> tree.CompoundStmt:
@@ -1316,6 +1337,21 @@ class Parser(object):
         return tree.ColdAttr()
 
     @parse_debug
+    def parse_FallThroughAttr(self, node) -> tree.FallThroughAttr:
+        assert node['kind'] == "FallThroughAttr"
+        return tree.FallThroughAttr()
+
+    @parse_debug
+    def parse_LikelyAttr(self, node) -> tree.LikelyAttr:
+        assert node['kind'] == "LikelyAttr"
+        return tree.LikelyAttr()
+
+    @parse_debug
+    def parse_UnlikelyAttr(self, node) -> tree.UnlikelyAttr:
+        assert node['kind'] == "UnlikelyAttr"
+        return tree.UnlikelyAttr()
+
+    @parse_debug
     def parse_ConstAttr(self, node) -> tree.ConstAttr:
         assert node['kind'] == "ConstAttr"
         return tree.ConstAttr()
@@ -1358,6 +1394,16 @@ class Parser(object):
         assert node['kind'] == "DeprecatedAttr"
         msg = self.attr_informations[node['id']]['deprecation_message'] or None
         return tree.DeprecatedAttr(msg=msg)
+
+    @parse_debug
+    def parse_NoUniqueAddressAttr(self, node) -> tree.NoUniqueAddressAttr:
+        assert node['kind'] == "NoUniqueAddressAttr"
+        return tree.NoUniqueAddressAttr()
+
+    @parse_debug
+    def parse_CarriesDependencyAttr(self, node) -> tree.CarriesDependencyAttr:
+        assert node['kind'] == "CarriesDependencyAttr"
+        return tree.CarriesDependencyAttr()
 
     @parse_debug
     def parse_UnavailableAttr(self, node) -> tree.UnavailableAttr:
@@ -1848,6 +1894,11 @@ class Parser(object):
     def parse_OverrideAttr(self, node) -> tree.OverrideAttr:
         assert node['kind'] == "OverrideAttr"
         return tree.OverrideAttr()
+
+    @parse_debug
+    def parse_CXX11NoReturnAttr(self, node) -> tree.CXX11NoReturnAttr:
+        assert node['kind'] == "CXX11NoReturnAttr"
+        return tree.CXX11NoReturnAttr()
 
     @parse_debug
     def parse_CXXMemberCallExpr(self, node) -> tree.CXXMemberCallExpr:

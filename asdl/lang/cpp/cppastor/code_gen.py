@@ -264,6 +264,8 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_ParmVarDecl(self, node: tree.ParmVarDecl):
         self.write(self.visit_type_helper(node.name or "", node.type))
+        if node.attributes:
+            self.space_list(node.attributes)
         if node.default:
             self.write(" = ", node.default)
 
@@ -313,6 +315,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_ConstAttr(self, node: tree.ConstAttr):
         self.write("__attribute__((const))")
+
+    def visit_FallThroughAttr(self, node: tree.FallThroughAttr):
+        self.write("[[fallthrough]]")
 
     def visit_ConstructorAttr(self, node: tree.ConstructorAttr):
         self.write("__attribute__((constructor")
@@ -441,6 +446,12 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_TargetClonesAttr(self, node: tree.TargetClonesAttr):
         self.write("__attribute__((target_clones(", node.desc, ")))")
 
+    def visit_NoUniqueAddressAttr(self, node: tree.NoUniqueAddressAttr):
+        self.write("[[no_unique_address]]")
+
+    def visit_CarriesDependencyAttr(self, node: tree.CarriesDependencyAttr):
+        self.write("[[carries_dependency]]")
+
     def visit_WarnUnusedResultAttr(self, node: tree.WarnUnusedResultAttr):
         self.write("__attribute__((warn_unused_result))")
 
@@ -507,6 +518,10 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_ExprStmt(self, node: tree.ExprStmt):
         self.write(node.expr, ";")
+
+    def visit_AttributedStmt(self, node: tree.AttributedStmt):
+        self.space_list(node.attributes, trailing=True)
+        self.write(node.stmt)
 
     def visit_IndirectGotoStmt(self, node: tree.IndirectGotoStmt):
         self.write("goto *", node.expr, ";")
@@ -969,6 +984,15 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_OverrideAttr(self, node: tree.OverrideAttr):
         self.write("override")
 
+    def visit_CXX11NoReturnAttr(self, node: tree.CXX11NoReturnAttr):
+        self.write("[[noreturn]]")
+
+    def visit_LikelyAttr(self, node: tree.LikelyAttr):
+        self.write("[[likely]]")
+
+    def visit_UnlikelyAttr(self, node: tree.UnlikelyAttr):
+        self.write("[[unlikely]]")
+
     def visit_CXXMemberCallExpr(self, node: tree.CXXMemberCallExpr):
         self.write(node.bound_method, "(")
         self.comma_list(node.args)
@@ -1117,6 +1141,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         pass
 
     def visit_function_like(self, node):
+        if getattr(node, 'attributes', None):
+            self.space_list(node.attributes, trailing=True)
+
         if getattr(node, 'storage', None):
             self.write(node.storage, " ")
 
@@ -1153,9 +1180,6 @@ class SourceGenerator(ExplicitNodeVisitor):
 
         if getattr(node, 'method_attributes', None):
             self.space_list(node.method_attributes, trailing=True)
-
-        if getattr(node, 'attributes', None):
-            self.space_list(node.attributes, trailing=True)
 
         if getattr(node, 'initializers', None):
             self.write(" : ")

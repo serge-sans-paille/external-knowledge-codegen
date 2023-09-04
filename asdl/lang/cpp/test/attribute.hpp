@@ -48,108 +48,176 @@ struct s
  * function attributes
  */
 void f0 () { /* Do something. */; }
-void f1 () __attribute__ ((weak)) __attribute__((alias ("f0")));
+__attribute__ ((weak)) __attribute__((alias ("f0"))) void f1 () ;
 
-void f2 () __attribute__ ((aligned));
-void f3 () __attribute__ ((aligned(8)));
+__attribute__ ((aligned)) void f2 () ;
+__attribute__ ((aligned(8))) void f3 () ;
 
 struct s0 {
-  s0 () __attribute__ ((aligned));
-  ~s0 () __attribute__ ((aligned));
-  operator int () const __attribute__ ((aligned));
-  void m() noexcept __attribute__ ((aligned));
+  __attribute__ ((aligned)) s0 () ;
+  __attribute__ ((aligned)) ~s0 () ;
+  __attribute__ ((aligned)) operator int () const ;
+  __attribute__ ((aligned)) void m() noexcept ;
 };
 
-void* f4 (int, int) __attribute__ ((alloc_align (1)));
+__attribute__ ((alloc_align (1))) void* f4 (int, int) ;
 
-void* f5 (int, int) __attribute__ ((alloc_size (1)));
-void* f6 (int, int) __attribute__ ((alloc_size (1, 2)));
+__attribute__ ((alloc_size (1))) void* f5 (int, int) ;
+__attribute__ ((alloc_size (1, 2))) void* f6 (int, int) ;
 
-void* f7 (int, int) __attribute__ ((always_inline));
+__attribute__ ((always_inline)) void* f7 (int, int) ;
 
-void* f8 (int, int) __attribute__ ((cold));
+__attribute__ ((cold)) void* f8 (int, int) ;
 
-void* f9 (int, int) __attribute__ ((constructor));
-void* f10 (int, int) __attribute__ ((constructor(45)));
-void* f11 (int, int) __attribute__ ((destructor));
-void* f12 (int, int) __attribute__ ((destructor(54)));
+__attribute__ ((constructor)) void* f9 (int, int) ;
+__attribute__ ((constructor(45))) void* f10 (int, int) ;
+__attribute__ ((destructor)) void* f11 (int, int) ;
+__attribute__ ((destructor(54))) void* f12 (int, int) ;
 
-void* f13 (int, int) __attribute__ ((deprecated));
-void* f14 (int, int) __attribute__ ((deprecated("msg")));
+__attribute__ ((deprecated)) void* f13 (int, int) ;
+__attribute__ ((deprecated("msg"))) void* f14 (int, int) ;
 
-void* f15 (int, int) __attribute__ ((unavailable));
-void* f16 (int, int) __attribute__ ((unavailable("msg")));
+__attribute__ ((unavailable)) void* f15 (int, int) ;
+__attribute__ ((unavailable("msg"))) void* f16 (int, int) ;
 
-void* f17 (int, int) __attribute__ ((error("msg")));
+__attribute__ ((error("msg"))) void* f17 (int, int) ;
 
-void* f18 (int, int) __attribute__ ((flatten));
+__attribute__ ((flatten)) void* f18 (int, int) ;
 
-int f19(void *, const char *, ...) __attribute__ ((format (printf, 2, 3)));
+__attribute__ ((format (printf, 2, 3))) int f19(void *, const char *, ...) ;
 
-extern char * f20(char *my_domain, const char *my_format) __attribute__ ((format_arg (2)));
+__attribute__ ((format_arg (2))) extern char * f20(char *my_domain, const char *my_format) ;
 
-extern inline void* f21 (int, int) __attribute__ ((gnu_inline));
+__attribute__ ((gnu_inline)) extern inline void* f21 (int, int) ;
 
-void* f22 (int, int) __attribute__ ((hot));
+__attribute__ ((hot)) void* f22 (int, int) ;
 
 void * (*f23 ())();
-void* f24 () __attribute__ ((ifunc("f23")));
+__attribute__ ((ifunc("f23"))) void* f24 () ;
 
-void f25 (void*) __attribute__ ((interrupt));
+__attribute__ ((interrupt)) void f25 (void*) ;
 
-void f26 (void*) __attribute__ ((leaf));
+__attribute__ ((leaf)) void f26 (void*) ;
 
-void* f27 (void*) __attribute__ ((malloc));
+__attribute__ ((malloc)) void* f27 (void*) ;
 
-void* f28 (void*) __attribute__ ((no_instrument_function));
+__attribute__ ((no_instrument_function)) void* f28 (void*) ;
 
-void* f29 (void*) __attribute__ ((no_profile_instrument_function));
+__attribute__ ((no_profile_instrument_function)) void* f29 (void*) ;
 
-void* f30 (void*) __attribute__ ((no_sanitize ("alignment", "object-size")));
+__attribute__ ((no_sanitize ("alignment", "object-size"))) void* f30 (void*) ;
 
-void* f31 (void*) __attribute__ ((no_split_stack));
+__attribute__ ((no_split_stack)) void* f31 (void*) ;
 
-void* f32 (void*) __attribute__ ((noinline));
+__attribute__ ((noinline)) void* f32 (void*) ;
 
-void* f33 (void*) __attribute__ ((nonnull));
-void* f34 (void*) __attribute__ ((nonnull(1)));
+__attribute__ ((nonnull)) void* f33 (void*) ;
+__attribute__ ((nonnull(1))) void* f34 (void*) ;
 
-void* f35 (void*) __attribute__ ((noreturn));
+__attribute__ ((noreturn)) void* f35 (void*) ;
 
-void* f36 (void*) __attribute__ ((nothrow));
+void* f36 (void*) __attribute__ ((nothrow)) ;
 
-void* f37 (void*) __attribute__ ((patchable_function_entry(0)));
-void* f38 (void*) __attribute__ ((patchable_function_entry(4, 2)));
+__attribute__ ((patchable_function_entry(0))) void* f37 (void*) ;
+__attribute__ ((patchable_function_entry(4, 2))) void* f38 (void*) ;
 
-void* f39 (void*) __attribute__ ((pure));
+__attribute__ ((pure)) void* f39 (void*) ;
 
-void* f40 (void*) __attribute__ ((returns_nonnull));
+__attribute__ ((returns_nonnull)) void* f40 (void*) ;
 
-void* f41 (void*) __attribute__ ((returns_twice));
+__attribute__ ((returns_twice)) void* f41 (void*) ;
 
-void* f42 (void*) __attribute__ ((section("foo")));
+__attribute__ ((section("foo"))) void* f42 (void*) ;
 
-void* f43 (void*, ...) __attribute__ ((sentinel));
-void* f44 (void*, ...) __attribute__ ((sentinel(1)));
-void* f45 (void*, ...) __attribute__ ((sentinel(2, 1)));
+__attribute__ ((sentinel)) void* f43 (void*, ...) ;
+__attribute__ ((sentinel(1))) void* f44 (void*, ...) ;
+__attribute__ ((sentinel(2, 1))) void* f45 (void*, ...) ;
 
-int f46 (int) __attribute__ ((no_stack_protector));
+__attribute__ ((no_stack_protector)) int f46 (int) ;
 
-int f47 () __attribute__ ((__target__ ("sse3")));
+__attribute__ ((__target__ ("sse3"))) int f47 () ;
 
-int f48 () __attribute__ ((target_clones("default", "arch=x86-64", "arch=x86-64-v2", "arch=x86-64-v3", "arch=x86-64-v4")));
+__attribute__ ((target_clones("default", "arch=x86-64", "arch=x86-64-v2", "arch=x86-64-v3", "arch=x86-64-v4"))) int f48 () ;
 
-int f49 () __attribute__ ((unused));
+__attribute__ ((unused)) int f49 () ;
 
-int f50 () __attribute__ ((used));
+__attribute__ ((used)) int f50 () ;
 
-int f51 () __attribute__ ((retain));
+__attribute__ ((retain)) int f51 ();
 
-int f52 () __attribute__((visibility("protected")));
+__attribute__((visibility("protected"))) int f52 ();
 
-int f53 () __attribute__((warn_unused_result));
+__attribute__((warn_unused_result)) int f53 ();
 
-int f54 () __attribute__((weak));
+__attribute__((weak)) int f54 ();
 
 // static int f55 () __attribute__((weakref)) __attribute__((alias("f53"))); // dumped as weakref + alias
 // static int f56 () __attribute__((weakref("f53"))); // dumped as weakref + alias
+
+
+// C++ style attributes
+
+[[noreturn]] void cxx11_noreturn();
+// [[deprecated]] void cxx11_deprecated(); // parsed as __attribute__((deprecated))
+// [[nodiscard]] void cxx11_nodiscard();
+// void cxx11_maybe_unused() {
+//   [[maybe_unused]] int var;
+// }
+
+struct Empty {};
+struct Y
+{
+    int i;
+    [[no_unique_address]] Empty e;
+};
+
+void cxx_carries_dependencies0(int* val [[carries_dependency]]);
+void cxx_carries_dependencies1(int* val [[carries_dependency]] = nullptr);
+
+
+void cxx_fallthrough(int n)
+{
+    // example from https://en.cppreference.com/w/cpp/language/attributes/fallthrough
+    void gp();
+    void hp();
+    void ip();
+
+    switch (n)
+    {
+        case 1:
+        case 2:
+            gp();
+            [[fallthrough]];
+        case 3: // no warning on fallthrough
+            hp();
+        case 4: // compiler may warn on fallthrough
+            if (n < 3)
+            {
+                ip();
+             //   [[fallthrough]]; // OK
+            }
+            else
+            {
+                return;
+            }
+    }
+}
+
+int cxx_likely0(int i) {
+  // example from https://en.cppreference.com/w/cpp/language/attributes/likely
+    switch (i)
+    {
+        case 1: [[fallthrough]];
+        [[likely]] case 2: return 1;
+    }
+    return 2;
+}
+
+
+long long cxx_likely1(long long n) noexcept
+{
+    if (n > 1) [[likely]]
+        return n * cxx_likely1(n - 1);
+    else [[unlikely]]
+        return 1;
+}

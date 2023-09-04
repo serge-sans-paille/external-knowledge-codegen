@@ -47,12 +47,28 @@ class ConstructorAttr(Attr):
     attrs = ("priority",)
 
 
+class CXX11NoReturnAttr(Attr):
+    attrs = ()
+
+
 class DestructorAttr(Attr):
     attrs = ("priority",)
 
 
 class ErrorAttr(Attr):
     attrs = ("msg",)
+
+
+class FallThroughAttr(Attr):
+    attrs = ()
+
+
+class LikelyAttr(Attr):
+    attrs = ()
+
+
+class UnlikelyAttr(Attr):
+    attrs = ()
 
 
 class FlattenAttr(Attr):
@@ -80,6 +96,14 @@ class IFuncAttr(Attr):
 
 
 class AnyX86InterruptAttr(Attr):
+    attrs = ()
+
+
+class NoUniqueAddressAttr(Attr):
+    attrs = ()
+
+
+class CarriesDependencyAttr(Attr):
     attrs = ()
 
 
@@ -556,7 +580,7 @@ class NonTypeTemplateParmDecl(Declaration):
 
 
 class ParmVarDecl(Declaration):
-    attrs = ("type", "name", "default")
+    attrs = ("type", "name", "default", "attributes",)
 
 
 class FieldDecl(Declaration):
@@ -619,6 +643,10 @@ class LocalVariableDeclarationStmt(Statement):
 
 class TypeDeclarationStmt(Statement):
     attrs = ("declaration",)
+
+
+class AttributedStmt(Statement):
+    attrs = ("stmt", "attributes",)
 
 
 class IfStmt(Statement):
