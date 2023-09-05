@@ -813,7 +813,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_LambdaExpr(self, node: tree.LambdaExpr):
         self.write("[")
-        # TODO: capture list
+        for idx, capture_expr in enumerate(node.capture_exprs or ()):
+            capture_mode = "&" if isinstance(capture_expr, tree.DeclRefExpr) else ""
+            self.write("," if idx else "", capture_mode, capture_expr)
         self.write("](")
         self.comma_list(node.parameters)
         self.write(")")
