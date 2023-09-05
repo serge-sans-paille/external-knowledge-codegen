@@ -1167,7 +1167,7 @@ class EmptyDecl(Declaration):
     attrs = ()
 
 
-class CStyleCastExpr(Node):
+class CStyleCastExpr(Expression):
     attrs = ("type", "expr",)
 
 
