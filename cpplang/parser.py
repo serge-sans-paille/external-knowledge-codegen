@@ -2199,7 +2199,10 @@ class Parser(object):
     def parse_TypedefType(self, node) -> tree.TypedefType:
         assert node['kind'] == "TypedefType"
         type_, = self.parse_subnodes(node)
-        return tree.TypedefType(name=node['name'], type=type_)
+        name = node.get('name')
+        if name is None:
+            name = node["decl"]["name"]
+        return tree.TypedefType(name=name, type=type_)
 
 
     @parse_debug
