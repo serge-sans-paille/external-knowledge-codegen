@@ -1041,6 +1041,12 @@ class Parser(object):
         name = node['name']
         return tree.AddrLabelExpr(name=name)
 
+    def parse_VAArgExpr(self, node) -> tree.VAArgExpr:
+        assert node['kind'] == 'VAArgExpr'
+        expr, = self.parse_subnodes(node)
+        type_ = self.parse_node(self.type_informations[node['id']])
+        return tree.VAArgExpr(expr=expr, type=type_)
+
     def parse_OffsetOfExpr(self, node) -> tree.OffsetOfExpr:
         assert node['kind'] == 'OffsetOfExpr'
         expr_infos = self.expr_informations[node['id']]

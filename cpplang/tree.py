@@ -853,6 +853,10 @@ class OffsetOfExpr(Expression):
     attrs = ("type", "kinds",)
 
 
+class VAArgExpr(Expression):
+    attrs = ("expr", "type",)
+
+
 class OffsetOfField(Node):
     attrs = ("name",)
 

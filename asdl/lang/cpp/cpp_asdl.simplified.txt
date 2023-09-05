@@ -106,6 +106,7 @@ expression = AddrLabelExpr(identifier name)
            | UnaryExprOrTypeTraitExpr(identifier name, expression? expr, type? type)
            | UnaryOperator(constant opcode, constant postfix, expression expr)
            | UserDefinedLiteral(constant suffix, expression expr)
+           | VAArgExpr(expression expr, type type)
 
 parameter = ParmVarDecl(type type, identifier? name, expression? default, attribute* attributes)
 

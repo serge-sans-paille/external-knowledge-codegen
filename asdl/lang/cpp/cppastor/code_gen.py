@@ -302,6 +302,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         # The cast is implicit, no need to pretty-print it.
         self.write(node.expr)
 
+    def visit_VAArgExpr(self, node: tree.VAArgExpr):
+        self.write("__builtin_va_arg(", node.expr, ", ", node.type, ")")
+
     def visit_AlignedAttr(self, node: tree.AlignedAttr):
         self.write("__attribute__((aligned")
         if node.size is not None:
