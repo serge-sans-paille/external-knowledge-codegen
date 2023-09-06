@@ -560,6 +560,9 @@ class SourceGenerator(ExplicitNodeVisitor):
             for attribute in node.attributes:
                 self.write(attribute, " ")
 
+        if node.type_qualifier:
+            self.write(node.type_qualifier, " ")
+
         self.write(self.visit_type_helper(node.name, node.type))
         if node.init:
             self.write(" = ", node.init)
