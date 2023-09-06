@@ -4,7 +4,7 @@ identifier, int, string, constant
 cu = TranslationUnit(statement* stmts)
 
 declaration = AccessSpecDecl(access_spec access_spec)
-            | CXXConstructorDecl(identifier name, exception_spec? exception, default_mode? defaulted, statement? body, attribute* attributes, parameter* parameters, cxx_ctor_initializer* initializers)
+            | CXXConstructorDecl(identifier name, exception_spec? exception, default_mode? defaulted, statement? body, attribute* attributes, parameter* parameters, cxx_ctor_initializer* initializers, constant? explicit)
             | CXXConversionDecl(identifier name, constant? inline, exception_spec? exception, constant? const, statement? body, attribute* attributes)
             | CXXDestructorDecl(identifier name, exception_spec? exception, virtual_spec? virtual, default_mode? defaulted, statement? body, attribute* attributes)
             | CXXMethodDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, exception_spec? exception, virtual_spec? virtual, constant? const, default_mode? defaulted, method_attr* method_attributes, constant? ref_qualifier, statement? body, attribute* attributes, parameter* parameters)

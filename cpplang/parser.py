@@ -134,6 +134,7 @@ class Parser(object):
         Depending on which one, a different init function is called
         """
         self.type_informations = {}
+        self.decl_informations = {}
         self.expr_informations = {}
         self.asm_informations = {}
         self.template_instances = {}
@@ -507,6 +508,11 @@ class Parser(object):
             if 'node_inner' in child:
                 inner_child, = child['node_inner']
                 self.type_informations[child['node_id']] = inner_child
+
+            if 'isExplicit' in child:
+                decl_info = self.decl_informations.setdefault(child['node_id'], {})
+                decl_info["isExplicit"] = child['isExplicit']
+
             if 'inner' in child:
                 self.parse_type_summary(child['inner'])
             if 'expr_inner' in child:
@@ -683,12 +689,16 @@ class Parser(object):
 
         assert not method_attrs
 
-        noexcept = None
+        if self.decl_informations.get(node['id'], {}).get('isExplicit'):
+            explicit = 'explicit'
+        else:
+            explicit = None
 
         defaulted = self.parse_default(node)
 
         return tree.CXXConstructorDecl(name=name, exception=exception,
                                        attributes=attrs,
+                                       explicit=explicit,
                                        defaulted=defaulted, body=body,
                                        parameters=args, initializers=inits)
 

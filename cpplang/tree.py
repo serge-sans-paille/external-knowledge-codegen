@@ -323,7 +323,8 @@ class RecordDecl(TypeDeclaration):
 
 
 class CXXConstructorDecl(Declaration):
-    attrs = ("name", "exception", "defaulted", "body", "attributes", "parameters", "initializers",)
+    attrs = ("name", "exception", "defaulted", "body", "attributes", "parameters", "initializers",
+             "explicit",)
 
 
 class CXXCtorInitializer(Node):

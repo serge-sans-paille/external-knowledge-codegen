@@ -559,15 +559,18 @@ public:
 
   void Visit(const Decl *D) {
     if(!D) return;
-    if(const auto * VD = dyn_cast<ValueDecl>(D)) {
+    if (const auto *VD = dyn_cast<ValueDecl>(D)) {
       JOS.attribute("node_id", createPointerRepresentation(D));
-        JOS.attributeBegin("node_inner");
-        JOS.arrayBegin();
+      JOS.attributeBegin("node_inner");
+      JOS.arrayBegin();
       JOS.objectBegin();
       Visit(VD->getType());
       JOS.objectEnd();
-        JOS.arrayEnd();
-        JOS.attributeEnd();
+      JOS.arrayEnd();
+      if (const auto *CD = dyn_cast<CXXConstructorDecl>(D)) {
+        JOS.attribute("isExplicit", CD->isExplicit());
+      }
+      JOS.attributeEnd();
     }
     InnerDeclVisitor::Visit(D);
   }

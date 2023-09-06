@@ -1200,6 +1200,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         if getattr(node, 'inline', None):
             self.write("inline ")
 
+        if getattr(node, 'explicit', None):
+            self.write("explicit ")
+
         if getattr(node, 'virtual', None):
             self.write(node.virtual, " ")
 
