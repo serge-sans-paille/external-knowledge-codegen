@@ -1702,6 +1702,8 @@ class Parser(object):
         var_type = self.parse_node(self.type_informations[node['id']])
         inner_nodes = self.parse_subnodes(node)
 
+        type_qualifier = "mutable" if node.get('mutable') else None # TODO: add support for const and volatile
+
         if 'hasInClassInitializer' in node:
             init = inner_nodes.pop()
         else:
@@ -1709,7 +1711,7 @@ class Parser(object):
 
         attributes = inner_nodes
 
-        return tree.FieldDecl(name=name, type=var_type, init=init,
+        return tree.FieldDecl(name=name, type=var_type, init=init, type_qualifier=type_qualifier,
                               attributes=attributes)
 
     @parse_debug
