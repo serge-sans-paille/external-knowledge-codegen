@@ -857,6 +857,13 @@ class VAArgExpr(Expression):
     attrs = ("expr", "type",)
 
 
+class DumpedExpr(Expression):
+    attrs = ("value",)
+
+
+class SubstNonTypeTemplateParmExpr(Expression):
+    attrs = ("decl", "expr",)
+
 class OffsetOfField(Node):
     attrs = ("name",)
 

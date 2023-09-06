@@ -2238,13 +2238,40 @@ class Parser(object):
     def parse_TemplateSpecializationType(self, node) -> tree.TemplateSpecializationType:
         assert node['kind'] == "TemplateSpecializationType"
         inner_nodes = self.parse_subnodes(node)
-        template_args = [
-                inner_node for inner_node in inner_nodes
-                if isinstance(inner_node, tree.TemplateArgument)
-        ]
-        return tree.TemplateSpecializationType(name=node['templateName'],
+        if 'templateName' in node:
+            template_args = [
+                    inner_node for inner_node in inner_nodes
+                    if isinstance(inner_node, tree.TemplateArgument)
+            ]
+            name = node['templateName']
+        elif 'name' in node:
+            name = node['name']
+            template_args = []
+            for inner_node in inner_nodes:
+                if isinstance(inner_node, tree.Type):
+                    ta = tree.TemplateArgument(type=inner_node, expr=None)
+                elif isinstance(inner_node, tree.Expression):
+                    ta = tree.TemplateArgument(type=None, expr=inner_node)
+                else:
+                    raise NotImplementedError
+                template_args.append(ta)
+        else:
+            raise NotImplementedError
+        return tree.TemplateSpecializationType(name=name,
                                                template_args=template_args)
 
+
+    @parse_debug
+    def parse_DumpedExpr(self, node) -> tree.DumpedExpr:
+        # FIXME: this node shoudln't exist
+        assert node['kind'] == "DumpedExpr"
+        return tree.DumpedExpr(value=node["value"])
+
+    @parse_debug
+    def parse_SubstNonTypeTemplateParmExpr(self, node) -> tree.SubstNonTypeTemplateParmExpr:
+        assert node['kind'] == "SubstNonTypeTemplateParmExpr"
+        decl, expr = self.parse_subnodes(node)
+        return tree.SubstNonTypeTemplateParmExpr(decl=decl, expr=expr)
 
     @parse_debug
     def parse_TypeOfExprType(self, node) -> tree.TypeOfExprType:
