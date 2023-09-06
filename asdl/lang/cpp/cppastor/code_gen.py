@@ -211,14 +211,16 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.name)
 
     def visit_CXXRecordDecl(self, node: tree.CXXRecordDecl):
-        self.write(node.kind, " ")
-        self.write(node.name)
-        for base in node.bases or ():
-            self.write(" : ", base)
+        self.write(node.kind, " ", node.name)
+        if node.bases:
+            self.write(" : ")
+            self.comma_list(node.bases)
+
         if node.complete:
             self.write(" {", "\n")
             self.decl_list(node.decls or ())
             self.write("}")
+
         self.write(";")
         self.newline(extra=1)
 
@@ -960,7 +962,21 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(">")
 
     def visit_ClassTemplateSpecializationDecl(self, node: tree.ClassTemplateSpecializationDecl):
-        ...
+        self.write("template<")
+        self.comma_list(node.template_parameters)
+        self.write(">\n")
+        self.write(node.kind, " ", node.name)
+        self.write("<")
+        self.comma_list(node.template_arguments)
+        self.write(">")
+        for base in node.bases or ():
+            self.write(" : ", base)
+        if node.complete:
+            self.write(" {", "\n")
+            self.decl_list(node.decls or ())
+            self.write("}")
+        self.write(";")
+        self.newline(extra=1)
 
     def visit_TemplateArgument(self, node: tree.TemplateArgument):
         if node.type:

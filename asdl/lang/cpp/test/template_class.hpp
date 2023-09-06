@@ -33,3 +33,15 @@ struct with_default_value;
 // instantiation
 using d = decl<int>;
 using dv = decl_value<3>;
+
+// specialization
+template<>
+struct decl<int> {
+  int imember;
+};
+
+template<>
+struct decl_value<5> {
+  static const int member = 0;
+};
+
