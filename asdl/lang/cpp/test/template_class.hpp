@@ -45,3 +45,25 @@ struct decl_value<5> {
   static const int member = 0;
 };
 
+// partial specialization
+template<typename T0, typename T1>
+struct foo;
+
+template<typename T>
+struct foo<T, float> {};
+
+template<typename P>
+struct foo<decl<P>, bool> {
+  P p;
+};
+
+template<typename T, typename P>
+struct foo<decl<P>, T> {
+  P p;
+};
+
+template<typename T, typename P>
+struct foo<T, decl<P>> {
+  template<typename S>
+  P doit(S);
+};

@@ -463,7 +463,7 @@ class TemplateTypeParmType(Type):
     attrs = ("name",)
 
 class TemplateSpecializationType(Type):
-    attrs = ("type", "template_args",)
+    attrs = ("name", "template_args",)
 
 class ReferenceType(Type):
     attrs = ("arguments", "sub_type",)
@@ -560,6 +560,10 @@ class ClassTemplateDecl(Declaration):
 
 
 class ClassTemplateSpecializationDecl(CXXRecordDecl):
+    attrs = ("template_arguments", "template_parameters",)
+
+
+class ClassTemplatePartialSpecializationDecl(CXXRecordDecl):
     attrs = ("template_arguments", "template_parameters",)
 
 
