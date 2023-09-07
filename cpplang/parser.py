@@ -2179,6 +2179,13 @@ class Parser(object):
         return tree.ConstantArrayType(type=type_, size=size)
 
     @parse_debug
+    def parse_DependentSizedArrayType(self, node) -> tree.DependentSizedArrayType:
+        assert node['kind'] == "DependentSizedArrayType"
+        size_repr = node['size_repr']  # FIXME: should be an expression
+        type_, = self.parse_subnodes(node)
+        return tree.DependentSizedArrayType(type=type_, size_repr=size_repr)
+
+    @parse_debug
     def parse_ComplexType(self, node) -> tree.ComplexType:
         assert node['kind'] == "ComplexType"
         type_, = self.parse_subnodes(node)

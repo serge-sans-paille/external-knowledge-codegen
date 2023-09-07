@@ -637,6 +637,10 @@ class SourceGenerator(ExplicitNodeVisitor):
             return self.visit_type_helper("{} [{}]".format(current_expr,
                                                               current_type.size),
                                              current_type.type)
+        if isinstance(current_type, tree.DependentSizedArrayType):
+            return self.visit_type_helper("{} [{}]".format(current_expr,
+                                                              current_type.size_repr),
+                                             current_type.type)
         if isinstance(current_type, tree.IncompleteArrayType):
             return self.visit_type_helper("{} []".format(current_expr),
                                           current_type.type)
