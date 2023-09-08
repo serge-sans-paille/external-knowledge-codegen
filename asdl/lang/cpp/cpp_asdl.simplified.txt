@@ -6,15 +6,15 @@ cu = TranslationUnit(statement* stmts)
 declaration = AccessSpecDecl(access_spec access_spec)
             | CXXConstructorDecl(identifier name, exception_spec? exception, default_mode? defaulted, statement? body, attribute* attributes, parameter* parameters, cxx_ctor_initializer* initializers)
             | CXXConversionDecl(identifier name, constant? inline, exception_spec? exception, constant? const, statement? body, attribute* attributes)
-            | CXXDestructorDecl(identifier name, exception_spec? exception, constant? virtual, default_mode? defaulted, statement? body, attribute* attributes)
-            | CXXMethodDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, exception_spec? exception, constant? virtual, constant? const, default_mode? defaulted, method_attr* method_attributes, constant? ref_qualifier, statement? body, attribute* attributes, parameter* parameters)
+            | CXXDestructorDecl(identifier name, exception_spec? exception, virtual_spec? virtual, default_mode? defaulted, statement? body, attribute* attributes)
+            | CXXMethodDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, exception_spec? exception, virtual_spec? virtual, constant? const, default_mode? defaulted, method_attr* method_attributes, constant? ref_qualifier, statement? body, attribute* attributes, parameter* parameters)
             | CXXRecordDecl(identifier name, identifier kind, base* bases, constant complete, declaration* decls)
             | ClassTemplateSpecializationDecl(template_argument* template_arguments, template_parameter* template_parameters, identifier name, identifier kind, base* bases, constant complete, declaration* decls)
             | ClassTemplatePartialSpecializationDecl(template_argument* template_arguments, template_parameter* template_parameters, identifier name, identifier kind, base* bases, constant complete, declaration* decls)
             | ClassTemplateDecl(template_parameter* template_parameters, declaration decl)
             | EmptyDecl
             | EnumDecl(identifier? name, enum_field* fields)
-            | FieldDecl(identifier name, type type, expression? init, constant? type_qualifier, attribute* attributes)
+            | FieldDecl(identifier name, type type, expression? init, expression? bitwidth, constant? type_qualifier, attribute* attributes)
             | FriendDecl(identifier type)
             | FunctionDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, exception_spec? exception, statement? body, attribute* attributes, parameter* parameters)
             | FunctionTemplateDecl(template_parameter* template_parameters, declaration decl)
@@ -26,8 +26,10 @@ declaration = AccessSpecDecl(access_spec access_spec)
             | UsingDirectiveDecl(identifier name)
             | VarDecl(identifier name, type type, constant? storage_class, constant init_mode, constant? implicit, constant? referenced, expression? init, attribute* attributes, constant? tls)
 
-template_parameter = TemplateTypeParmDecl(identifier name, template_argument? default)
+template_parameter = TemplateTypeParmDecl(identifier name, template_tag tag, template_argument? default)
                    | NonTypeTemplateParmDecl(type type, identifier name, template_argument? default)
+
+template_tag = ClassTag | TypenameTag
 
 template_argument = TemplateArgument(type? type, expression? expr)
 
@@ -197,11 +199,13 @@ attribute = AlignedAttr(expression? size)
           | WeakAttr
           | WeakRefAttr(identifier? name)
 
-base = Base(identifier name, access_spec? access_spec)
+base = Base(identifier name, access_spec? access_spec, virtual_spec? virtual)
 
 access_spec = Public
             | Protected
             | Private
+
+virtual_spec = Virtual
 
 default_mode = Default
              | Delete

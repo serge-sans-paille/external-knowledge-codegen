@@ -338,6 +338,10 @@ class AccessSpecDecl(Declaration):
     attrs = ("access_spec",)
 
 
+class Virtual(Node):
+    attrs = ()
+
+
 class Public(Node):
     attrs = ()
 
@@ -576,7 +580,7 @@ class TemplateArgument(Node):
 
 
 class TemplateTypeParmDecl(Declaration):
-    attrs = ("name", "default",)
+    attrs = ("name", "tag", "default",)
 
 
 class NonTypeTemplateParmDecl(Declaration):
@@ -588,7 +592,15 @@ class ParmVarDecl(Declaration):
 
 
 class FieldDecl(Declaration):
-    attrs = ("type", "name", "init", "attributes", "type_qualifier")
+    attrs = ("type", "name", "init", "bitwidth", "attributes", "type_qualifier",)
+
+
+class ClassTag(Node):
+    attrs = ()
+
+
+class TypenameTag(Node):
+    attrs = ()
 
 
 # ------------------------------------------------------------------------------
@@ -1164,7 +1176,7 @@ class FriendDecl(Declaration):
 
 
 class Base(Node):
-    attrs = ("name", "access_spec",)
+    attrs = ("name", "access_spec", "virtual",)
 
 
 class CXXStdInitializerListExpr(Node):

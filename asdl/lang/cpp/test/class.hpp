@@ -95,3 +95,15 @@ struct S {
 void test() {
   const S &s_ref = S(); // Requires a CXXBindTemporaryExpr.
 }
+
+
+// virtual inheritance
+struct B { int n; };
+class X : public virtual B {};
+//class Y : virtual public B {}; // We don't keep info on the order
+class Y : public virtual B {};
+class Z : public B {};
+
+struct AA : X, Y, Z
+{
+};

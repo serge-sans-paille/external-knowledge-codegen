@@ -1,6 +1,9 @@
 template<typename T>
 void foo(int);
 
+template<class T>
+void footix(int);
+
 template<typename T>
 void foo_with_body(int) {
   return;

@@ -579,7 +579,9 @@ class Parser(object):
                 access_type = type(None)
             else:
                 access_type = getattr(tree, written_access.capitalize())
+            virtual = base.get('isVirtual') and tree.Virtual()
             bases.append(tree.Base(access_spec=access_type(),
+                                   virtual=virtual,
                                    name=base['type']['qualType']))
 
         inner_nodes = self.parse_subnodes(node)
@@ -714,9 +716,7 @@ class Parser(object):
 
         name = node['name']
 
-        virtual = node.get('virtual')
-        if virtual:
-            virtual = "virtual"
+        virtual = node.get('virtual') and tree.Virtual()
 
         body, args, inits, method_attrs, attrs, exception = self.parse_function_inner(node)
         assert not args
@@ -775,9 +775,7 @@ class Parser(object):
         else:
             assert ref_qualifier is None
 
-        virtual = node.get('virtual')
-        if virtual:
-            virtual = "virtual"
+        virtual = node.get('virtual') and tree.Virtual()
 
         defaulted = self.parse_default(node)
 
@@ -1704,15 +1702,21 @@ class Parser(object):
 
         type_qualifier = "mutable" if node.get('mutable') else None # TODO: add support for const and volatile
 
-        if 'hasInClassInitializer' in node:
-            init = inner_nodes.pop()
+        if node.get('isBitfield'):
+            bitwidth = inner_nodes.pop(0)
+        else:
+            bitwidth = None
+
+        if node.get('hasInClassInitializer'):
+            init = inner_nodes.pop(0)
         else:
             init = None
 
         attributes = inner_nodes
 
-        return tree.FieldDecl(name=name, type=var_type, init=init, type_qualifier=type_qualifier,
-                              attributes=attributes)
+        return tree.FieldDecl(name=name, type=var_type, init=init,
+                              type_qualifier=type_qualifier,
+                              bitwidth=bitwidth, attributes=attributes)
 
     @parse_debug
     def parse_BinaryOperator(self, node) -> tree.BinaryOperator:
@@ -1937,12 +1941,13 @@ class Parser(object):
     def parse_TemplateTypeParmDecl(self, node) -> tree.TemplateTypeParmDecl:
         assert node['kind'] == "TemplateTypeParmDecl"
         name = node['name']
+        tag = getattr(tree, node['tagUsed'].capitalize() + 'Tag')()
         inner_nodes = self.parse_subnodes(node)
         if inner_nodes:
             default, = inner_nodes
         else:
             default = None
-        return tree.TemplateTypeParmDecl(name=name, default=default)
+        return tree.TemplateTypeParmDecl(name=name, tag=tag, default=default)
 
     @parse_debug
     def parse_NonTypeTemplateParmDecl(self, node) -> tree.NonTypeTemplateParmDecl:
