@@ -416,6 +416,9 @@ class ConstantArrayType(Type):
 class DependentSizedArrayType(Type):
     attrs = ("type", "size_repr", )
 
+class VariableArrayType(Type):
+    attrs = ("type", "size_repr",)
+
 class DecayedType(Type):
     attrs = ("type",)
 

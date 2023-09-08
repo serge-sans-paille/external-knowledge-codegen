@@ -11,3 +11,12 @@ void foo() {
   x[0];
   x2[0][3];
 }
+
+// vla
+void bar(int n, float a[n + 1]);
+void bar(int n) {
+  typedef int ty[n];
+  ty a;
+  int b[n];
+  int (*c)[n];
+}
