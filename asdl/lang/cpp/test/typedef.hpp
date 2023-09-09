@@ -43,5 +43,8 @@ struct outer {
   struct inner {
     typedef T type_outer;
     typedef P type_inner;
+    T outer_decl;
+    P inner_decl;
+    void foo(T, P);
   };
 };
