@@ -20,3 +20,15 @@ void bar(int n) {
   int b[n];
   int (*c)[n];
 }
+
+// templated size
+template<int N>
+void babar(float a[N]);
+
+template<int N>
+void babar() {
+  typedef int ty[N];
+  ty a;
+  int b[N];
+  int (*c)[N];
+}

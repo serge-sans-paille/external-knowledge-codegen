@@ -2181,8 +2181,12 @@ class Parser(object):
     @parse_debug
     def parse_DependentSizedArrayType(self, node) -> tree.DependentSizedArrayType:
         assert node['kind'] == "DependentSizedArrayType"
-        size_repr = node['size_repr']  # FIXME: should be an expression
-        type_, = self.parse_subnodes(node)
+        type_, *expr = self.parse_subnodes(node)
+        size_repr = node.get('size_repr')  # FIXME: should be an expression
+        if size_repr is None:
+            # in some cases, the json file has full type info
+            size_expr, = expr  # unfortunately we cannot use that yet
+            size_repr = self.get_node_source_code(node['inner'][1])
         return tree.DependentSizedArrayType(type=type_, size_repr=size_repr)
 
     @parse_debug
