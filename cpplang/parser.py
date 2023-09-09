@@ -2341,7 +2341,8 @@ class Parser(object):
             index = node.get('index')
             assert index is not None
             for parent in reversed(self.stack):
-                if parent['kind'] == 'ClassTemplatePartialSpecializationDecl':
+                if parent['kind'] in ('ClassTemplateDecl',
+                                      'ClassTemplatePartialSpecializationDecl'):
                     break
             else:
                 raise NotImplementedError
