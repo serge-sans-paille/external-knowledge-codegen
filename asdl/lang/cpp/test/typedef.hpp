@@ -36,3 +36,12 @@ template<class T, int N>
 struct babar {
   typedef T type[N];
 };
+
+template<class T>
+struct outer {
+  template<class P>
+  struct inner {
+    typedef T type_outer;
+    typedef P type_inner;
+  };
+};
