@@ -8,6 +8,7 @@ void foo() {
   void * p1 = (void*)&x; // implicit pointer cast
   const void * p2 = &x;
   const void * p3 = (const void*)&x;
+  (void)x;
 }
 
 void bar() {

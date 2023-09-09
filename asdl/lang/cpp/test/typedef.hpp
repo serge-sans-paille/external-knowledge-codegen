@@ -23,3 +23,6 @@ typedef int (&function_ref)(float);
 typedef const char (&char_array)[10];
 
 simple user;
+
+typedef long long my_int64;
+typedef my_int64 my_int64;

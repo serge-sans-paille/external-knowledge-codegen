@@ -853,6 +853,10 @@ class OffsetOfExpr(Expression):
     attrs = ("type", "kinds",)
 
 
+class VAArgExpr(Expression):
+    attrs = ("expr", "type",)
+
+
 class OffsetOfField(Node):
     attrs = ("name",)
 
@@ -1167,7 +1171,7 @@ class EmptyDecl(Declaration):
     attrs = ()
 
 
-class CStyleCastExpr(Node):
+class CStyleCastExpr(Expression):
     attrs = ("type", "expr",)
 
 
