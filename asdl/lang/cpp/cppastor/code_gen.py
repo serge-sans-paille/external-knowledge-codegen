@@ -678,6 +678,11 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(current_type, tree.TemplateTypeParmType):
             return "{} {}".format(current_type.name, current_expr)
 
+        if isinstance(current_type, tree.DependentNameType):
+            return "typename {} {}".format(current_type.nested +
+                                           current_type.attr,
+                                           current_expr)
+
         if isinstance(current_type, tree.SubstTemplateTypeParmType):
             return self.visit_type_helper(current_expr, current_type.type)
 
@@ -759,6 +764,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_DecayedType(self, node: tree.DecayedType):
         self.write(node.type)
+
+    def visit_DependentNameType(self, node: tree.DependentNameType):
+        self.write("typename ", node.nested, node.attr)
 
     def visit_TypeRef(self, node: tree.TypeRef):
         self.write(node.name)

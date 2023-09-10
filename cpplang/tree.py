@@ -419,6 +419,9 @@ class DependentSizedArrayType(Type):
 class VariableArrayType(Type):
     attrs = ("type", "size_repr",)
 
+class DependentNameType(Type):
+    attrs = ("nested", "attr",)
+
 class DecayedType(Type):
     attrs = ("type",)
 

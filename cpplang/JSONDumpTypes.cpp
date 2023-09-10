@@ -245,6 +245,12 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Inner.push_back(fullType(Ctx, SQT.Ty));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
+  else if(auto *DependentNameTy = dyn_cast<DependentNameType>(Ty)) {
+    std::string qual_dump;
+    llvm::raw_string_ostream qual_stream(qual_dump);
+    Ret["nested_name"] = (DependentNameTy->getQualifier()->dump(qual_stream), qual_dump);
+    Ret["attribute_name"] = DependentNameTy->getIdentifier()->getName();
+  }
   else if(auto * VectorTy = dyn_cast<VectorType>(Ty)) {
     QualType QT = VectorTy->getElementType();
     Ret["size"] = VectorTy->getNumElements() * Ctx.getTypeSizeInChars(VectorTy->getElementType()).getQuantity();
@@ -632,6 +638,13 @@ public:
 
 void JSONNodeTypeDumper::Visit(const Type *T) {
   if(!T) return;
+  if(auto * DependentNameTy = dyn_cast<DependentNameType>(T)) {
+    JOS.attribute("node_id", createPointerRepresentation(DependentNameTy));
+    std::string qual_dump;
+    llvm::raw_string_ostream qual_stream(qual_dump);
+    JOS.attribute("nested_name", (DependentNameTy->getQualifier()->dump(qual_stream), qual_dump));
+    JOS.attribute("attribute_name", DependentNameTy->getIdentifier()->getName());
+  }
   InnerTypeVisitor::Visit(T);
 }
 
