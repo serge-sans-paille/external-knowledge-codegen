@@ -1231,8 +1231,9 @@ class Parser(object):
     def parse_NamespaceDecl(self, node) -> tree.NamespaceDecl:
         assert node['kind'] == "NamespaceDecl"
         name = node.get('name') # Namespaces can be anonymous (no name given), in which case name is null
+        inline = node.get('isInline') and "inline"
         decls = self.parse_subnodes(node)
-        return tree.NamespaceDecl(name=name, decls=decls)
+        return tree.NamespaceDecl(name=name, inline=inline, decls=decls)
 
     #@parse_debug
     #def parse_Namespace(self, node) -> tree.Namespace:

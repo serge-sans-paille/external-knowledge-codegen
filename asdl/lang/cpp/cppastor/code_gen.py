@@ -245,6 +245,8 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.visit_function_like(node)
 
     def visit_NamespaceDecl(self, node: tree.NamespaceDecl):
+        if node.inline:
+            self.write("inline ")
         self.write("namespace ")
         if node.name is not None:
             self.write(node.name)
