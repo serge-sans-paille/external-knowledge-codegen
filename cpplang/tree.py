@@ -749,7 +749,7 @@ class ReturnStmt(Statement):
 
 
 class NamespaceDecl(Declaration):
-    attrs = ("name", "decls",)
+    attrs = ("name", "inline", "decls",)
 
 
 class UsingDirectiveDecl(Declaration):
