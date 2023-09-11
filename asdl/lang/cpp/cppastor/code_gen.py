@@ -527,7 +527,7 @@ class SourceGenerator(ExplicitNodeVisitor):
                     self.write(" = ", node.init)
 
     def visit_ExprStmt(self, node: tree.ExprStmt):
-        self.write(node.expr, ";")
+        self.write(node.expr, ";\n")
 
     def visit_AttributedStmt(self, node: tree.AttributedStmt):
         self.space_list(node.attributes, trailing=True)
