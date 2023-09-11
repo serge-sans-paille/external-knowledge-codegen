@@ -2237,8 +2237,10 @@ class Parser(object):
     @parse_debug
     def parse_FunctionProtoType(self, node) -> tree.FunctionProtoType:
         assert node['kind'] == "FunctionProtoType"
+        trailing_return = node.get('trailingReturn') and "auto"
         return_type, *parameter_types = self.parse_subnodes(node)
         return tree.FunctionProtoType(return_type=return_type,
+                                      trailing_return=trailing_return,
                                       parameter_types=parameter_types)
 
     @parse_debug

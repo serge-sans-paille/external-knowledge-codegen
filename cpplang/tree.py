@@ -438,7 +438,7 @@ class FunctionNoProtoType(Type):
     attrs = ()
 
 class FunctionProtoType(Type):
-    attrs = ("return_type", "parameter_types",)
+    attrs = ("return_type", "parameter_types", "trailing_return")
 
 class LValueReferenceType(Type):
     attrs = ("type",)
