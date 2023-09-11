@@ -130,7 +130,7 @@ type = AutoType(auto_keyword keyword)
      | ElaboratedType(type type, identifier? qualifiers)
      | EnumType(identifier name)
      | FunctionNoProtoType
-     | FunctionProtoType(type return_type, type* parameter_types)
+     | FunctionProtoType(type return_type, type* parameter_types, constant? trailing_return)
      | IncompleteArrayType(type type)
      | LValueReferenceType(type type)
      | ParenType(type type)

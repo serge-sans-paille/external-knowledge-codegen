@@ -602,9 +602,14 @@ class SourceGenerator(ExplicitNodeVisitor):
             parameter_types = current_type.parameter_types or []
             argument_types = ', '.join(self.visit_type_helper("", ty)
                                        for ty in parameter_types)
-            return self.visit_type_helper(
-                    "{}({})".format(current_expr, argument_types),
-                    current_type.return_type)
+            if current_type.trailing_return:
+                trailing_type  = self.visit_type_helper("", current_type.return_type)
+                return "auto {} ({}) -> {}".format(current_expr, argument_types,
+                                                   trailing_type)
+            else:
+                return self.visit_type_helper(
+                        "{}({})".format(current_expr, argument_types),
+                        current_type.return_type)
         if isinstance(current_type, tree.ParenType):
             return self.visit_type_helper("({})".format(current_expr),
                                              current_type.type)
@@ -736,9 +741,15 @@ class SourceGenerator(ExplicitNodeVisitor):
         raise NotImplementedError("FunctionNoProtoType")
 
     def visit_FunctionProtoType(self, node: tree.FunctionProtoType):
-        self.write(node.return_type, "(")
-        self.comma_list(node.parameter_types)
-        self.write(")")
+        if node.trailing_return:
+            self.write("auto (")
+            self.comma_list(node.parameter_types)
+            self.write(") -> ")
+            self.write(node.return_type)
+        else:
+            self.write(node.return_type, "(")
+            self.comma_list(node.parameter_types)
+            self.write(")")
 
     def visit_ParenType(self, node: tree.ParenType):
         self.write("(", node.type, ")")

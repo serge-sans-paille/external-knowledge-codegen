@@ -13,3 +13,7 @@ auto lambda = [](auto y) { return y; };
 auto bar(int x) {
   return [&x](auto * z) { return *z + x; };
 }
+
+typedef auto foobar() -> int;
+
+using barfoo = auto () -> int;
