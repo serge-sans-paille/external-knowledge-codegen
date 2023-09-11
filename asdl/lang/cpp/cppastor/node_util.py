@@ -22,9 +22,11 @@ For a whole-tree approach, see the treewalk submodule.
 
 from cpplang.ast import Node
 import itertools
+import logging
 import sys
 
-ENABLE_DEBUG_SUPPORT = True
+logger = logging.getLogger(__name__)
+
 
 try:
     zip_longest = itertools.zip_longest
@@ -157,8 +159,7 @@ class ExplicitNodeVisitor(object):
         global ENABLE_DEBUG_SUPPORT
         method = 'visit_' + node.__class__.__name__
         visitor = getattr(self, method, abort)
-        if ENABLE_DEBUG_SUPPORT:
-            print(f"node_util.visit {method}", file=sys.stderr)
+        logger.debug(f"node_util.visit {method}")
         #self.stack.append(node.__class__.__name__)
         return visitor(node)
         #self.stack.pop()

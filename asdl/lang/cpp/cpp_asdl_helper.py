@@ -1,10 +1,11 @@
 # coding=utf-8
 
+import logging
 import sys
 
 from asdl.asdl_ast import RealizedField, AbstractSyntaxTree
 
-ENABLE_DEBUG_SUPPORT = True
+logger = logging.getLogger(__name__)
 
 # from https://stackoverflow.com/questions/15357422/python-determine-if-a-string-should-be-converted-into-int-or-float
 def isfloat(x):
@@ -27,23 +28,21 @@ def isint(x):
 
 
 def cpp_ast_to_asdl_ast(cpp_ast_node, grammar):
-    global ENABLE_DEBUG_SUPPORT
     # node should be composite
     cpp_node_name = type(cpp_ast_node).__name__
     # assert py_node_name.startswith('_ast.')
 
     production = grammar.get_prod_by_ctr_name(cpp_node_name)
-    # print(production, file=sys.stderr)
+    # logger.debug(production)
 
     fields = []
     for field in production.fields:
-        if ENABLE_DEBUG_SUPPORT:
-            print(f"cpp_ast_to_asdl_ast {cpp_node_name}, field: {field.name}")
+        logger.debug(f"cpp_ast_to_asdl_ast {cpp_node_name}, field: {field.name}")
         #try:
             #field_value = next(c for c in cpp_ast_node.get_children() if c.kind.name == field.name)
         #except StopIteration as e:
             #field_value = None
-        #print(f"cpp_ast_to_asdl_ast {cpp_node_name}, field_value: {field_value}")
+        #logger.debug(f"cpp_ast_to_asdl_ast {cpp_node_name}, field_value: {field_value}")
         field_value = getattr(cpp_ast_node, field.name)
         asdl_field = RealizedField(field)
         if field.cardinality == 'single' or field.cardinality == 'optional':
@@ -86,7 +85,7 @@ def asdl_ast_to_cpp_ast(asdl_ast_node, grammar):
         # for composite node
         field_value = None
         #if field.name == 'arguments':
-            #print(f'arguments {field.value} {field.cardinality}', file=sys.stderr)
+            #logger.debug(f'arguments {field.value} {field.cardinality}')
         if grammar.is_composite_type(field.type):
             if (field.value is not None) and (field.cardinality == 'multiple'):
                 field_value = []

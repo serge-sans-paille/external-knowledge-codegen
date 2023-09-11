@@ -4,6 +4,7 @@ import argparse
 import colorama
 import contextlib
 import json
+import logging
 import os
 import re
 import subprocess
@@ -14,6 +15,10 @@ import cppastor
 import cpplang
 from asdl.lang.cpp.cpp_transition_system import *
 from asdl.hypothesis import *
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+logging.root.setLevel(logging.INFO)
 
 
 @contextlib.contextmanager
@@ -63,7 +68,7 @@ def removeComments(string: str) -> str:
     return string
 
 
-def code_from_hyp(asdl_ast, debug=False):
+def code_from_hyp(asdl_ast):
     # get the sequence of gold-standard actions to construct the ASDL AST
     actions = parser.get_actions(asdl_ast)
     # a hypothesis is a(n) (partial) ASDL AST generated using a sequence of
@@ -74,10 +79,9 @@ def code_from_hyp(asdl_ast, debug=False):
         # types of the transition system
         valid_cont_types = parser.get_valid_continuation_types(hypothesis)
         if action.__class__ not in valid_cont_types:
-            print(f"Error: Valid continuation types are {valid_cont_types} "
+            logger.error(f"Error: Valid continuation types are {valid_cont_types} "
                   f"but current action class is {action.__class__} "
-                  f"on frontier {hypothesis.frontier_node} / {hypothesis.frontier_field}",
-                  file=sys.stderr)
+                  f"on frontier {hypothesis.frontier_node} / {hypothesis.frontier_field}")
             raise Exception(f"{action.__class__} is not in {valid_cont_types}")
 
         # if it's an ApplyRule action, the production rule should belong to the
@@ -93,10 +97,9 @@ def code_from_hyp(asdl_ast, debug=False):
                                 f"{bcolors.ENDC}")
             assert action.production in grammar[hypothesis.frontier_field.type]
 
-        if debug:
-            p_t = (hypothesis.frontier_node.created_time
-                   if hypothesis.frontier_node else -1)
-            print(f't={t}, p_t={p_t}, Action={action}', file=sys.stderr)
+        p_t = (hypothesis.frontier_node.created_time
+                if hypothesis.frontier_node else -1)
+        logger.debug(f't={t}, p_t={p_t}, Action={action}')
         hypothesis.apply_action(action)
     cpp_ast = asdl_ast_to_cpp_ast(hypothesis.tree, grammar)
     source = cppastor.to_source(cpp_ast)
@@ -144,32 +147,28 @@ def preprocess_code(cpp_code):
 
 def roundtrip(cpp_code: str = None, filepath: str = None,
               compile_command: Dict[str, str] = None,
-              check_hypothesis=False, fail_on_error=False, member=False, debug=False):
+              check_hypothesis=False, fail_on_error=False, member=False,
+              skip_checks=False):
 
     # get the (domain-specific) cpp AST of the example Cpp code snippet
-    # if debug:
-    #     print(f'Cpp code: \n{cpp_code}')
+    logger.debug(f'Cpp code: \n{cpp_code}')
     if member:
         cpp_ast = cpplang.parse.parse_member_declaration(
-            s=cpp_code, filepath=filepath, compile_command=compile_command,
-            debug=debug)
+            s=cpp_code, filepath=filepath, compile_command=compile_command)
     else:
         cpp_ast = cpplang.parse.parse(
-            s=cpp_code, filepath=filepath, compile_command=compile_command,
-            debug=debug)
+            s=cpp_code, filepath=filepath, compile_command=compile_command)
     # convert the cpp AST into general-purpose ASDL AST used by tranX
     asdl_ast = cpp_ast_to_asdl_ast(cpp_ast, grammar)
-    if debug:
-        print(f'String representation of the ASDL AST:')
-        print(f'{asdl_ast.to_string()}')
-        print(f'Size of the AST: {asdl_ast.size}')
+    logger.debug(f'String representation of the ASDL AST:')
+    logger.debug(f'{asdl_ast.to_string()}')
+    logger.debug(f'Size of the AST: {asdl_ast.size}')
 
     # we can also convert the ASDL AST back into Cpp AST
     cpp_ast_reconstructed = asdl_ast_to_cpp_ast(asdl_ast, grammar)
-    if debug:
-        print(f'String representation of the reconstructed CPP AST:')
-        print(f'{cpp_ast_reconstructed}')
-        #print(f'Size of the AST: {asdl_ast.size}')
+    logger.debug(f'String representation of the reconstructed CPP AST:')
+    logger.debug(f'{cpp_ast_reconstructed}')
+    #logger.debug(f'Size of the AST: {asdl_ast.size}')
 
     # get the surface code snippets from the original Python AST,
     # the reconstructed AST and the AST generated using actions
@@ -186,9 +185,12 @@ def roundtrip(cpp_code: str = None, filepath: str = None,
     simp1 = simplify(src1)
     src2 = removeComments(cppastor.to_source(cpp_ast_reconstructed))
     simp2 = simplify(src2)
+    if skip_checks:
+        return True
+
     if check_hypothesis:
         #try:
-        src3 = code_from_hyp(asdl_ast, debug)
+        src3 = code_from_hyp(asdl_ast)
         #except Exception as e:
             #print(f"{e}", file=sys.stderr)
             #return False
@@ -270,11 +272,11 @@ cpp_code = [
 
 def check_filepath(filepath: str,
                    check_hypothesis: bool = False,
+                   skip_checks: bool = False,
                    fail_on_error=False,
                    member=False,
                    number: int = 0,
-                   total: int = 0,
-                   debug: bool = False):
+                   total: int = 0):
     if (filepath.endswith(".cpp") or filepath.endswith(".cc") or filepath.endswith(".h")
             or filepath.endswith(".i") or filepath.endswith(".ii")
             or filepath.endswith(".hpp")):
@@ -285,9 +287,10 @@ def check_filepath(filepath: str,
         with open(filepath, "r") as f:
             try:
                 cpp = f.read()
-                if not roundtrip(cpp, filepath, check_hypothesis=check_hypothesis,
+                if not roundtrip(cpp, filepath,
+                                 check_hypothesis=check_hypothesis,
                                  fail_on_error=fail_on_error, member=member,
-                                 debug=debug):
+                                 skip_checks=skip_checks):
                     cprint(bcolors.RED,
                            f"**Warn**{bcolors.ENDC} Test failed for "
                            f"file: {bcolors.MAGENTA}{filepath}",
@@ -309,8 +312,8 @@ def check_filepath(filepath: str,
 
 def check_compile_commands_db(compile_commands: List[Dict[str, str]],
                               check_hypothesis: bool = False,
-                              fail_on_error=False,
-                              debug: bool = False):
+                              skip_checks: bool = False,
+                              fail_on_error=False):
     for number, compile_command in enumerate(compile_commands, start=1):
         cprint(bcolors.ENDC,
                f"\n−−−−−−−−−−\nTesting Cpp file {number:5d}/{len(compile_commands):5d} "
@@ -319,9 +322,9 @@ def check_compile_commands_db(compile_commands: List[Dict[str, str]],
         try:
             if not roundtrip(compile_command=compile_command,
                              check_hypothesis=check_hypothesis,
+                             skip_checks=skip_checks,
                              fail_on_error=fail_on_error,
-                             member=False,
-                             debug=debug):
+                             member=False):
                 cprint(bcolors.RED,
                        f"**Warn**{bcolors.ENDC} Test failed for "
                        f"file: {bcolors.MAGENTA}{compile_command}",
@@ -343,11 +346,11 @@ def check_compile_commands_db(compile_commands: List[Dict[str, str]],
 
 def stats(nb_ok: int, nb_ko: int, ignored: List[str]):
     if nb_ok == nb_ko == 0:
-        print(f"No tests, no stats")
+        logger.info(f"No tests, no stats")
         return None
     print(f"Success: {nb_ok}/{nb_ok+nb_ko} ({int(nb_ok*100.0/(nb_ok+nb_ko))}%)")
     if ignored:
-        print(f"Ignored: {', '.join(ignored)})")
+        logger.info(f"Ignored: {', '.join(ignored)})")
 
 
 def collect_files(dir: str) -> int:
@@ -359,7 +362,7 @@ def collect_files(dir: str) -> int:
     return res
 
 
-def load_exclusions(exclusions_file: str, debug: bool = False) -> List[str]:
+def load_exclusions(exclusions_file: str) -> List[str]:
     exclusions = []
     if exclusions_file:
         with open(exclusions_file, 'r') as ex:
@@ -367,17 +370,16 @@ def load_exclusions(exclusions_file: str, debug: bool = False) -> List[str]:
                 exclusion = exclusion.strip()
                 if exclusion and exclusion[0] != '#':
                     exclusions.append(exclusion)
-    if debug:
-        print(f"loaded exclusions are: {exclusions}", file=sys.stderr)
+    logger.info(f"loaded exclusions are: {exclusions}")
     return exclusions
 
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
 
-    arg_parser.add_argument('-D', '--debug', default=False,
-                            action='store_true',
-                            help='If set, print additional debug messages.')
+    # arg_parser.add_argument('-D', '--debug', default=False,
+    #                         action='store_true',
+    #                         help='If set, print additional debug messages.')
     arg_parser.add_argument('-c', '--check_hypothesis', default=False,
                             action='store_true',
                             help='If set, the hypothesis parse tree will be '
@@ -402,6 +404,9 @@ if __name__ == '__main__':
                             help='If set, consider the file content as the '
                                   'code of a member instead of a complete '
                                   'compilation unit.')
+    arg_parser.add_argument('-s', '--skip-checks', dest='skip_checks',default=False,
+                            action='store_true',
+                            help='If set, parse without any sanity checks.')
     arg_parser.add_argument('-x', '--exclude', action='append', default=[],
                             type=str,
                             help='Exclude the given file from being tested.')
@@ -414,8 +419,9 @@ if __name__ == '__main__':
 
     fail_on_error = args.fail_on_error
     check_hypothesis = args.check_hypothesis
+    skip_checks = args.skip_checks
     exclusions = args.exclude
-    exclusions.extend(load_exclusions(args.exclusions, debug=args.debug))
+    exclusions.extend(load_exclusions(args.exclusions))
     nb_ok = 0
     nb_ko = 0
     ignored = []
@@ -433,8 +439,7 @@ if __name__ == '__main__':
     else:
         files = collect_files(args.dir)
         files.remove(f"{args.dir}/exclusions.txt")
-    if args.debug:
-        print(files)
+    logger.debug(files)
 
     if files:
         filtered_files = [f for f in files if f not in exclusions]
@@ -443,11 +448,11 @@ if __name__ == '__main__':
         for test_num, filepath in enumerate(filtered_files, start=1):
             test_result = check_filepath(filepath,
                                          check_hypothesis=check_hypothesis,
+                                         skip_checks=skip_checks,
                                          fail_on_error=fail_on_error,
                                          member=args.member,
                                          number=test_num,
-                                         total=total,
-                                         debug=args.debug)
+                                         total=total)
             if test_result is not None:
                 if test_result:
                     nb_ok = nb_ok + 1
@@ -463,6 +468,6 @@ if __name__ == '__main__':
         with open(args.db) as json_file:
             compile_commands = json.load(json_file)
             check_compile_commands_db(compile_commands,
-                                      check_hypothesis,
-                                      fail_on_error,
-                                      debug=args.debug)
+                                      check_hypothesis=check_hypothesis,
+                                      skip_checks=skip_checks,
+                                      fail_on_error=fail_on_error)
