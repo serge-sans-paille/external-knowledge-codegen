@@ -417,6 +417,10 @@ if __name__ == '__main__':
                             help='Set the given file to be tested.')
     args = arg_parser.parse_args()
 
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.root.setLevel(logging.DEBUG)
+
     fail_on_error = args.fail_on_error
     check_hypothesis = args.check_hypothesis
     skip_checks = args.skip_checks
