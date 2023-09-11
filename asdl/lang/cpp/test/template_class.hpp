@@ -34,6 +34,11 @@ struct with_default_value;
 using d = decl<int>;
 using dv = decl_value<3>;
 
+// declare variables
+decl<float> dd_float;
+decl<decl<float>> dd_type;
+decl_value<8> dd8;
+
 // specialization
 template<>
 struct decl<int> {

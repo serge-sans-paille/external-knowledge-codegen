@@ -673,6 +673,17 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(current_type, tree.SubstTemplateTypeParmType):
             return self.visit_type_helper(current_expr, current_type.type)
 
+        if isinstance(current_type, tree.TemplateSpecializationType):
+            template_args = []
+            for ta in current_type.template_args or():
+                if ta.type:
+                    template_args.append(self.visit_type_helper("", ta.type))
+                else:
+                    template_args.append(ta.expr.value)
+            return "{}<{}> {}".format(current_type.name,
+                                      ", ".join(template_args),
+                                      current_expr)
+
         raise NotImplementedError(current_type)
 
     def visit_TypedefDecl(self, node: tree.TypedefDecl):
@@ -1188,6 +1199,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
         if getattr(node, 'inline', None):
             self.write("inline ")
+
+        if getattr(node, 'explicit', None):
+            self.write("explicit ")
 
         if getattr(node, 'virtual', None):
             self.write(node.virtual, " ")

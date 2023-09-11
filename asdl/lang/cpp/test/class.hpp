@@ -50,6 +50,10 @@ class with_copy_ctor {
   with_copy_ctor(const with_copy_ctor &);
 };
 
+class with_explicit_ctor {
+  explicit with_explicit_ctor(int);
+};
+
 class with_move_ctor {
   with_move_ctor(with_move_ctor &&);
 };

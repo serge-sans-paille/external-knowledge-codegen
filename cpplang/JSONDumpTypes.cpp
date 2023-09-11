@@ -234,6 +234,30 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Inner.push_back(fullType(Ctx, SubstTemplateTypeParmTy->getReplacementType()));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
+  else if(auto* TemplateSpecializationTy = dyn_cast<TemplateSpecializationType>(Ty)) {
+    Ret["name"] = TemplateSpecializationTy->getTemplateName().getAsTemplateDecl()->getName();
+    llvm::json::Array Inner;
+    for(auto& TA : TemplateSpecializationTy->template_arguments()) {
+      switch(TA.getKind()) {
+        case TemplateArgument::ArgKind::Type:
+          Inner.push_back(fullType(Ctx, TA.getAsType()));
+          break;
+        case TemplateArgument::ArgKind::Expression: {
+            llvm::json::Object InnerExpr;
+            std::string pretty_buffer;
+            llvm::raw_string_ostream pretty_stream(pretty_buffer);
+            TA.getAsExpr()->printPretty(pretty_stream, nullptr, PrintingPolicy(Ctx.getLangOpts()));
+            InnerExpr["kind"] = "DumpedExpr"; // expression dumped as a string
+            InnerExpr["value"] = pretty_buffer;
+            Inner.push_back(std::move(InnerExpr));
+          } break;
+        default:
+          TA.dump();
+          assert(false && "unsupported template argument kind");
+      }
+    }
+    Ret["inner"] = llvm::json::Value(std::move(Inner));
+  }
   else {
     Ty->dump();
     assert(false && "unsupported type");
@@ -535,15 +559,18 @@ public:
 
   void Visit(const Decl *D) {
     if(!D) return;
-    if(const auto * VD = dyn_cast<ValueDecl>(D)) {
+    if (const auto *VD = dyn_cast<ValueDecl>(D)) {
       JOS.attribute("node_id", createPointerRepresentation(D));
-        JOS.attributeBegin("node_inner");
-        JOS.arrayBegin();
+      JOS.attributeBegin("node_inner");
+      JOS.arrayBegin();
       JOS.objectBegin();
       Visit(VD->getType());
       JOS.objectEnd();
-        JOS.arrayEnd();
-        JOS.attributeEnd();
+      JOS.arrayEnd();
+      if (const auto *CD = dyn_cast<CXXConstructorDecl>(D)) {
+        JOS.attribute("isExplicit", CD->isExplicit());
+      }
+      JOS.attributeEnd();
     }
     InnerDeclVisitor::Visit(D);
   }

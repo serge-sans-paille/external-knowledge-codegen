@@ -323,7 +323,8 @@ class RecordDecl(TypeDeclaration):
 
 
 class CXXConstructorDecl(Declaration):
-    attrs = ("name", "exception", "defaulted", "body", "attributes", "parameters", "initializers",)
+    attrs = ("name", "exception", "defaulted", "body", "attributes", "parameters", "initializers",
+             "explicit",)
 
 
 class CXXCtorInitializer(Node):
@@ -856,6 +857,13 @@ class OffsetOfExpr(Expression):
 class VAArgExpr(Expression):
     attrs = ("expr", "type",)
 
+
+class DumpedExpr(Expression):
+    attrs = ("value",)
+
+
+class SubstNonTypeTemplateParmExpr(Expression):
+    attrs = ("decl", "expr",)
 
 class OffsetOfField(Node):
     attrs = ("name",)

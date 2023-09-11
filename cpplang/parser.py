@@ -134,6 +134,7 @@ class Parser(object):
         Depending on which one, a different init function is called
         """
         self.type_informations = {}
+        self.decl_informations = {}
         self.expr_informations = {}
         self.asm_informations = {}
         self.template_instances = {}
@@ -507,6 +508,11 @@ class Parser(object):
             if 'node_inner' in child:
                 inner_child, = child['node_inner']
                 self.type_informations[child['node_id']] = inner_child
+
+            if 'isExplicit' in child:
+                decl_info = self.decl_informations.setdefault(child['node_id'], {})
+                decl_info["isExplicit"] = child['isExplicit']
+
             if 'inner' in child:
                 self.parse_type_summary(child['inner'])
             if 'expr_inner' in child:
@@ -683,12 +689,16 @@ class Parser(object):
 
         assert not method_attrs
 
-        noexcept = None
+        if self.decl_informations.get(node['id'], {}).get('isExplicit'):
+            explicit = 'explicit'
+        else:
+            explicit = None
 
         defaulted = self.parse_default(node)
 
         return tree.CXXConstructorDecl(name=name, exception=exception,
                                        attributes=attrs,
+                                       explicit=explicit,
                                        defaulted=defaulted, body=body,
                                        parameters=args, initializers=inits)
 
@@ -2238,13 +2248,40 @@ class Parser(object):
     def parse_TemplateSpecializationType(self, node) -> tree.TemplateSpecializationType:
         assert node['kind'] == "TemplateSpecializationType"
         inner_nodes = self.parse_subnodes(node)
-        template_args = [
-                inner_node for inner_node in inner_nodes
-                if isinstance(inner_node, tree.TemplateArgument)
-        ]
-        return tree.TemplateSpecializationType(name=node['templateName'],
+        if 'templateName' in node:
+            template_args = [
+                    inner_node for inner_node in inner_nodes
+                    if isinstance(inner_node, tree.TemplateArgument)
+            ]
+            name = node['templateName']
+        elif 'name' in node:
+            name = node['name']
+            template_args = []
+            for inner_node in inner_nodes:
+                if isinstance(inner_node, tree.Type):
+                    ta = tree.TemplateArgument(type=inner_node, expr=None)
+                elif isinstance(inner_node, tree.Expression):
+                    ta = tree.TemplateArgument(type=None, expr=inner_node)
+                else:
+                    raise NotImplementedError
+                template_args.append(ta)
+        else:
+            raise NotImplementedError
+        return tree.TemplateSpecializationType(name=name,
                                                template_args=template_args)
 
+
+    @parse_debug
+    def parse_DumpedExpr(self, node) -> tree.DumpedExpr:
+        # FIXME: this node shoudln't exist
+        assert node['kind'] == "DumpedExpr"
+        return tree.DumpedExpr(value=node["value"])
+
+    @parse_debug
+    def parse_SubstNonTypeTemplateParmExpr(self, node) -> tree.SubstNonTypeTemplateParmExpr:
+        assert node['kind'] == "SubstNonTypeTemplateParmExpr"
+        decl, expr = self.parse_subnodes(node)
+        return tree.SubstNonTypeTemplateParmExpr(decl=decl, expr=expr)
 
     @parse_debug
     def parse_TypeOfExprType(self, node) -> tree.TypeOfExprType:
