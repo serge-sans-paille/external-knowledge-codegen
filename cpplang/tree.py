@@ -413,6 +413,12 @@ class BuiltinType(Type):
 class ConstantArrayType(Type):
     attrs = ("type", "size", )
 
+class DependentSizedArrayType(Type):
+    attrs = ("type", "size_repr", )
+
+class VariableArrayType(Type):
+    attrs = ("type", "size_repr",)
+
 class DecayedType(Type):
     attrs = ("type",)
 
