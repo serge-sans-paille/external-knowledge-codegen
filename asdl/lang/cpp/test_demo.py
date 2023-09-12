@@ -19,6 +19,7 @@ def test_test_dir():
 
     fail_on_error = False
     check_hypothesis = True
+    skip_checks = False
     exclusions = []
     # exclusions.extend(load_exclusions(args.exclusions, debug=True))
     nb_ok = 0
@@ -37,9 +38,9 @@ def test_test_dir():
         if filepath not in exclusions:
             test_result = check_filepath(filepath,
                                         check_hypothesis=check_hypothesis,
+                                        skip_checks=skip_checks,
                                         fail_on_error=fail_on_error,
                                         member=False,
                                         number=test_num,
-                                        total=total,
-                                        debug=True)
+                                        total=total)
             assert(test_result is not None and test_result)
