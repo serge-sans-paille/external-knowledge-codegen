@@ -377,9 +377,9 @@ def load_exclusions(exclusions_file: str) -> List[str]:
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
 
-    # arg_parser.add_argument('-D', '--debug', default=False,
-    #                         action='store_true',
-    #                         help='If set, print additional debug messages.')
+    arg_parser.add_argument('-D', '--debug', default=False,
+                            action='store_true',
+                            help='If set, print additional debug messages.')
     arg_parser.add_argument('-c', '--check_hypothesis', default=False,
                             action='store_true',
                             help='If set, the hypothesis parse tree will be '
