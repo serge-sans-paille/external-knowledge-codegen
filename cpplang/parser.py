@@ -1113,7 +1113,6 @@ class Parser(object):
         else:
             expr, = self.parse_subnodes(node)
             type_ = None
-        print(expr, type_)
         return tree.CXXTypeidExpr(expr=expr, type=type_)
 
     def parse_MemberExpr(self, node) -> tree.MemberExpr:
