@@ -713,6 +713,12 @@ class SourceGenerator(ExplicitNodeVisitor):
         expr = self.visit_type_helper(node.name, node.type)
         self.write("typedef ", expr, ";")
 
+    def visit_DecltypeType(self, node: tree.DecltypeType):
+        self.write("decltype(", node.repr, ")")
+
+    def visit_TypeOfExprType(self, node: tree.TypeOfExprType):
+        self.write("__typeof__(", node.repr, ")")
+
     def visit_TypeAliasDecl(self, node: tree.TypeAliasDecl):
         self.write("using ", node.name, " = ", node.type, ";")
 
@@ -876,7 +882,8 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("](")
         self.comma_list(node.parameters)
         self.write(")")
-        # TODO: trailing return type
+        if node.trailing_type:
+            self.write(" -> ", node.trailing_type)
         self.write(node.body)
 
 
@@ -1238,7 +1245,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         if getattr(node, 'virtual', None):
             self.write(node.virtual, " ")
 
-        if getattr(node, 'return_type', None):
+        trailing_return = getattr(node, 'trailing_return', None)
+        if trailing_return:
+            self.write("auto ")
+        elif getattr(node, 'return_type', None):
             self.write(node.return_type, " ")
 
         self.write(node.name)
@@ -1265,6 +1275,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
         if getattr(node, 'method_attributes', None):
             self.space_list(node.method_attributes, trailing=True)
+
+        if trailing_return:
+            self.write(" -> ", node.return_type)
 
         if getattr(node, 'initializers', None):
             self.write(" : ")
