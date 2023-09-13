@@ -72,3 +72,15 @@ struct foo<T, decl<P>> {
   template<typename S>
   P doit(S);
 };
+
+template<typename Tp>
+struct some_type
+{
+};
+
+template<typename Tp>
+struct some_type<volatile Tp>
+{
+};
+
+

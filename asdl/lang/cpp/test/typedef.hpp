@@ -26,3 +26,25 @@ simple user;
 
 typedef long long my_int64;
 typedef my_int64 my_int64;
+
+template<class T>
+struct bar {
+  typedef T type;
+};
+
+template<class T, int N>
+struct babar {
+  typedef T type[N];
+};
+
+template<class T>
+struct outer {
+  template<class P>
+  struct inner {
+    typedef T type_outer;
+    typedef P type_inner;
+    T outer_decl;
+    P inner_decl;
+    void foo(T, P);
+  };
+};

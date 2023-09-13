@@ -161,7 +161,10 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
   else if(auto* TemplateTypeParmTy = dyn_cast<TemplateTypeParmType>(Ty)) {
-    Ret["name"] = TemplateTypeParmTy->getIdentifier()->getName();
+    if(auto * Identifier = TemplateTypeParmTy->getIdentifier())
+      Ret["name"] = Identifier->getName();
+    Ret["depth"] = TemplateTypeParmTy->getDepth();
+    Ret["index"] = TemplateTypeParmTy->getIndex();
   }
   else if(auto * ParenTy = dyn_cast<ParenType>(Ty)) {
     llvm::json::Array Inner;

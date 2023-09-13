@@ -2338,11 +2338,15 @@ class Parser(object):
         assert node['kind'] == "TemplateTypeParmType"
         name = node.get('name')
         if name is None:
-            index = node.get('index')
-            assert index is not None
-            for parent in reversed(self.stack):
-                if parent['kind'] == 'ClassTemplatePartialSpecializationDecl':
-                    break
+            index = node['index']
+            depth = node['depth']
+            for parent in self.stack:
+                if parent['kind'] in ('ClassTemplateDecl',
+                                      'ClassTemplatePartialSpecializationDecl'):
+                    if depth != 0:
+                        depth -= 1
+                    else:
+                        break
             else:
                 raise NotImplementedError
             parent_inner = parent['inner']
