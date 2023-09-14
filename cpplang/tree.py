@@ -407,6 +407,9 @@ class Type(Node):
 class AutoType(Type):
     attrs = ("keyword",)
 
+class BitIntType(Type):
+    attrs = ("size", "sign",)
+
 class BuiltinType(Type):
     attrs = ("name",)
 

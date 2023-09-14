@@ -1314,6 +1314,19 @@ class Parser(object):
         return tree.AutoType(keyword=keyword)
 
     @parse_debug
+    def parse_BitIntType(self, node) -> tree.BitIntType:
+        assert node['kind'] == "BitIntType"
+        if 'size' in node:
+            size = str(node['size'])
+            sign = node['sign']
+        else:
+            qual_type = node['type']['qualType']
+            match = re.match('^((?:(?:un)signed)?) ?_BitInt\(([0-9]+)\)$', qual_type)
+            sign, size = match.groups()
+
+        return tree.BitIntType(size=size, sign=sign)
+
+    @parse_debug
     def parse_QualType(self, node) -> tree.QualType:
         assert node['kind'] == "QualType"
         type_, = self.parse_subnodes(node)

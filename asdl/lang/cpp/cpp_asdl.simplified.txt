@@ -125,6 +125,7 @@ cxx_ctor_initializer = CXXCtorInitializer(identifier name, expression* args)
 
 
 type = AutoType(auto_keyword keyword)
+     | BitIntType(constant size, constant sign)
      | BuiltinType(identifier name)
      | ComplexType(type type)
      | ConstantArrayType(type type, constant size)
