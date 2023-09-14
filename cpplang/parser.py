@@ -1053,10 +1053,25 @@ class Parser(object):
         child, = self.parse_subnodes(node)
         return tree.DefaultStmt(stmt=self.as_statement(child))
 
+    def parse_SizeOfPackExpr(self, node) -> tree.SizeOfPackExpr:
+        assert node['kind'] == 'SizeOfPackExpr'
+        name = node['name']
+        return tree.SizeOfPackExpr(name=name)
+
+    def parse_UnresolvedLookupExpr(self, node) -> tree.UnresolvedLookupExpr:
+        assert node['kind'] == 'UnresolvedLookupExpr'
+        name = node['name']
+        return tree.UnresolvedLookupExpr(name=name)
+
     def parse_AddrLabelExpr(self, node) -> tree.AddrLabelExpr:
         assert node['kind'] == 'AddrLabelExpr'
         name = node['name']
         return tree.AddrLabelExpr(name=name)
+
+    def parse_PackExpansionExpr(self, node) -> tree.PackExpansionExpr:
+        assert node['kind'] == 'PackExpansionExpr'
+        expr, = self.parse_subnodes(node)
+        return tree.PackExpansionExpr(expr=expr)
 
     def parse_VAArgExpr(self, node) -> tree.VAArgExpr:
         assert node['kind'] == 'VAArgExpr'
@@ -1986,7 +2001,9 @@ class Parser(object):
             default, = inner_nodes
         else:
             default = None
-        return tree.TemplateTypeParmDecl(name=name, tag=tag, default=default)
+        parameter_pack = node.get("isParameterPack") and "pack"
+        return tree.TemplateTypeParmDecl(name=name, tag=tag, default=default,
+                                         parameter_pack=parameter_pack)
 
     @parse_debug
     def parse_NonTypeTemplateParmDecl(self, node) -> tree.NonTypeTemplateParmDecl:
@@ -1998,8 +2015,10 @@ class Parser(object):
             default, = inner_nodes
         else:
             default = None
+        parameter_pack = node.get("isParameterPack") and "pack"
         return tree.NonTypeTemplateParmDecl(name=name, type=type_,
-                                            default=default)
+                                            default=default,
+                                            parameter_pack=parameter_pack)
 
     @parse_debug
     def parse_FullComment(self, node) -> tree.FullComment:

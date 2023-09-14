@@ -541,6 +541,15 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_AddrLabelExpr(self, node: tree.AddrLabelExpr):
         self.write("&&", node.name)
 
+    def visit_UnresolvedLookupExpr(self, node: tree.UnresolvedLookupExpr):
+        self.write(node.name)
+
+    def visit_SizeOfPackExpr(self, node: tree.SizeOfPackExpr):
+        self.write("sizeof...(", node.name, ")")
+
+    def visit_PackExpansionExpr(self, node: tree.PackExpansionExpr):
+        self.write("", node.expr, "...")
+
     def visit_ConstrainedExpression(self, node: tree.ConstrainedExpression):
         self.write('"', node.constraint, '"', "(", node.expr, ")")
 
@@ -1063,12 +1072,12 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("typename")
 
     def visit_TemplateTypeParmDecl(self, node: tree.TemplateTypeParmDecl):
-        self.write(node.tag, " ", node.name)
+        self.write(node.tag, "... " if node.parameter_pack else " ", node.name)
         if node.default:
             self.write("=", node.default)
 
     def visit_NonTypeTemplateParmDecl(self, node: tree.NonTypeTemplateParmDecl):
-        self.write(node.type, " ", node.name)
+        self.write(node.type, "... " if node.parameter_pack else " ", node.name)
         if node.default:
             self.write("=", node.default)
 

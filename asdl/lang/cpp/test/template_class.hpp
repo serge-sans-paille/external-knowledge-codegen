@@ -83,4 +83,6 @@ struct some_type<volatile Tp>
 {
 };
 
-
+// Parameter pack
+template<class... T> struct parameter_pack;
+template<int... I> struct iparameter_pack;
