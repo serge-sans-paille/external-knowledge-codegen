@@ -923,6 +923,11 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.cond, "?", node.true_expr, ":",
                    node.false_expr)
 
+    def visit_ChooseExpr(self, node: tree.ChooseExpr):
+        self.write("__builtin_choose_expr(", node.cond, ", ",
+                   node.true_expr, ", ",
+                   node.false_expr, ")")
+
     def visit_ArraySubscriptExpr(self, node: tree.ArraySubscriptExpr):
         self.write(node.base, "[", node.index, "]")
 
@@ -1103,6 +1108,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_CXXFunctionalCastExpr(self, node: tree.CXXFunctionalCastExpr):
         self.write(node.type, "(", node.expr, ")")
+
+    def visit_BuiltinBitCastExpr(self, node: tree.BuiltinBitCastExpr):
+        self.write("__builtin_bit_cast(", node.type, ", ", node.expr, ")")
 
     def visit_CXXStaticCastExpr(self, node: tree.CXXStaticCastExpr):
         self.write("static_cast<", node.type, ">(", node.expr, ")")
