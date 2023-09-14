@@ -49,3 +49,7 @@ namespace A
         class translation_unit_X{};
     }
 }
+
+// Inline namespaces from c++11
+inline namespace D {
+}

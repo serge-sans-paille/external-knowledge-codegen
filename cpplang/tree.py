@@ -419,6 +419,9 @@ class DependentSizedArrayType(Type):
 class VariableArrayType(Type):
     attrs = ("type", "size_repr",)
 
+class DependentNameType(Type):
+    attrs = ("nested", "attr",)
+
 class DecayedType(Type):
     attrs = ("type",)
 
@@ -746,7 +749,7 @@ class ReturnStmt(Statement):
 
 
 class NamespaceDecl(Declaration):
-    attrs = ("name", "decls",)
+    attrs = ("name", "inline", "decls",)
 
 
 class UsingDirectiveDecl(Declaration):

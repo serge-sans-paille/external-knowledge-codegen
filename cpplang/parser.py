@@ -508,6 +508,8 @@ class Parser(object):
             if 'node_inner' in child:
                 inner_child, = child['node_inner']
                 self.type_informations[child['node_id']] = inner_child
+            elif 'node_id' in child:
+                self.type_informations[child['node_id']] = child
 
             if 'isExplicit' in child:
                 decl_info = self.decl_informations.setdefault(child['node_id'], {})
@@ -515,6 +517,7 @@ class Parser(object):
 
             if 'inner' in child:
                 self.parse_type_summary(child['inner'])
+
             if 'expr_inner' in child:
                 assert 'node_inner' not in child
                 self.stack.append(child)
@@ -1228,8 +1231,9 @@ class Parser(object):
     def parse_NamespaceDecl(self, node) -> tree.NamespaceDecl:
         assert node['kind'] == "NamespaceDecl"
         name = node.get('name') # Namespaces can be anonymous (no name given), in which case name is null
+        inline = node.get('isInline') and "inline"
         decls = self.parse_subnodes(node)
-        return tree.NamespaceDecl(name=name, decls=decls)
+        return tree.NamespaceDecl(name=name, inline=inline, decls=decls)
 
     #@parse_debug
     #def parse_Namespace(self, node) -> tree.Namespace:
@@ -2332,6 +2336,18 @@ class Parser(object):
         assert node['kind'] == "LValueReferenceType"
         type_, = self.parse_subnodes(node)
         return tree.LValueReferenceType(type=type_)
+
+    @parse_debug
+    def parse_DependentNameType(self, node) -> tree.DependentNameType:
+        assert node['kind'] == "DependentNameType"
+        if 'id' in node:
+            type_info = self.type_informations[node['id']]
+        else:
+            type_info = node
+
+        attr = type_info["attribute_name"]
+        nested = type_info["nested_name"]
+        return tree.DependentNameType(nested=nested, attr=attr)
 
     @parse_debug
     def parse_TemplateTypeParmType(self, node) -> tree.TemplateTypeParmType:
