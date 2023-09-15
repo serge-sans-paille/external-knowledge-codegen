@@ -1075,7 +1075,10 @@ class CXXFunctionalCastExpr(Expression):
 
 
 class CXXStaticCastExpr(Expression):
-    attrs = ("type", "expr",)
+    attrs = ("type", "expr", "value_category")
+
+class CXXConstCastExpr(Expression):
+    attrs = ("type", "expr", "value_category")
 
 
 class CXXReinterpretCastExpr(Expression):
