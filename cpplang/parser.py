@@ -1179,7 +1179,11 @@ class Parser(object):
             raise ValueError("expecting at least a call operator for a lambda")
 
         call_method = self.parse_node(cxx_method)
-        parameters = call_method.parameters
+
+        if isinstance(call_method, tree.FunctionTemplateDecl):
+            parameters = call_method.decl.parameters
+        else:
+            parameters = call_method.parameters
 
         inner_nodes = self.parse_subnodes(node)
         capture_exprs = []
@@ -2353,6 +2357,7 @@ class Parser(object):
     def parse_TemplateTypeParmType(self, node) -> tree.TemplateTypeParmType:
         assert node['kind'] == "TemplateTypeParmType"
         name = node.get('name')
+
         if name is None:
             index = node['index']
             depth = node['depth']
@@ -2371,6 +2376,10 @@ class Parser(object):
                     if n['kind'] == 'TemplateTypeParmDecl'
             ]
             name = parent_template_params[index]['name']
+        # This happens for lambda becuase they are represented as templated function
+        elif name.endswith(":auto"):
+            return tree.AutoType(keyword=tree.Auto())
+
         return tree.TemplateTypeParmType(name=name)
 
     @parse_debug

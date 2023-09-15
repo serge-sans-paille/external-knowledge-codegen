@@ -701,6 +701,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
         raise NotImplementedError(current_type)
 
+    def visit_AutoType(self, node: tree.AutoType):
+        self.write("auto")
+
     def visit_TypedefDecl(self, node: tree.TypedefDecl):
         expr = self.visit_type_helper(node.name, node.type)
         self.write("typedef ", expr, ";")
