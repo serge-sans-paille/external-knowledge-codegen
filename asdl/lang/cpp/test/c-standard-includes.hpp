@@ -8,7 +8,7 @@
 #include <ciso646>
 #include <climits>
 #include <clocale>
-//#include <cmath>  // uses template
+#include <cmath>  // uses template
 #include <csetjmp>
 #include <csignal>
 #include <cstdarg>

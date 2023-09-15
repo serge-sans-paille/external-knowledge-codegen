@@ -590,7 +590,7 @@ class FunctionTemplateDecl(Declaration):
 
 
 class TemplateArgument(Node):
-    attrs = ("type", "expr",)
+    attrs = ("type", "expr", "pack",)
 
 
 class TemplateTypeParmDecl(Declaration):

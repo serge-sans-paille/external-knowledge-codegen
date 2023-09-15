@@ -1986,15 +1986,19 @@ class Parser(object):
             intty = tree.BuiltinType(name='int')
             intval = str(node['value'])
             value = tree.IntegerLiteral(type=intty, value=intval)
-        elif inner_nodes:
+        elif len(inner_nodes) == 1:
             value, = inner_nodes
+        elif len(inner_nodes) > 1:
+            value = inner_nodes
         else:
             raise NotImplementedError
 
         if isinstance(value, tree.Type):
-            return tree.TemplateArgument(type=value, expr=None)
+            return tree.TemplateArgument(type=value, expr=None, pack=None)
         elif isinstance(value, tree.Expression):
-            return tree.TemplateArgument(type=None, expr=value)
+            return tree.TemplateArgument(type=None, expr=value, pack=None)
+        elif isinstance(value, list):
+            return tree.TemplateArgument(type=None, expr=None, pack=value)
         else:
             raise NotImplementedError
 

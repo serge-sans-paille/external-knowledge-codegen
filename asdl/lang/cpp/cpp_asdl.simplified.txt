@@ -31,7 +31,7 @@ template_parameter = TemplateTypeParmDecl(identifier name, template_tag tag, tem
 
 template_tag = ClassTag | TypenameTag
 
-template_argument = TemplateArgument(type? type, expression? expr)
+template_argument = TemplateArgument(type? type, expression? expr, type* pack)
 
 statement = AttributedStmt(statement stmt, attribute* attributes)
           | BreakStmt
