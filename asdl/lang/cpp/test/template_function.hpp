@@ -37,3 +37,8 @@ void bar() {
 
 
 // specialization
+
+// parameter pack
+template <typename... Ts> void packs(Ts... a) {
+}
+

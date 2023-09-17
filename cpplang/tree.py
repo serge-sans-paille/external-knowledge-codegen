@@ -455,6 +455,9 @@ class IncompleteArrayType(Type):
 class ParenType(Type):
     attrs = ("type",)
 
+class PackExpansionType(Type):
+    attrs = ("type",)
+
 class PointerType(Type):
     attrs = ("type",)
 
