@@ -26,7 +26,8 @@ template <typename... Ts> void test(Ts... a) {
   int b; int c;
   []() {};
   [](int a, ...) {};
-//  [a...] {};
+  [a...] {};
+  [a...,b] {};
 //  [=] {};
 //  [=] { return b; };
 //  [&] {};

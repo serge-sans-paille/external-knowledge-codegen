@@ -1197,6 +1197,13 @@ class Parser(object):
         float_, = self.parse_subnodes(node)
         return tree.ImaginaryLiteral(type=type_, value=float_.value)
 
+    def is_parameter_pack(self, expr, expr_node):
+        decl = expr_node.get("referencedDecl")
+        if decl is None:
+            return False
+        type_info = self.type_informations[decl["id"]]
+        return type_info["kind"] == 'PackExpansionType'
+
     @parse_debug
     def parse_LambdaExpr(self, node) -> tree.LambdaExpr:
         assert node['kind'] == "LambdaExpr"
@@ -1222,11 +1229,18 @@ class Parser(object):
             trailing_type = extract_trailing_type(call_method)
             variadic = call_method.variadic
 
-        inner_nodes = self.parse_subnodes(node)
+        inner_nodes = self.parse_subnodes(node, keep_empty=True)
         capture_exprs = []
         body = None
-        for inner_node in inner_nodes:
-            if isinstance(inner_node, tree.Expression):
+        for inner_node, subnode in zip(inner_nodes, node["inner"]):
+            if not inner_node:
+                continue
+            if isinstance(inner_node, tree.ParenListExpr):
+                for expr, expr_node in zip(inner_node.exprs, subnode["inner"]):
+                    if self.is_parameter_pack(expr, expr_node):
+                        expr = tree.PackExpansionExpr(expr=expr)
+                    capture_exprs.append(expr)
+            elif isinstance(inner_node, tree.Expression):
                 capture_exprs.append(inner_node)
             elif isinstance(inner_node, tree.Statement):
                 assert not body

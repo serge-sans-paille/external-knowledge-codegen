@@ -918,7 +918,10 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write("...")
         self.write(")")
         if node.trailing_type:
-            self.write(" -> ", node.trailing_type)
+            if isinstance(node.trailing_type, tree.AutoType):
+                pass  # that's a decent default
+            else:
+                self.write(" -> ", node.trailing_type)
         self.write(node.body)
 
 
