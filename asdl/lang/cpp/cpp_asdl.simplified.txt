@@ -75,7 +75,8 @@ expression = AddrLabelExpr(identifier name)
            | CXXNullPtrLiteralExpr
            | CXXOperatorCallExpr(expression left, expression op, expression right)
            | CXXReinterpretCastExpr(type type, expression expr)
-           | CXXStaticCastExpr(type type, expression expr)
+           | CXXStaticCastExpr(type type, expression expr, constant value_category)
+           | CXXConstCastExpr(type type, expression expr, constant value_category)
            | CXXStdInitializerListExpr(expression* subnodes)
            | CXXTemporaryObjectExpr(type type, expression* args)
            | CXXThisExpr

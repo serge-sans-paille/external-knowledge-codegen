@@ -2049,7 +2049,16 @@ class Parser(object):
         assert node['kind'] == "CXXStaticCastExpr"
         type_ = self.parse_node(self.type_informations[node['id']])
         expr, = self.parse_subnodes(node)
-        return tree.CXXStaticCastExpr(type=type_, expr=expr)
+        value_category = node['valueCategory']
+        return tree.CXXStaticCastExpr(type=type_, expr=expr, value_category=value_category)
+
+    @parse_debug
+    def parse_CXXConstCastExpr(self, node) -> tree.CXXConstCastExpr:
+        assert node['kind'] == "CXXConstCastExpr"
+        type_ = self.parse_node(self.type_informations[node['id']])
+        expr, = self.parse_subnodes(node)
+        value_category = node['valueCategory']
+        return tree.CXXConstCastExpr(type=type_, expr=expr, value_category=value_category)
 
     @parse_debug
     def parse_CXXReinterpretCastExpr(self, node) -> tree.CXXReinterpretCastExpr:

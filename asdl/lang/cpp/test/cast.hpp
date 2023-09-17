@@ -13,9 +13,33 @@ void foo() {
 
 void bar() {
   int(1);
+
+  // value static_cast
+  int a;
   static_cast<float>(1);
+  static_cast<float>(a);
+
+  // pointer/inheritance static_cast
+  struct U{};
+  struct V : U{};
+  V v;
+  U* ptr_u = static_cast<U*>(&v);
+  V* ptr_v = static_cast<V*>(ptr_u);
+  U& ref_u = static_cast<U&>(v);
+  V& ref_v = static_cast<V&>(ref_u);
+
+  // reinterpret_cast
   unsigned long i;
   reinterpret_cast<long *>(&i);
+  int buffer[10];
+  reinterpret_cast<char*>(&buffer);
+
+  // const_cast reference or pointer
+  int x = 0;
+  const int& x_const = const_cast<const int&>(x);
+  int& x_not_const = const_cast<int&>(x_const);
+  const int* ptr_x_const = const_cast<const int*>(&x);
+  int* ptr_x = const_cast<int*>(ptr_x_const);
 }
 
 
