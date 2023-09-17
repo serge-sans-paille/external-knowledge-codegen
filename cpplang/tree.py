@@ -438,7 +438,7 @@ class FunctionNoProtoType(Type):
     attrs = ()
 
 class FunctionProtoType(Type):
-    attrs = ("return_type", "parameter_types",)
+    attrs = ("return_type", "parameter_types", "trailing_return")
 
 class LValueReferenceType(Type):
     attrs = ("type",)
@@ -549,14 +549,14 @@ class Member(NonEmptyDeclaration):
 
 class CXXMethodDecl(Declaration):
     attrs = ("name", "return_type", "storage", "variadic", "inline",
-             "exception",
+             "trailing_return", "exception",
              "virtual", "const", "defaulted", "method_attributes", "ref_qualifier",
              "body", "attributes", "parameters",)
 
 
 class FunctionDecl(Declaration):
     attrs = ("name", "return_type", "storage", "variadic", "inline",
-             "exception",
+             "trailing_return", "exception",
              "body", "attributes", "parameters")
 
 class Throw(Node):
@@ -892,7 +892,7 @@ class UserDefinedLiteral(Expression):
 
 
 class LambdaExpr(Expression):
-    attrs = ("parameters", "capture_exprs", "body",)
+    attrs = ("parameters", "capture_exprs", "trailing_type", "body",)
 
 
 class ReferenceTypeExpression(Expression):

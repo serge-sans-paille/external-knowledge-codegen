@@ -775,6 +775,7 @@ class Parser(object):
         variadic = "..." if node['type']['qualType'].endswith('...)') else None
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
+        trailing_return = type_info.get("trailingReturn") and "trailing-return"
 
         const = type_info.get('isconst')
         if const:
@@ -796,6 +797,7 @@ class Parser(object):
                                   variadic=variadic, parameters=args,
                                   inline=inline, storage=storage,
                                   virtual=virtual,
+                                  trailing_return=trailing_return,
                                   body=body, exception=exception,
                                   attributes=attrs,
                                   # method specific keywords
@@ -813,12 +815,14 @@ class Parser(object):
         variadic = "..." if node['type']['qualType'].endswith('...)') else None
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
+        trailing_return = type_info.get("trailingReturn") and "trailing-return"
 
         body, args, inits, method_attrs, attrs, exception = self.parse_function_inner(node)
         assert not inits
         assert not method_attrs
 
         return tree.FunctionDecl(name=name, return_type=return_type,
+                                 trailing_return=trailing_return,
                                  attributes=attrs,
                                  variadic=variadic, parameters=args,
                                  inline=inline, storage=storage,
@@ -1180,10 +1184,15 @@ class Parser(object):
 
         call_method = self.parse_node(cxx_method)
 
+
+        extract_trailing_type = lambda d: d.trailing_return and d.return_type
+
         if isinstance(call_method, tree.FunctionTemplateDecl):
             parameters = call_method.decl.parameters
+            trailing_type = extract_trailing_type(call_method.decl)
         else:
             parameters = call_method.parameters
+            trailing_type = extract_trailing_type(call_method)
 
         inner_nodes = self.parse_subnodes(node)
         capture_exprs = []
@@ -1197,8 +1206,8 @@ class Parser(object):
             else:
                 raise NotImplementedError(inner_node)
 
-
         return tree.LambdaExpr(parameters=parameters, body=body,
+                               trailing_type=trailing_type,
                                capture_exprs=capture_exprs)
 
     @parse_debug
@@ -2246,8 +2255,10 @@ class Parser(object):
     @parse_debug
     def parse_FunctionProtoType(self, node) -> tree.FunctionProtoType:
         assert node['kind'] == "FunctionProtoType"
+        trailing_return = node.get('trailingReturn') and "auto"
         return_type, *parameter_types = self.parse_subnodes(node)
         return tree.FunctionProtoType(return_type=return_type,
+                                      trailing_return=trailing_return,
                                       parameter_types=parameter_types)
 
     @parse_debug

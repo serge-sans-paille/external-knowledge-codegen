@@ -97,6 +97,8 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
       Ret["isconst"] = true;
     if(FunctionProtoTy->getExtInfo().getNoReturn())
       Ret["isNoReturn"] = true;
+    if(FunctionProtoTy->hasTrailingReturn())
+      Ret["trailingReturn"] = true;
     switch(FunctionProtoTy->getRefQualifier()) {
       case RefQualifierKind::RQ_None:
         break;
