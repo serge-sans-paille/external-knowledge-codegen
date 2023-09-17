@@ -901,6 +901,10 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_UserDefinedLiteral(self, node: tree.UserDefinedLiteral):
         self.write(node.expr, " ", node.suffix)
 
+
+    def visit_ParenListExpr(self, node: tree.ParenListExpr):
+        self.comma_list(node.exprs)
+
     def visit_LambdaExpr(self, node: tree.LambdaExpr):
         self.write("[")
         for idx, capture_expr in enumerate(node.capture_exprs or ()):
@@ -908,6 +912,10 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write("," if idx else "", capture_mode, capture_expr)
         self.write("](")
         self.comma_list(node.parameters)
+        if getattr(node, 'variadic', None):
+            if node.parameters:
+                self.write(", ")
+            self.write("...")
         self.write(")")
         if node.trailing_type:
             self.write(" -> ", node.trailing_type)

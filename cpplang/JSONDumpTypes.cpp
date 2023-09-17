@@ -47,6 +47,8 @@ static llvm::json::Object fullType(const ASTContext &Ctx, QualType T);
 
 static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
   llvm::json::Object Ret;
+  if(!Ty)
+    return Ret;
   Ret["kind"] = (llvm::Twine(Ty->getTypeClassName()) + "Type").str();
   auto const& PP = Ctx.getPrintingPolicy();
   if(auto * BuiltinTy = dyn_cast<BuiltinType>(Ty)) {

@@ -12,3 +12,31 @@ void with_capture(int X, int &Y) {
   auto z = [X,&Y](){ return X, Y;};
   auto z_p = [&X,Y](){ return X, Y;};
 }
+
+
+template <typename... Ts> void test(Ts... a) {
+  struct V {
+    void f() {
+      // [this] {}; parsed but dumped with ()
+      // [*this] {}; parsed but dumped with ()
+      [this] () {};
+      [*this] () {};
+    }
+  };
+  int b; int c;
+  []() {};
+  [](int a, ...) {};
+//  [a...] {};
+//  [=] {};
+//  [=] { return b; };
+//  [&] {};
+//  [&] { return c; };
+//  [b, &c] { return b + c; };
+//  [a..., x = 12] {};
+//  []() constexpr {};
+//  []() mutable {};
+//  []() noexcept {};
+  []() -> int { return 0; };
+//  [] [[noreturn]] () {};
+}
+

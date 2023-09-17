@@ -760,6 +760,14 @@ class Parser(object):
         access_spec = getattr(tree, access.capitalize())()
         return tree.AccessSpecDecl(access_spec=access_spec)
 
+    def is_variadic(self, node):
+        qual_type = node['type']['qualType']
+        if re.match(r".*, \.\.\.\)(( const.*)|( noexcept.*)|( ->.*)|( except.*))?$",
+                    qual_type):
+            return "..."
+        else:
+            return None
+
     @parse_debug
     def parse_CXXMethodDecl(self, node) -> tree.CXXMethodDecl:
         assert node['kind'] == "CXXMethodDecl"
@@ -772,7 +780,7 @@ class Parser(object):
 
         type_info = self.type_informations[node['id']]
         return_type = self.parse_node(type_info).return_type
-        variadic = "..." if node['type']['qualType'].endswith(', ...)') else None
+        variadic = self.is_variadic(node)
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
         trailing_return = type_info.get("trailingReturn") and "trailing-return"
@@ -812,7 +820,7 @@ class Parser(object):
         name = node['name']
         type_info = self.type_informations[node['id']]
         return_type = getattr(self.parse_node(type_info), 'return_type', None)
-        variadic = "..." if node['type']['qualType'].endswith(', ...)') else None
+        variadic = self.is_variadic(node)
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
         trailing_return = type_info.get("trailingReturn") and "trailing-return"
@@ -1063,6 +1071,11 @@ class Parser(object):
         name = node['name']
         return tree.UnresolvedLookupExpr(name=name)
 
+    def parse_ParenListExpr(self, node) -> tree.ParenListExpr:
+        assert node["kind"] == "ParenListExpr"
+        exprs = self.parse_subnodes(node)
+        return tree.ParenListExpr(exprs=exprs)
+
     def parse_AddrLabelExpr(self, node) -> tree.AddrLabelExpr:
         assert node['kind'] == 'AddrLabelExpr'
         name = node['name']
@@ -1198,15 +1211,16 @@ class Parser(object):
 
         call_method = self.parse_node(cxx_method)
 
-
         extract_trailing_type = lambda d: d.trailing_return and d.return_type
 
         if isinstance(call_method, tree.FunctionTemplateDecl):
             parameters = call_method.decl.parameters
             trailing_type = extract_trailing_type(call_method.decl)
+            variadic = call_method.decl.variadic
         else:
             parameters = call_method.parameters
             trailing_type = extract_trailing_type(call_method)
+            variadic = call_method.variadic
 
         inner_nodes = self.parse_subnodes(node)
         capture_exprs = []
@@ -1222,6 +1236,7 @@ class Parser(object):
 
         return tree.LambdaExpr(parameters=parameters, body=body,
                                trailing_type=trailing_type,
+                               variadic=variadic,
                                capture_exprs=capture_exprs)
 
     @parse_debug

@@ -859,6 +859,10 @@ class DeclRefExpr(Expression):
     attrs = ("name", "kind", "template_arguments",)
 
 
+class ParenListExpr(Expression):
+    attrs = ("exprs",)
+
+
 class SizeOfPackExpr(Expression):
     attrs = ("name",)
 
@@ -911,7 +915,7 @@ class UserDefinedLiteral(Expression):
 
 
 class LambdaExpr(Expression):
-    attrs = ("parameters", "capture_exprs", "trailing_type", "body",)
+    attrs = ("parameters", "capture_exprs", "trailing_type", "variadic", "body",)
 
 
 class ReferenceTypeExpression(Expression):
