@@ -943,6 +943,10 @@ class ConditionalOperator(Expression):
     attrs = ("cond", "true_expr", "false_expr")
 
 
+class ChooseExpr(Expression):
+    attrs = ("cond", "true_expr", "false_expr")
+
+
 class ArraySubscriptExpr(Expression):
     attrs = ("base", "index",)
 
@@ -1071,6 +1075,10 @@ class CXXTemporaryObjectExpr(Node):
 
 
 class CXXFunctionalCastExpr(Expression):
+    attrs = ("type", "expr",)
+
+
+class BuiltinBitCastExpr(Expression):
     attrs = ("type", "expr",)
 
 

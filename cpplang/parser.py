@@ -1113,7 +1113,6 @@ class Parser(object):
         else:
             expr, = self.parse_subnodes(node)
             type_ = None
-        print(expr, type_)
         return tree.CXXTypeidExpr(expr=expr, type=type_)
 
     def parse_MemberExpr(self, node) -> tree.MemberExpr:
@@ -1787,6 +1786,13 @@ class Parser(object):
                                         false_expr=false_expr)
 
     @parse_debug
+    def parse_ChooseExpr(self, node) -> tree.ChooseExpr:
+        assert node['kind'] == "ChooseExpr"
+        cond, true_expr, false_expr = self.parse_subnodes(node)
+        return tree.ChooseExpr(cond=cond, true_expr=true_expr,
+                                        false_expr=false_expr)
+
+    @parse_debug
     def parse_ArraySubscriptExpr(self, node) -> tree.ArraySubscriptExpr:
         assert node['kind'] == "ArraySubscriptExpr"
         base, index = self.parse_subnodes(node)
@@ -2052,6 +2058,13 @@ class Parser(object):
         type_ = self.parse_node(self.type_informations[node['id']])
         expr, = self.parse_subnodes(node)
         return tree.CXXFunctionalCastExpr(type=type_, expr=expr)
+
+    @parse_debug
+    def parse_BuiltinBitCastExpr(self, node) -> tree.BuiltinBitCastExpr:
+        assert node['kind'] == "BuiltinBitCastExpr"
+        type_ = self.parse_node(self.type_informations[node['id']])
+        expr, = self.parse_subnodes(node)
+        return tree.BuiltinBitCastExpr(type=type_, expr=expr)
 
     @parse_debug
     def parse_CXXStaticCastExpr(self, node) -> tree.CXXStaticCastExpr:
