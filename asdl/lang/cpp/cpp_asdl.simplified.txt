@@ -26,8 +26,8 @@ declaration = AccessSpecDecl(access_spec access_spec)
             | UsingDirectiveDecl(identifier name)
             | VarDecl(identifier name, type type, constant? storage_class, constant init_mode, constant? implicit, constant? referenced, expression? init, attribute* attributes, constant? tls)
 
-template_parameter = TemplateTypeParmDecl(identifier name, template_tag tag, template_argument? default)
-                   | NonTypeTemplateParmDecl(type type, identifier name, template_argument? default)
+template_parameter = TemplateTypeParmDecl(identifier name, template_tag tag, template_argument? default, constant? parameter_pack)
+                   | NonTypeTemplateParmDecl(type type, identifier name, template_argument? default, constant? parameter_pack)
 
 template_tag = ClassTag | TypenameTag
 
@@ -103,13 +103,16 @@ expression = AddrLabelExpr(identifier name)
            | MemberExpr(identifier name, identifier op, expression? expr)
            | OffsetOfExpr(type type, offsetof_kind* kinds)
            | OpaqueValueExpr(expression expr)
+           | PackExpansionExpr(expression expr)
            | ParenExpr(expression expr)
            | PredefinedExpr(identifier name)
+           | SizeOfPackExpr(identifier name)
            | StmtExpr(statement stmt)
            | StringLiteral(constant value)
            | SubstNonTypeTemplateParmExpr(declaration decl, expression expr)
            | UnaryExprOrTypeTraitExpr(identifier name, expression? expr, type? type)
            | UnaryOperator(constant opcode, constant postfix, expression expr)
+           | UnresolvedLookupExpr(identifier name)
            | UserDefinedLiteral(constant suffix, expression expr)
            | VAArgExpr(expression expr, type type)
 
@@ -123,6 +126,7 @@ cxx_ctor_initializer = CXXCtorInitializer(identifier name, expression* args)
 
 
 type = AutoType(auto_keyword keyword)
+     | BitIntType(constant size, constant sign)
      | BuiltinType(identifier name)
      | ComplexType(type type)
      | ConstantArrayType(type type, constant size)

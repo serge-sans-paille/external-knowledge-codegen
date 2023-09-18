@@ -1053,10 +1053,25 @@ class Parser(object):
         child, = self.parse_subnodes(node)
         return tree.DefaultStmt(stmt=self.as_statement(child))
 
+    def parse_SizeOfPackExpr(self, node) -> tree.SizeOfPackExpr:
+        assert node['kind'] == 'SizeOfPackExpr'
+        name = node['name']
+        return tree.SizeOfPackExpr(name=name)
+
+    def parse_UnresolvedLookupExpr(self, node) -> tree.UnresolvedLookupExpr:
+        assert node['kind'] == 'UnresolvedLookupExpr'
+        name = node['name']
+        return tree.UnresolvedLookupExpr(name=name)
+
     def parse_AddrLabelExpr(self, node) -> tree.AddrLabelExpr:
         assert node['kind'] == 'AddrLabelExpr'
         name = node['name']
         return tree.AddrLabelExpr(name=name)
+
+    def parse_PackExpansionExpr(self, node) -> tree.PackExpansionExpr:
+        assert node['kind'] == 'PackExpansionExpr'
+        expr, = self.parse_subnodes(node)
+        return tree.PackExpansionExpr(expr=expr)
 
     def parse_VAArgExpr(self, node) -> tree.VAArgExpr:
         assert node['kind'] == 'VAArgExpr'
@@ -1297,6 +1312,19 @@ class Parser(object):
             keyword = tree.GNUAutoType()
 
         return tree.AutoType(keyword=keyword)
+
+    @parse_debug
+    def parse_BitIntType(self, node) -> tree.BitIntType:
+        assert node['kind'] == "BitIntType"
+        if 'size' in node:
+            size = str(node['size'])
+            sign = node['sign']
+        else:
+            qual_type = node['type']['qualType']
+            match = re.match('^((?:(?:un)signed)?) ?_BitInt\(([0-9]+)\)$', qual_type)
+            sign, size = match.groups()
+
+        return tree.BitIntType(size=size, sign=sign)
 
     @parse_debug
     def parse_QualType(self, node) -> tree.QualType:
@@ -1986,7 +2014,9 @@ class Parser(object):
             default, = inner_nodes
         else:
             default = None
-        return tree.TemplateTypeParmDecl(name=name, tag=tag, default=default)
+        parameter_pack = node.get("isParameterPack") and "pack"
+        return tree.TemplateTypeParmDecl(name=name, tag=tag, default=default,
+                                         parameter_pack=parameter_pack)
 
     @parse_debug
     def parse_NonTypeTemplateParmDecl(self, node) -> tree.NonTypeTemplateParmDecl:
@@ -1998,8 +2028,10 @@ class Parser(object):
             default, = inner_nodes
         else:
             default = None
+        parameter_pack = node.get("isParameterPack") and "pack"
         return tree.NonTypeTemplateParmDecl(name=name, type=type_,
-                                            default=default)
+                                            default=default,
+                                            parameter_pack=parameter_pack)
 
     @parse_debug
     def parse_FullComment(self, node) -> tree.FullComment:

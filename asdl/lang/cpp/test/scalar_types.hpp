@@ -25,3 +25,9 @@ _Complex double cd = 2.5i;
 _Complex long double cld = 2.5Li;
 
 __float128 f128 = 1.2q;
+
+// bit ints
+_BitInt(3) b3;
+unsigned _BitInt(3) u3;
+using i33 = _BitInt(33);
+using u33 = unsigned _BitInt(33);

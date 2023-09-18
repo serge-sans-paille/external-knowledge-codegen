@@ -407,6 +407,9 @@ class Type(Node):
 class AutoType(Type):
     attrs = ("keyword",)
 
+class BitIntType(Type):
+    attrs = ("size", "sign",)
+
 class BuiltinType(Type):
     attrs = ("name",)
 
@@ -540,6 +543,7 @@ class ElementArrayValue(Node):
 class InitListExpr(Node):
     attrs = ("values",)
 
+
 # ------------------------------------------------------------------------------
 
 
@@ -590,11 +594,11 @@ class TemplateArgument(Node):
 
 
 class TemplateTypeParmDecl(Declaration):
-    attrs = ("name", "tag", "default",)
+    attrs = ("name", "tag", "default", "parameter_pack",)
 
 
 class NonTypeTemplateParmDecl(Declaration):
-    attrs = ("type", "name", "default",)
+    attrs = ("type", "name", "default", "parameter_pack",)
 
 
 class ParmVarDecl(Declaration):
@@ -850,6 +854,18 @@ class Expression(Node):
 
 class DeclRefExpr(Expression):
     attrs = ("name", "kind", "template_arguments",)
+
+
+class SizeOfPackExpr(Expression):
+    attrs = ("name",)
+
+
+class PackExpansionExpr(Expression):
+    attrs = ("expr",)
+
+
+class UnresolvedLookupExpr(Expression):
+    attrs = ('name',)
 
 
 class PredefinedExpr(Expression):

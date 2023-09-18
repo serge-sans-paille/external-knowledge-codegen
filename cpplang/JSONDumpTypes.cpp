@@ -52,6 +52,13 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
   if(auto * BuiltinTy = dyn_cast<BuiltinType>(Ty)) {
     Ret["type"] = llvm::json::Object{{"qualType", BuiltinTy->getName(PP)}};
   }
+  else if(auto * BitIntTy = dyn_cast<BitIntType>(Ty)) {
+    Ret["size"] = BitIntTy->getNumBits();
+    if(BitIntTy->isUnsigned())
+      Ret["sign"] = "unsigned";
+    else
+      Ret["sign"] = "signed";
+  }
   else if(auto * ConstantArrayTy = dyn_cast<ConstantArrayType>(Ty)) {
     Ret["size"] = ConstantArrayTy->getSize().getZExtValue();
     llvm::json::Array Inner;
