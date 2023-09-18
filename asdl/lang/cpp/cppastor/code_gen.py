@@ -917,6 +917,13 @@ class SourceGenerator(ExplicitNodeVisitor):
                 self.write(", ")
             self.write("...")
         self.write(")")
+
+        if getattr(node, 'exception', None):
+            self.write(" ", node.exception)
+
+        if getattr(node, 'attributes', None):
+            self.space_list(node.attributes, trailing=True)
+
         if node.trailing_type:
             if isinstance(node.trailing_type, tree.AutoType):
                 pass  # that's a decent default

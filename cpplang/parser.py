@@ -1224,10 +1224,14 @@ class Parser(object):
             parameters = call_method.decl.parameters
             trailing_type = extract_trailing_type(call_method.decl)
             variadic = call_method.decl.variadic
+            exception = call_method.decl.exception
+            attributes = call_method.decl.attributes
         else:
             parameters = call_method.parameters
             trailing_type = extract_trailing_type(call_method)
             variadic = call_method.variadic
+            exception = call_method.exception
+            attributes = call_method.attributes
 
         inner_nodes = self.parse_subnodes(node, keep_empty=True)
         capture_exprs = []
@@ -1250,7 +1254,8 @@ class Parser(object):
 
         return tree.LambdaExpr(parameters=parameters, body=body,
                                trailing_type=trailing_type,
-                               variadic=variadic,
+                               variadic=variadic, exception=exception,
+                               attributes=attributes,
                                capture_exprs=capture_exprs)
 
     @parse_debug

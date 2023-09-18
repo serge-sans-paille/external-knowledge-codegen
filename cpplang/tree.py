@@ -915,7 +915,8 @@ class UserDefinedLiteral(Expression):
 
 
 class LambdaExpr(Expression):
-    attrs = ("parameters", "capture_exprs", "trailing_type", "variadic", "body",)
+    attrs = ("parameters", "capture_exprs", "trailing_type", "exception",
+             "variadic", "body", "attributes",)
 
 
 class ReferenceTypeExpression(Expression):

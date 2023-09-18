@@ -26,18 +26,18 @@ template <typename... Ts> void test(Ts... a) {
   int b; int c;
   []() {};
   [](int a, ...) {};
-  [a...] {};
-  [a...,b] {};
+  [a...] () {};
+  [a...,b] () {};
 //  [=] {};
 //  [=] { return b; };
 //  [&] {};
 //  [&] { return c; };
-//  [b, &c] { return b + c; };
-//  [a..., x = 12] {};
-//  []() constexpr {};
+  [b, &c] { return b + c; };
+//  [a..., x = 12] () {};
+  //[]() constexpr {};
 //  []() mutable {};
-//  []() noexcept {};
+  []() noexcept {};
   []() -> int { return 0; };
-//  [] [[noreturn]] () {};
+  [] [[noreturn]] () {};
 }
 
