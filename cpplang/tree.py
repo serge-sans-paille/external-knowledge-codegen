@@ -455,6 +455,9 @@ class IncompleteArrayType(Type):
 class InjectedClassNameType(Type):
     attrs = ("type",)
 
+class MemberPointerType(Type):
+    attrs = ("cls", "type",)
+
 class ParenType(Type):
     attrs = ("type",)
 
@@ -866,7 +869,7 @@ class Expression(Node):
 
 
 class DeclRefExpr(Expression):
-    attrs = ("name", "kind", "template_arguments",)
+    attrs = ("name",)
 
 
 class ParenListExpr(Expression):

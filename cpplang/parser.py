@@ -1163,16 +1163,8 @@ class Parser(object):
     @parse_debug
     def parse_DeclRefExpr(self, node) -> tree.DeclRefExpr:
         assert node['kind'] == "DeclRefExpr"
-        ref_decl = node['referencedDecl']
-        name = ref_decl['name']
-        kind = ref_decl['kind']
-        if ref_decl['id'] in self.template_instances:
-            template_arguments = self.template_instances[ref_decl['id']]
-        else:
-            template_arguments = []
-
-        return tree.DeclRefExpr(name=name, kind=kind,
-                                template_arguments=template_arguments)
+        name = self.get_node_source_code(node) #ref_decl['name']
+        return tree.DeclRefExpr(name=name)
 
     @parse_debug
     def parse_IntegerLiteral(self, node) -> tree.IntegerLiteral:
@@ -1274,9 +1266,7 @@ class Parser(object):
     def parse_UserDefinedLiteral(self, node) -> tree.UserDefinedLiteral:
         assert node['kind'] == "UserDefinedLiteral"
         func, expr = self.parse_subnodes(node)
-        operator_name = func.expr.name
-        assert operator_name.startswith('operator""')
-        suffix = operator_name[len('operator""'):]
+        suffix = func.expr.name
 
         if isinstance(expr, (tree.FloatingLiteral, tree.IntegerLiteral)):
             expr.type.name = 'user-defined-literal'
@@ -1346,6 +1336,12 @@ class Parser(object):
             keyword = tree.GNUAutoType()
 
         return tree.AutoType(keyword=keyword)
+
+    @parse_debug
+    def parse_MemberPointerType(self, node) -> tree.MemberPointerType:
+        assert node['kind'] == "MemberPointerType"
+        cls, type_ = self.parse_subnodes(node)
+        return tree.MemberPointerType(cls=cls, type=type_)
 
     @parse_debug
     def parse_PackExpansionType(self, node) -> tree.PackExpansionType:

@@ -311,6 +311,12 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Inner.push_back(fullType(Ctx, InjectedClassNameTy->getInjectedSpecializationType()));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
+  else if(auto* MemberPointerTy = dyn_cast<MemberPointerType>(Ty)) {
+    llvm::json::Array Inner;
+    Inner.push_back(fullType(Ctx, MemberPointerTy->getClass()));
+    Inner.push_back(fullType(Ctx, MemberPointerTy->getPointeeType()));
+    Ret["inner"] = llvm::json::Value(std::move(Inner));
+  }
   else {
     Ty->dump();
     assert(false && "unsupported type");
