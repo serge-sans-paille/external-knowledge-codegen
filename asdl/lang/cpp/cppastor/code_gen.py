@@ -1107,13 +1107,22 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_TypenameTag(self, node: tree.TypenameTag):
         self.write("typename")
 
+    def visit_TemplateTemplateParmDecl(self, node: tree.TemplateTemplateParmDecl):
+        self.write("template<")
+        self.comma_list(node.template_parameters)
+        self.write("> class ", node.name or "")
+
     def visit_TemplateTypeParmDecl(self, node: tree.TemplateTypeParmDecl):
-        self.write(node.tag, "... " if node.parameter_pack else " ", node.name)
+        self.write(node.tag,
+                   "... " if node.parameter_pack else " ",
+                   node.name or "")
         if node.default:
             self.write("=", node.default)
 
     def visit_NonTypeTemplateParmDecl(self, node: tree.NonTypeTemplateParmDecl):
-        self.write(node.type, "... " if node.parameter_pack else " ", node.name)
+        self.write(node.type,
+                   "... " if node.parameter_pack else " ",
+                   node.name or "")
         if node.default:
             self.write("=", node.default)
 

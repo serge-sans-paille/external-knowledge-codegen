@@ -596,11 +596,18 @@ class TemplateArgument(Node):
     attrs = ("type", "expr", "pack",)
 
 
-class TemplateTypeParmDecl(Declaration):
+class TemplateParmDecl(Declaration):
+    attrs = ()
+
+class TemplateTemplateParmDecl(TemplateParmDecl):
+    attrs = ("name", "template_parameters",)
+
+
+class TemplateTypeParmDecl(TemplateParmDecl):
     attrs = ("name", "tag", "default", "parameter_pack",)
 
 
-class NonTypeTemplateParmDecl(Declaration):
+class NonTypeTemplateParmDecl(TemplateParmDecl):
     attrs = ("type", "name", "default", "parameter_pack",)
 
 

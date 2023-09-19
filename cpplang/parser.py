@@ -1915,8 +1915,7 @@ class Parser(object):
         template_parameters = []
         decl = None
         for inner_node, json_descr in zip(inner_nodes, node['inner']):
-            if isinstance(inner_node, (tree.TemplateTypeParmDecl,
-                                 tree.NonTypeTemplateParmDecl)):
+            if isinstance(inner_node, tree.TemplateParmDecl):
                 template_parameters.append(inner_node)
             elif isinstance(inner_node, tree.CXXRecordDecl):
                 # first instance is the generic definition, the others are the
@@ -1946,8 +1945,7 @@ class Parser(object):
         for inner_node in inner_nodes:
             if isinstance(inner_node, tree.TemplateArgument):
                 template_arguments.append(inner_node)
-            elif isinstance(inner_node, (tree.TemplateTypeParmDecl,
-                                 tree.NonTypeTemplateParmDecl)):
+            elif isinstance(inner_node, tree.TemplateParmDecl):
                 template_parameters.append(inner_node)
             else:
                 decls.append(inner_node)
@@ -1976,8 +1974,7 @@ class Parser(object):
         for inner_node in inner_nodes:
             if isinstance(inner_node, tree.TemplateArgument):
                 template_arguments.append(inner_node)
-            elif isinstance(inner_node, (tree.TemplateTypeParmDecl,
-                                 tree.NonTypeTemplateParmDecl)):
+            elif isinstance(inner_node, tree.TemplateParmDecl):
                 template_parameters.append(inner_node)
             else:
                 decls.append(inner_node)
@@ -1997,8 +1994,7 @@ class Parser(object):
         template_parameters = []
         decl = None
         for inner_node, json_descr in zip(inner_nodes, node['inner']):
-            if isinstance(inner_node, (tree.TemplateTypeParmDecl,
-                                 tree.NonTypeTemplateParmDecl)):
+            if isinstance(inner_node, tree.TemplateParmDecl):
                 template_parameters.append(inner_node)
             elif isinstance(inner_node, (tree.FunctionDecl, tree.CXXMethodDecl)):
                 # first instance is the generic definition, the others are the
@@ -2051,7 +2047,7 @@ class Parser(object):
     @parse_debug
     def parse_TemplateTypeParmDecl(self, node) -> tree.TemplateTypeParmDecl:
         assert node['kind'] == "TemplateTypeParmDecl"
-        name = node['name']
+        name = node.get('name')
         tag = getattr(tree, node['tagUsed'].capitalize() + 'Tag')()
         inner_nodes = self.parse_subnodes(node)
         if inner_nodes:
@@ -2063,10 +2059,18 @@ class Parser(object):
                                          parameter_pack=parameter_pack)
 
     @parse_debug
+    def parse_TemplateTemplateParmDecl(self, node) -> tree.TemplateTemplateParmDecl:
+        assert node['kind'] == "TemplateTemplateParmDecl"
+        name = node.get('name')
+        template_parameters = self.parse_subnodes(node)
+        return tree.TemplateTemplateParmDecl(name=name,
+                                             template_parameters=template_parameters)
+
+    @parse_debug
     def parse_NonTypeTemplateParmDecl(self, node) -> tree.NonTypeTemplateParmDecl:
         assert node['kind'] == "NonTypeTemplateParmDecl"
         type_ = self.parse_node(self.type_informations[node['id']])
-        name = node['name']
+        name = node.get('name')
         inner_nodes = self.parse_subnodes(node)
         if inner_nodes:
             default, = inner_nodes
