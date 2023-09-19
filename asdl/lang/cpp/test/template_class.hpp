@@ -101,3 +101,12 @@ iparameter_pack_expansion<1, 2> *itemplated_decl;
 template<template<typename X, X W> class Z> struct Y {};
 template<template<typename X, X W> class> struct anonymous_Y {};
 template<template<typename X, X> class> struct other_anonymous_Y {};
+
+
+// Injected template
+template<class T>
+struct injected {
+  injected foo();
+  template<class Tp>
+  injected<Tp> bar();
+};

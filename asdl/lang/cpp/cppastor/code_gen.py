@@ -728,6 +728,9 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_AutoType(self, node: tree.AutoType):
         self.write("auto")
 
+    def visit_InjectedClassNameType(self, node: tree.InjectedClassNameType):
+        self.write(node.type.name)
+
     def visit_TypedefDecl(self, node: tree.TypedefDecl):
         expr = self.visit_type_helper(node.name, node.type)
         self.write("typedef ", expr, ";")

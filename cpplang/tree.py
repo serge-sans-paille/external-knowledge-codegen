@@ -452,6 +452,9 @@ class RValueReferenceType(Type):
 class IncompleteArrayType(Type):
     attrs = ("type",)
 
+class InjectedClassNameType(Type):
+    attrs = ("type",)
+
 class ParenType(Type):
     attrs = ("type",)
 

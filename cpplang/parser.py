@@ -2045,6 +2045,12 @@ class Parser(object):
         return tree.SubstTemplateTypeParmType(type=type_)
 
     @parse_debug
+    def parse_InjectedClassNameType(self, node) -> tree.InjectedClassNameType:
+        assert node['kind'] == "InjectedClassNameType"
+        type_, = self.parse_subnodes(node)
+        return tree.InjectedClassNameType(type=type_)
+
+    @parse_debug
     def parse_TemplateTypeParmDecl(self, node) -> tree.TemplateTypeParmDecl:
         assert node['kind'] == "TemplateTypeParmDecl"
         name = node.get('name')
