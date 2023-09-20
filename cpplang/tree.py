@@ -795,6 +795,10 @@ class TypedefDecl(Declaration):
     attrs = ("name", "type")
 
 
+class TypeAliasTemplateDecl(Declaration):
+    attrs = ("template_parameters", "decl",)
+
+
 class TypeAliasDecl(Declaration):
     attrs = ("name", "type")
 
