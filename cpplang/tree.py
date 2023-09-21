@@ -455,6 +455,9 @@ class IncompleteArrayType(Type):
 class ParenType(Type):
     attrs = ("type",)
 
+class PackExpansionType(Type):
+    attrs = ("type",)
+
 class PointerType(Type):
     attrs = ("type",)
 
@@ -590,7 +593,7 @@ class FunctionTemplateDecl(Declaration):
 
 
 class TemplateArgument(Node):
-    attrs = ("type", "expr",)
+    attrs = ("type", "expr", "pack",)
 
 
 class TemplateTypeParmDecl(Declaration):

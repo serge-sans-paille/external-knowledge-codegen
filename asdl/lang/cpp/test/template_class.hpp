@@ -86,3 +86,9 @@ struct some_type<volatile Tp>
 // Parameter pack
 template<class... T> struct parameter_pack;
 template<int... I> struct iparameter_pack;
+
+template<class... Ts> struct parameter_pack_expansion : parameter_pack<Ts...> {};
+parameter_pack_expansion<int, float> *templated_decl;
+
+template<int... Is> struct iparameter_pack_expansion : iparameter_pack<Is...> {};
+iparameter_pack_expansion<1, 2> *itemplated_decl;

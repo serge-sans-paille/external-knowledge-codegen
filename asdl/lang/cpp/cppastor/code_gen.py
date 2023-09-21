@@ -599,6 +599,10 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(current_type, tree.BuiltinType):
             return "{} {}".format(current_type.name, current_expr)
 
+        if isinstance(current_type, tree.PackExpansionType):
+            type_ = self.visit_type_helper("", current_type.type)
+            return "{}... {}".format(type_, current_expr)
+
         if isinstance(current_type, tree.ComplexType):
             return "_Complex " + self.visit_type_helper(current_expr, current_type.type)
 
@@ -736,6 +740,9 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_TypeAliasDecl(self, node: tree.TypeAliasDecl):
         self.write("using ", node.name, " = ", node.type, ";")
+
+    def visit_PackExpansionType(self, node: tree.PackExpansionType):
+        self.write(node.type, "...")
 
     def visit_UsingDecl(self, node: tree.UsingDecl):
         self.write("using ", node.name, ";")

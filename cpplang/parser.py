@@ -37,7 +37,7 @@ def rebuild_clang_plugin():
         subprocess.check_call([
             shutil.which("clang"),
             plugin_src,
-            "-O2", "-fPIC",
+            "-O0", "-fPIC", "-g",
             "-shared",
             "-o", plugin_path] + llvm_compile_flags)
 
@@ -772,7 +772,7 @@ class Parser(object):
 
         type_info = self.type_informations[node['id']]
         return_type = self.parse_node(type_info).return_type
-        variadic = "..." if node['type']['qualType'].endswith('...)') else None
+        variadic = "..." if node['type']['qualType'].endswith(', ...)') else None
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
         trailing_return = type_info.get("trailingReturn") and "trailing-return"
@@ -812,7 +812,7 @@ class Parser(object):
         name = node['name']
         type_info = self.type_informations[node['id']]
         return_type = getattr(self.parse_node(type_info), 'return_type', None)
-        variadic = "..." if node['type']['qualType'].endswith('...)') else None
+        variadic = "..." if node['type']['qualType'].endswith(', ...)') else None
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
         trailing_return = type_info.get("trailingReturn") and "trailing-return"
@@ -1312,6 +1312,12 @@ class Parser(object):
             keyword = tree.GNUAutoType()
 
         return tree.AutoType(keyword=keyword)
+
+    @parse_debug
+    def parse_PackExpansionType(self, node) -> tree.PackExpansionType:
+        assert node['kind'] == "PackExpansionType"
+        type_, = self.parse_subnodes(node)
+        return tree.PackExpansionType(type=type_)
 
     @parse_debug
     def parse_BitIntType(self, node) -> tree.BitIntType:
@@ -1986,15 +1992,19 @@ class Parser(object):
             intty = tree.BuiltinType(name='int')
             intval = str(node['value'])
             value = tree.IntegerLiteral(type=intty, value=intval)
-        elif inner_nodes:
+        elif len(inner_nodes) == 1:
             value, = inner_nodes
+        elif len(inner_nodes) > 1:
+            value = inner_nodes
         else:
             raise NotImplementedError
 
         if isinstance(value, tree.Type):
-            return tree.TemplateArgument(type=value, expr=None)
+            return tree.TemplateArgument(type=value, expr=None, pack=None)
         elif isinstance(value, tree.Expression):
-            return tree.TemplateArgument(type=None, expr=value)
+            return tree.TemplateArgument(type=None, expr=value, pack=None)
+        elif isinstance(value, list):
+            return tree.TemplateArgument(type=None, expr=None, pack=value)
         else:
             raise NotImplementedError
 

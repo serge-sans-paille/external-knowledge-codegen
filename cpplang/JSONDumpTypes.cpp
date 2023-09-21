@@ -155,6 +155,7 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
           ExceptionSpec["isBasic"] = true;
           break;
         case ExceptionSpecificationType::EST_Unevaluated:
+        case ExceptionSpecificationType::EST_Uninstantiated:
           break;
         default:
           llvm::errs() << ESI.Type << "\n";
@@ -272,6 +273,11 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
   else if(auto* SubstTemplateTypeParmTy = dyn_cast<SubstTemplateTypeParmType>(Ty)) {
     llvm::json::Array Inner;
     Inner.push_back(fullType(Ctx, SubstTemplateTypeParmTy->getReplacementType()));
+    Ret["inner"] = llvm::json::Value(std::move(Inner));
+  }
+  else if(auto* PackExpansionTy = dyn_cast<PackExpansionType>(Ty)) {
+    llvm::json::Array Inner;
+    Inner.push_back(fullType(Ctx, PackExpansionTy->getPattern()));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
   else if(auto* TemplateSpecializationTy = dyn_cast<TemplateSpecializationType>(Ty)) {
