@@ -2,6 +2,9 @@
 template<typename T>
 struct forward_decl;
 
+template<typename>
+struct anonymous_forward_decl;
+
 template<typename T, typename S>
 struct multiple_params;
 
@@ -92,3 +95,9 @@ parameter_pack_expansion<int, float> *templated_decl;
 
 template<int... Is> struct iparameter_pack_expansion : iparameter_pack<Is...> {};
 iparameter_pack_expansion<1, 2> *itemplated_decl;
+
+// Template template
+
+template<template<typename X, X W> class Z> struct Y {};
+template<template<typename X, X W> class> struct anonymous_Y {};
+template<template<typename X, X> class> struct other_anonymous_Y {};

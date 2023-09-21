@@ -596,11 +596,18 @@ class TemplateArgument(Node):
     attrs = ("type", "expr", "pack",)
 
 
-class TemplateTypeParmDecl(Declaration):
+class TemplateParmDecl(Declaration):
+    attrs = ()
+
+class TemplateTemplateParmDecl(TemplateParmDecl):
+    attrs = ("name", "template_parameters",)
+
+
+class TemplateTypeParmDecl(TemplateParmDecl):
     attrs = ("name", "tag", "default", "parameter_pack",)
 
 
-class NonTypeTemplateParmDecl(Declaration):
+class NonTypeTemplateParmDecl(TemplateParmDecl):
     attrs = ("type", "name", "default", "parameter_pack",)
 
 
@@ -859,6 +866,10 @@ class DeclRefExpr(Expression):
     attrs = ("name", "kind", "template_arguments",)
 
 
+class ParenListExpr(Expression):
+    attrs = ("exprs",)
+
+
 class SizeOfPackExpr(Expression):
     attrs = ("name",)
 
@@ -911,7 +922,8 @@ class UserDefinedLiteral(Expression):
 
 
 class LambdaExpr(Expression):
-    attrs = ("parameters", "capture_exprs", "trailing_type", "body",)
+    attrs = ("parameters", "capture_exprs", "trailing_type", "exception",
+             "variadic", "body", "attributes",)
 
 
 class ReferenceTypeExpression(Expression):

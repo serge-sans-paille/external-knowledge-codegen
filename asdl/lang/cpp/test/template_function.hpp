@@ -1,6 +1,9 @@
 template<typename T>
 void foo(int);
 
+template<typename>
+void anonymous_foo(int);
+
 template<class T>
 void footix(int);
 

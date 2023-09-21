@@ -760,6 +760,14 @@ class Parser(object):
         access_spec = getattr(tree, access.capitalize())()
         return tree.AccessSpecDecl(access_spec=access_spec)
 
+    def is_variadic(self, node):
+        qual_type = node['type']['qualType']
+        if re.match(r".*, \.\.\.\)(( const.*)|( noexcept.*)|( ->.*)|( except.*))?$",
+                    qual_type):
+            return "..."
+        else:
+            return None
+
     @parse_debug
     def parse_CXXMethodDecl(self, node) -> tree.CXXMethodDecl:
         assert node['kind'] == "CXXMethodDecl"
@@ -772,7 +780,7 @@ class Parser(object):
 
         type_info = self.type_informations[node['id']]
         return_type = self.parse_node(type_info).return_type
-        variadic = "..." if node['type']['qualType'].endswith(', ...)') else None
+        variadic = self.is_variadic(node)
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
         trailing_return = type_info.get("trailingReturn") and "trailing-return"
@@ -812,7 +820,7 @@ class Parser(object):
         name = node['name']
         type_info = self.type_informations[node['id']]
         return_type = getattr(self.parse_node(type_info), 'return_type', None)
-        variadic = "..." if node['type']['qualType'].endswith(', ...)') else None
+        variadic = self.is_variadic(node)
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
         trailing_return = type_info.get("trailingReturn") and "trailing-return"
@@ -1063,6 +1071,11 @@ class Parser(object):
         name = node['name']
         return tree.UnresolvedLookupExpr(name=name)
 
+    def parse_ParenListExpr(self, node) -> tree.ParenListExpr:
+        assert node["kind"] == "ParenListExpr"
+        exprs = self.parse_subnodes(node)
+        return tree.ParenListExpr(exprs=exprs)
+
     def parse_AddrLabelExpr(self, node) -> tree.AddrLabelExpr:
         assert node['kind'] == 'AddrLabelExpr'
         name = node['name']
@@ -1184,6 +1197,13 @@ class Parser(object):
         float_, = self.parse_subnodes(node)
         return tree.ImaginaryLiteral(type=type_, value=float_.value)
 
+    def is_parameter_pack(self, expr, expr_node):
+        decl = expr_node.get("referencedDecl")
+        if decl is None:
+            return False
+        type_info = self.type_informations[decl["id"]]
+        return type_info["kind"] == 'PackExpansionType'
+
     @parse_debug
     def parse_LambdaExpr(self, node) -> tree.LambdaExpr:
         assert node['kind'] == "LambdaExpr"
@@ -1198,21 +1218,33 @@ class Parser(object):
 
         call_method = self.parse_node(cxx_method)
 
-
         extract_trailing_type = lambda d: d.trailing_return and d.return_type
 
         if isinstance(call_method, tree.FunctionTemplateDecl):
             parameters = call_method.decl.parameters
             trailing_type = extract_trailing_type(call_method.decl)
+            variadic = call_method.decl.variadic
+            exception = call_method.decl.exception
+            attributes = call_method.decl.attributes
         else:
             parameters = call_method.parameters
             trailing_type = extract_trailing_type(call_method)
+            variadic = call_method.variadic
+            exception = call_method.exception
+            attributes = call_method.attributes
 
-        inner_nodes = self.parse_subnodes(node)
+        inner_nodes = self.parse_subnodes(node, keep_empty=True)
         capture_exprs = []
         body = None
-        for inner_node in inner_nodes:
-            if isinstance(inner_node, tree.Expression):
+        for inner_node, subnode in zip(inner_nodes, node["inner"]):
+            if not inner_node:
+                continue
+            if isinstance(inner_node, tree.ParenListExpr):
+                for expr, expr_node in zip(inner_node.exprs, subnode["inner"]):
+                    if self.is_parameter_pack(expr, expr_node):
+                        expr = tree.PackExpansionExpr(expr=expr)
+                    capture_exprs.append(expr)
+            elif isinstance(inner_node, tree.Expression):
                 capture_exprs.append(inner_node)
             elif isinstance(inner_node, tree.Statement):
                 assert not body
@@ -1222,6 +1254,8 @@ class Parser(object):
 
         return tree.LambdaExpr(parameters=parameters, body=body,
                                trailing_type=trailing_type,
+                               variadic=variadic, exception=exception,
+                               attributes=attributes,
                                capture_exprs=capture_exprs)
 
     @parse_debug
@@ -1881,8 +1915,7 @@ class Parser(object):
         template_parameters = []
         decl = None
         for inner_node, json_descr in zip(inner_nodes, node['inner']):
-            if isinstance(inner_node, (tree.TemplateTypeParmDecl,
-                                 tree.NonTypeTemplateParmDecl)):
+            if isinstance(inner_node, tree.TemplateParmDecl):
                 template_parameters.append(inner_node)
             elif isinstance(inner_node, tree.CXXRecordDecl):
                 # first instance is the generic definition, the others are the
@@ -1912,8 +1945,7 @@ class Parser(object):
         for inner_node in inner_nodes:
             if isinstance(inner_node, tree.TemplateArgument):
                 template_arguments.append(inner_node)
-            elif isinstance(inner_node, (tree.TemplateTypeParmDecl,
-                                 tree.NonTypeTemplateParmDecl)):
+            elif isinstance(inner_node, tree.TemplateParmDecl):
                 template_parameters.append(inner_node)
             else:
                 decls.append(inner_node)
@@ -1942,8 +1974,7 @@ class Parser(object):
         for inner_node in inner_nodes:
             if isinstance(inner_node, tree.TemplateArgument):
                 template_arguments.append(inner_node)
-            elif isinstance(inner_node, (tree.TemplateTypeParmDecl,
-                                 tree.NonTypeTemplateParmDecl)):
+            elif isinstance(inner_node, tree.TemplateParmDecl):
                 template_parameters.append(inner_node)
             else:
                 decls.append(inner_node)
@@ -1963,8 +1994,7 @@ class Parser(object):
         template_parameters = []
         decl = None
         for inner_node, json_descr in zip(inner_nodes, node['inner']):
-            if isinstance(inner_node, (tree.TemplateTypeParmDecl,
-                                 tree.NonTypeTemplateParmDecl)):
+            if isinstance(inner_node, tree.TemplateParmDecl):
                 template_parameters.append(inner_node)
             elif isinstance(inner_node, (tree.FunctionDecl, tree.CXXMethodDecl)):
                 # first instance is the generic definition, the others are the
@@ -2017,7 +2047,7 @@ class Parser(object):
     @parse_debug
     def parse_TemplateTypeParmDecl(self, node) -> tree.TemplateTypeParmDecl:
         assert node['kind'] == "TemplateTypeParmDecl"
-        name = node['name']
+        name = node.get('name')
         tag = getattr(tree, node['tagUsed'].capitalize() + 'Tag')()
         inner_nodes = self.parse_subnodes(node)
         if inner_nodes:
@@ -2029,10 +2059,18 @@ class Parser(object):
                                          parameter_pack=parameter_pack)
 
     @parse_debug
+    def parse_TemplateTemplateParmDecl(self, node) -> tree.TemplateTemplateParmDecl:
+        assert node['kind'] == "TemplateTemplateParmDecl"
+        name = node.get('name')
+        template_parameters = self.parse_subnodes(node)
+        return tree.TemplateTemplateParmDecl(name=name,
+                                             template_parameters=template_parameters)
+
+    @parse_debug
     def parse_NonTypeTemplateParmDecl(self, node) -> tree.NonTypeTemplateParmDecl:
         assert node['kind'] == "NonTypeTemplateParmDecl"
         type_ = self.parse_node(self.type_informations[node['id']])
-        name = node['name']
+        name = node.get('name')
         inner_nodes = self.parse_subnodes(node)
         if inner_nodes:
             default, = inner_nodes
