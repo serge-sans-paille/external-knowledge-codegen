@@ -589,6 +589,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(";")
         self.newline(extra=1)
 
+    def visit_CXXDefaultInitExpr(self, node: tree.CXXDefaultInitExpr):
+        self.write(node.expression)
+
     def visit_type_helper(self, current_expr, current_type):
         if isinstance(current_type, tree.BitIntType):
             return "{}_BitInt({}) {}".format("" if current_type.sign == "signed" else

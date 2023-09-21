@@ -74,7 +74,7 @@ protected:
     void function() {}
     void function(X) {}
     void function(Type) {}
-    int member_data; // FIXME: add `= 0` once CXXDefaultInitExpr is supported
+    int member_data = 0;
 };
 
 class TypeB : private TypeA

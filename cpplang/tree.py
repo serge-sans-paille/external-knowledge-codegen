@@ -618,6 +618,8 @@ class ParmVarDecl(Declaration):
 class FieldDecl(Declaration):
     attrs = ("type", "name", "init", "bitwidth", "attributes", "type_qualifier",)
 
+class CXXDefaultInitExpr(Declaration):
+    attrs = ("expression",)
 
 class ClassTag(Node):
     attrs = ()

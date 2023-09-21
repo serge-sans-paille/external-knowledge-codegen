@@ -117,6 +117,7 @@ expression = AddrLabelExpr(identifier name)
            | UnresolvedLookupExpr(identifier name)
            | UserDefinedLiteral(constant suffix, expression expr)
            | VAArgExpr(expression expr, type type)
+           | CXXDefaultInitExpr(expression expr)
 
 parameter = ParmVarDecl(type type, identifier? name, expression? default, attribute* attributes)
 
