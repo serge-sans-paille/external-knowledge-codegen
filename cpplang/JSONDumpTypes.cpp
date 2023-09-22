@@ -306,6 +306,11 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     }
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
+  else if(auto *InjectedClassNameTy = dyn_cast<InjectedClassNameType>(Ty)) {
+    llvm::json::Array Inner;
+    Inner.push_back(fullType(Ctx, InjectedClassNameTy->getInjectedSpecializationType()));
+    Ret["inner"] = llvm::json::Value(std::move(Inner));
+  }
   else {
     Ty->dump();
     assert(false && "unsupported type");
