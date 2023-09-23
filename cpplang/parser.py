@@ -713,6 +713,11 @@ class Parser(object):
             name = anyInit['name']
             args = self.parse_subnodes(node)
 
+            # When the initializer list is not user-defined we need to not write anything.
+            # Only if it have been written explicitly (user-defined) must we take it into account.
+            if not args:
+                return None
+
         baseInit = node.get('baseInit')
         if baseInit:
             name = baseInit["qualType"]
@@ -1817,6 +1822,15 @@ class Parser(object):
         return tree.FieldDecl(name=name, type=var_type, init=init,
                               type_qualifier=type_qualifier,
                               bitwidth=bitwidth, attributes=attributes)
+
+    @parse_debug
+    def parse_CXXDefaultInitExpr(self, node) -> tree.CXXDefaultInitExpr:
+        assert node['kind'] == "CXXDefaultInitExpr"
+        expr = node.get('expression')
+        if expr:
+            return tree.CXXDefaultInitExpr(expr=expr)
+        else:
+            return None
 
     @parse_debug
     def parse_BinaryOperator(self, node) -> tree.BinaryOperator:
