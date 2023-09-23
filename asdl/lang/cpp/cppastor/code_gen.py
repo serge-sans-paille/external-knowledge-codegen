@@ -285,14 +285,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("(", node.stmt, ")")
 
     def visit_DeclRefExpr(self, node: tree.DeclRefExpr):
-        if node.name.startswith("operator"):
-            self.write(node.name.replace("operator", "", 1))
-        else:
-            self.write(node.name)
-        if node.template_arguments:
-            self.write("<")
-            self.comma_list(node.template_arguments)
-            self.write(">")
+        self.write(node.name)
 
     def visit_MaterializeTemporaryExpr(self, node: tree.MaterializeTemporaryExpr):
         self.write(node.expr)
@@ -715,6 +708,11 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(current_type, tree.SubstTemplateTypeParmType):
             return self.visit_type_helper(current_expr, current_type.type)
 
+        if isinstance(current_type, tree.MemberPointerType):
+            cls = self.visit_type_helper("", current_type.cls)
+            return self.visit_type_helper("{}::* {}".format(cls, current_expr),
+                                          current_type.type)
+
         if isinstance(current_type, tree.TemplateSpecializationType):
             template_args = []
             for ta in current_type.template_args or():
@@ -730,6 +728,10 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_AutoType(self, node: tree.AutoType):
         self.write("auto")
+
+    def visit_MemberPointerType(self, node: tree.MemberPointerType):
+        dump = self.visit_type_helper("", node)
+        self.write(dump)
 
     def visit_InjectedClassNameType(self, node: tree.InjectedClassNameType):
         self.write(node.type.name)
