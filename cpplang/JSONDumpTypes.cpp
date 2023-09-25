@@ -290,6 +290,16 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
         case TemplateArgument::ArgKind::Type:
           Inner.push_back(fullType(Ctx, TA.getAsType()));
           break;
+        case TemplateArgument::ArgKind::Template: {
+            llvm::json::Object InnerExpr;
+            std::string pretty_buffer;
+            llvm::raw_string_ostream pretty_stream(pretty_buffer);
+            TA.getAsTemplate().dump(pretty_stream);
+            InnerExpr["kind"] = "DumpedExpr"; // template dumped as a string
+            InnerExpr["value"] = pretty_buffer;
+            Inner.push_back(std::move(InnerExpr));
+          } break;
+          break;
         case TemplateArgument::ArgKind::Expression: {
             llvm::json::Object InnerExpr;
             std::string pretty_buffer;
@@ -672,6 +682,20 @@ void JSONNodeTypeDumper::Visit(const Type *T) {
     llvm::raw_string_ostream qual_stream(qual_dump);
     JOS.attribute("nested_name", (DependentNameTy->getQualifier()->dump(qual_stream), qual_dump));
     JOS.attribute("attribute_name", DependentNameTy->getIdentifier()->getName());
+  }
+  else if(auto * TemplateSpecializationTy = dyn_cast<TemplateSpecializationType>(T)) {
+    JOS.attribute("node_id", createPointerRepresentation(TemplateSpecializationTy));
+    JOS.attributeBegin("templateArgumentsExtra");
+    JOS.arrayBegin();
+    for(auto TA : TemplateSpecializationTy->template_arguments()) {
+      if(TA.getKind() == TemplateArgument::ArgKind::Template) {
+        std::string qual_dump;
+        llvm::raw_string_ostream qual_stream(qual_dump);
+        JOS.value((TA.getAsTemplate().dump(qual_stream), qual_dump));
+      }
+    }
+    JOS.arrayEnd();
+    JOS.attributeEnd();
   }
   InnerTypeVisitor::Visit(T);
 }
