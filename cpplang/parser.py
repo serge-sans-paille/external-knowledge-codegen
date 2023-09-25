@@ -1738,6 +1738,16 @@ class Parser(object):
         return tree.TypeRef(name=name, subnodes=subnodes)
 
     @parse_debug
+    def parse_TypeAliasTemplateDecl(self, node) -> tree.TypeAliasTemplateDecl:
+        assert node['kind'] == "TypeAliasTemplateDecl"
+        inner_nodes = self.parse_subnodes(node)
+        template_parameters = inner_nodes[:-1]
+        decl = inner_nodes[-1]
+        return tree.TypeAliasTemplateDecl(
+                template_parameters=template_parameters,
+                decl=decl)
+
+    @parse_debug
     def parse_TypeAliasDecl(self, node) -> tree.TypeAliasDecl:
         assert node['kind'] == "TypeAliasDecl"
         name = node['name']
@@ -2492,7 +2502,8 @@ class Parser(object):
             depth = node['depth']
             for parent in self.stack:
                 if parent['kind'] in ('ClassTemplateDecl',
-                                      'ClassTemplatePartialSpecializationDecl'):
+                                      'ClassTemplatePartialSpecializationDecl',
+                                      'TypeAliasTemplateDecl',):
                     if depth != 0:
                         depth -= 1
                     else:

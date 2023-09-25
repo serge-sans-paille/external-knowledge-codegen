@@ -746,6 +746,11 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_TypeOfExprType(self, node: tree.TypeOfExprType):
         self.write("__typeof__(", node.repr, ")")
 
+    def visit_TypeAliasTemplateDecl(self, node: tree.TypeAliasTemplateDecl):
+        self.write("template<")
+        self.comma_list(node.template_parameters)
+        self.write(">\n", node.decl)
+
     def visit_TypeAliasDecl(self, node: tree.TypeAliasDecl):
         self.write("using ", node.name, " = ", node.type, ";")
 
