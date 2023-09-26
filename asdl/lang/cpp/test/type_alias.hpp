@@ -16,3 +16,15 @@ struct alias_holder {
   template<class Q>
   using type1 = Q;
 };
+
+// template template version
+
+template <template <typename...> class O>
+struct D {
+  using type = void;
+};
+
+template <typename T> using P = typename T::P;
+
+using p = D<P>;
+p some();

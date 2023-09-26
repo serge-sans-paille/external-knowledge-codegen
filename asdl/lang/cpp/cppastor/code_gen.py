@@ -1106,6 +1106,9 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_ClassTemplatePartialSpecializationDecl(self, node: tree.ClassTemplateSpecializationDecl):
         self.visit_ClassTemplateSpecializationDecl(node)
 
+    def visit_DumpedExpr(self, node: tree.DumpedExpr):
+        self.write(node.value)
+
     def visit_TemplateArgument(self, node: tree.TemplateArgument):
         if node.type:
             self.write(node.type)

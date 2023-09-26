@@ -2047,7 +2047,7 @@ class Parser(object):
         elif len(inner_nodes) > 1:
             value = inner_nodes
         else:
-            raise NotImplementedError
+            return tree.TemplateArgument(type=None, expr=None, pack=None)
 
         if isinstance(value, tree.Type):
             return tree.TemplateArgument(type=value, expr=None, pack=None)
@@ -2418,10 +2418,20 @@ class Parser(object):
         assert node['kind'] == "TemplateSpecializationType"
         inner_nodes = self.parse_subnodes(node)
         if 'templateName' in node:
+            if 'id' in node:
+                type_info = self.type_informations[node['id']]
+                template_arg_extra = iter(type_info["templateArgumentsExtra"])
+            else:
+                template_arg_extra = iter(())
+
             template_args = [
                     inner_node for inner_node in inner_nodes
                     if isinstance(inner_node, tree.TemplateArgument)
             ]
+
+            for ta in template_args:
+                if ta.expr == ta.type == ta.pack == None:
+                    ta.expr = tree.DumpedExpr(value=next(template_arg_extra))
             name = node['templateName']
         elif 'name' in node:
             name = node['name']
