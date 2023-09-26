@@ -1,5 +1,5 @@
 #include <cassert>
-// #include <ccomplex> // uses template
+#include <ccomplex> // uses template
 #include <cctype>
 #include <cerrno>
 #include <cfenv>
@@ -18,7 +18,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-//#include <ctgmath>  // uses template
+#include <ctgmath>  // uses template
 #include <ctime>
 #include <cwchar>
 #include <cwctype>
