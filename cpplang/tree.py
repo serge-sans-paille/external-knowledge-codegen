@@ -878,6 +878,10 @@ class DeclRefExpr(Expression):
     attrs = ("name",)
 
 
+class DependentScopeDeclRefExpr(Expression):
+    attrs = ("name",)
+
+
 class ParenListExpr(Expression):
     attrs = ("exprs",)
 

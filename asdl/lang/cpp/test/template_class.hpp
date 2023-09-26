@@ -110,3 +110,12 @@ struct injected {
   template<class Tp>
   injected<Tp> bar();
 };
+
+// Injected template, dependent class ref and integral template
+template <typename E> struct RR;
+
+template <unsigned int I, typename H, int = RR<H>::value> struct base;
+
+template <unsigned int I, typename H> struct base<I, H, 1> {
+  base() = default;
+};
