@@ -290,6 +290,14 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
         case TemplateArgument::ArgKind::Type:
           Inner.push_back(fullType(Ctx, TA.getAsType()));
           break;
+        case TemplateArgument::ArgKind::Integral: {
+            llvm::json::Object InnerValue;
+            InnerValue["kind"] = "IntegerLiteral";
+            InnerValue["inner_type"] = fullType(Ctx, TA.getIntegralType());
+            SmallVector<char> Buffer;
+            InnerValue["value"] = (TA.getAsIntegral().toString(Buffer), Buffer);
+            Inner.push_back(std::move(InnerValue));
+          } break;
         case TemplateArgument::ArgKind::Template: {
             llvm::json::Object InnerExpr;
             std::string pretty_buffer;
@@ -310,7 +318,7 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
             Inner.push_back(std::move(InnerExpr));
           } break;
         default:
-          TA.dump();
+          TemplateSpecializationTy->dump();
           assert(false && "unsupported template argument kind");
       }
     }

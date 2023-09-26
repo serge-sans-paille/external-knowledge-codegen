@@ -687,6 +687,9 @@ class Parser(object):
             return None
 
         name = node['name']
+        # Get rid of template parameters in the name, they are usually just
+        # ignored
+        name = re.sub(r'(.*?)<.*',r'\1', name)
 
         body, args, inits, method_attrs, attrs, exception = self.parse_function_inner(node)
 
@@ -1172,10 +1175,19 @@ class Parser(object):
         return tree.DeclRefExpr(name=name)
 
     @parse_debug
+    def parse_DependentScopeDeclRefExpr(self, node) -> tree.DependentScopeDeclRefExpr:
+        assert node['kind'] == "DependentScopeDeclRefExpr"
+        name = self.get_node_source_code(node) #ref_decl['name']
+        return tree.DependentScopeDeclRefExpr(name=name)
+
+    @parse_debug
     def parse_IntegerLiteral(self, node) -> tree.IntegerLiteral:
         assert node['kind'] == "IntegerLiteral"
         value = node['value']
-        type_ = self.parse_node(self.type_informations[node['id']])
+        if 'inner_type' in node:  # Added by our parser
+            type_ = self.parse_node(node['inner_type'])
+        else:
+            type_ = self.parse_node(self.type_informations[node['id']])
         return tree.IntegerLiteral(type=type_, value=value)
 
     @parse_debug
@@ -2523,7 +2535,8 @@ class Parser(object):
             parent_inner = parent['inner']
             parent_template_params = [
                     n for n in parent_inner
-                    if n['kind'] == 'TemplateTypeParmDecl'
+                    if n['kind'] in ('TemplateTypeParmDecl',
+                                     'NonTypeTemplateParmDecl')
             ]
             name = parent_template_params[index]['name']
         # This happens for lambda becuase they are represented as templated function

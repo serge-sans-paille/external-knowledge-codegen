@@ -287,6 +287,9 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_DeclRefExpr(self, node: tree.DeclRefExpr):
         self.write(node.name)
 
+    def visit_DependentScopeDeclRefExpr(self, node: tree.DependentScopeDeclRefExpr):
+        self.write(node.name)
+
     def visit_MaterializeTemporaryExpr(self, node: tree.MaterializeTemporaryExpr):
         self.write(node.expr)
 
@@ -704,6 +707,9 @@ class SourceGenerator(ExplicitNodeVisitor):
             return "typename {} {}".format(current_type.nested +
                                            current_type.attr,
                                            current_expr)
+
+        if isinstance(current_type, tree.InjectedClassNameType):
+            return self.visit_type_helper(current_expr, current_type.type)
 
         if isinstance(current_type, tree.SubstTemplateTypeParmType):
             return self.visit_type_helper(current_expr, current_type.type)
