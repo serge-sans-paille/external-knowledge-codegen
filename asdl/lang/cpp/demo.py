@@ -59,12 +59,12 @@ def cprint(color: bcolors, string: str, **kwargs) -> None:
 
 
 def removeComments(string: str) -> str:
-    string = re.sub(re.compile("^\\s*#.*\n"), "", string)
-    string = re.sub(re.compile("\\s*#.*\n"), "", string)
+    string = re.sub(re.compile(r"^\s*#.*\n"), "", string)
+    string = re.sub(re.compile(r"\s*#.*\n"), "", string)
     # remove all occurance streamed comments (/*COMMENT */) from string
-    string = re.sub(re.compile("/\*.*?\*/", re.DOTALL), "", string)
+    string = re.sub(re.compile(r"/\*.*?\*/", re.DOTALL), "", string)
     # remove all occurance singleline comments (//COMMENT\n ) from string
-    string = re.sub(re.compile("//.*"), "", string)
+    string = re.sub(re.compile(r"//.*"), "", string)
     return string
 
 
