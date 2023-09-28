@@ -48,3 +48,7 @@ struct X { X(int, float); };
 X create_X() {
   return X(1, 3.14f); // creates a CXXTemporaryObjectExpr
 };
+
+// functional cast to unresolved type
+template<class T>
+T foo(int x) { return T(x);}
