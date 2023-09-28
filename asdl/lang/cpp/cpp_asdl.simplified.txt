@@ -86,6 +86,7 @@ expression = AddrLabelExpr(identifier name)
            | CXXThisExpr
            | CXXThrowExpr(expression? expr)
            | CXXTypeidExpr(expression? expr, type? type)
+           | CXXUnresolvedConstructExpr(expression expr)
            | CallExpr(expression callee, expression* args)
            | CharacterLiteral(identifier value)
            | CompoundAssignOperator(constant opcode, expression lhs, expression rhs)

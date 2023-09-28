@@ -955,6 +955,9 @@ class SourceGenerator(ExplicitNodeVisitor):
                 self.write(" -> ", node.trailing_type)
         self.write(node.body)
 
+    def visit_CXXUnresolvedConstructExpr(self, node:
+                                         tree.CXXUnresolvedConstructExpr):
+        self.write(node.expr)
 
     def visit_CXXNullPtrLiteralExpr(self, node: tree.CXXNullPtrLiteralExpr):
         self.write("nullptr")

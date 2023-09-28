@@ -882,6 +882,10 @@ class DependentScopeDeclRefExpr(Expression):
     attrs = ("name",)
 
 
+class CXXUnresolvedConstructExpr(Expression):
+    attrs = ("expr",)
+
+
 class ParenListExpr(Expression):
     attrs = ("exprs",)
 

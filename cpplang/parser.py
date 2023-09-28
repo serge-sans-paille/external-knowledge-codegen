@@ -1069,6 +1069,11 @@ class Parser(object):
         child, = self.parse_subnodes(node)
         return tree.DefaultStmt(stmt=self.as_statement(child))
 
+    def parse_CXXUnresolvedConstructExpr(self, node) -> tree.CXXUnresolvedConstructExpr:
+        assert node['kind'] == 'CXXUnresolvedConstructExpr'
+        expr, = self.parse_subnodes(node)
+        return tree.CXXUnresolvedConstructExpr(expr=expr)
+
     def parse_SizeOfPackExpr(self, node) -> tree.SizeOfPackExpr:
         assert node['kind'] == 'SizeOfPackExpr'
         name = node['name']
