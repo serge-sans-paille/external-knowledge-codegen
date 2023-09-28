@@ -1374,7 +1374,8 @@ class Parser(object):
             sign = node['sign']
         else:
             qual_type = node['type']['qualType']
-            match = re.match('^((?:(?:un)signed)?) ?_BitInt\(([0-9]+)\)$', qual_type)
+            match = re.match(r'^((?:(?:un)signed)?) ?_BitInt\(([0-9]+)\)$',
+                             qual_type)
             sign, size = match.groups()
 
         return tree.BitIntType(size=size, sign=sign)
