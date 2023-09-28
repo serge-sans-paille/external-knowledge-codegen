@@ -373,7 +373,7 @@ static llvm::json::Object fullType(const ASTContext &Ctx, QualType T) {
 
 class JSONNodeTypeDumper
     : public ConstStmtVisitor<JSONNodeTypeDumper>,
-      public ConstAttrVisitor<JSONNodeDumper>,
+      public ConstAttrVisitor<JSONNodeTypeDumper>,
       public TypeVisitor<JSONNodeTypeDumper>,
       public ConstDeclVisitor<JSONNodeTypeDumper>,
       public NodeStreamer {
@@ -381,14 +381,10 @@ class JSONNodeTypeDumper
 
   const SourceManager &SM;
   ASTContext& Ctx;
-  ASTNameGenerator ASTNameGen;
   PrintingPolicy PrintPolicy;
-  const comments::CommandTraits *Traits;
-  StringRef LastLocFilename, LastLocPresumedFilename;
-  unsigned LastLocLine, LastLocPresumedLine;
 
   using InnerStmtVisitor = ConstStmtVisitor<JSONNodeTypeDumper>;
-  using InnerAttrVisitor = ConstAttrVisitor<JSONNodeDumper>;
+  using InnerAttrVisitor = ConstAttrVisitor<JSONNodeTypeDumper>;
   using InnerTypeVisitor = TypeVisitor<JSONNodeTypeDumper>;
   using InnerDeclVisitor = ConstDeclVisitor<JSONNodeTypeDumper>;
 
@@ -400,15 +396,11 @@ class JSONNodeTypeDumper
     return "0x" + llvm::utohexstr(reinterpret_cast<uint64_t>(Ptr), true);
   }
 
-  StringRef getCommentCommandName(unsigned CommandID) const;
-
 public:
   JSONNodeTypeDumper(raw_ostream &OS, const SourceManager &SrcMgr, ASTContext &Ctx,
-                 const PrintingPolicy &PrintPolicy,
-                 const comments::CommandTraits *Traits)
-      : NodeStreamer(OS), SM(SrcMgr), Ctx(Ctx), ASTNameGen(Ctx),
-        PrintPolicy(PrintPolicy), Traits(Traits), LastLocLine(0),
-        LastLocPresumedLine(0)
+                 const PrintingPolicy &PrintPolicy)
+      : NodeStreamer(OS), SM(SrcMgr), Ctx(Ctx),
+        PrintPolicy(PrintPolicy)
 {}
 
   void Visit(const Attr *A) {
@@ -665,8 +657,7 @@ public:
     InnerDeclVisitor::Visit(D);
   }
 
-  void Visit(const GCCAsmStmt * S) {
-  }
+  void Visit(const GCCAsmStmt * S) {}
 
   void Visit(const comments::Comment *C, const comments::FullComment *FC) {}
   void Visit(const TemplateArgument &TA, SourceRange R = {},
