@@ -821,7 +821,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write(node.name)
 
     def visit_LValueReferenceType(self, node: tree.LValueReferenceType):
-        self.write(node.type)
+        self.write(node.type, "&")
 
     def visit_RValueReferenceType(self, node: tree.RValueReferenceType):
         self.write(node.type)
