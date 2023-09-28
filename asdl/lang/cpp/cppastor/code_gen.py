@@ -1408,7 +1408,19 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("this")
 
     def visit_FriendDecl(self, node: tree.FriendDecl):
-        self.write("friend ", node.type, ";")
+        if node.raw_decl:
+            self.write("friend ", node.raw_decl, ";")
+        else:
+            if isinstance(node.decl, (tree.ClassTemplateDecl,
+                                      tree.FunctionTemplateDecl)):
+                self.write("template<")
+                self.comma_list(node.decl.template_parameters)
+                self.write(">\n")
+                decl = node.decl.decl
+            else:
+                decl = node.decl
+            self.write("friend ", decl)
+
         self.newline(extra=1)
 
     def visit_CXXStdInitializerListExpr(self, node: tree.CXXStdInitializerListExpr):

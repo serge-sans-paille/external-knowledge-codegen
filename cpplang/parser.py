@@ -548,6 +548,10 @@ class Parser(object):
                 asm_infos['labels'] = [x['label'] for x in child.get('labels',
                                                                      [])]
 
+            # FIXME: skipping here means we're losing some attributes.
+            if 'node_id' not in child:
+                continue
+
             for field in ('aliasee', 'cleanup_function', 'deprecation_message',
                           'section_name', 'visibility', 'tls_model', 'name',
                           'source_index', "size_index", 'nmemb_index',
@@ -2286,8 +2290,15 @@ class Parser(object):
     @parse_debug
     def parse_FriendDecl(self, node) -> tree.FriendDecl:
         assert node['kind'] == "FriendDecl"
-        type_ = node['type']['qualType']
-        return tree.FriendDecl(type=type_)
+        subnodes = self.parse_subnodes(node)
+        if subnodes:
+            decl, = subnodes
+            raw_decl = None
+        else:
+            decl = None
+            raw_decl = node['type']['qualType']
+
+        return tree.FriendDecl(decl=decl, raw_decl=raw_decl)
 
     @parse_debug
     def parse_CXXStdInitializerListExpr(self, node) -> tree.CXXStdInitializerListExpr:

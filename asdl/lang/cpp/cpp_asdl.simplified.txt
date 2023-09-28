@@ -15,7 +15,7 @@ declaration = AccessSpecDecl(access_spec access_spec)
             | EmptyDecl
             | EnumDecl(identifier? name, enum_field* fields)
             | FieldDecl(identifier name, type type, expression? init, expression? bitwidth, constant? type_qualifier, attribute* attributes)
-            | FriendDecl(identifier type)
+            | FriendDecl(declaration? decl, constant? raw_decl)
             | FunctionDecl(identifier name, type return_type, constant? storage, constant? variadic, constant? inline, constant? trailing_return, exception_spec? exception, statement? body, attribute* attributes, parameter* parameters)
             | FunctionTemplateDecl(template_parameter* template_parameters, declaration decl)
             | NamespaceDecl(identifier? name, constant? inline, declaration* decls)

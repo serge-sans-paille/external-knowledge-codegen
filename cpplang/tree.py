@@ -1257,7 +1257,7 @@ class CStyleCastExpr(Expression):
 
 
 class FriendDecl(Declaration):
-    attrs = ("type",)
+    attrs = ("decl", "raw_decl",)
 
 
 class Base(Node):
