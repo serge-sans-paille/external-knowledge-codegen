@@ -119,3 +119,17 @@ template <unsigned int I, typename H, int = RR<H>::value> struct base;
 template <unsigned int I, typename H> struct base<I, H, 1> {
   base() = default;
 };
+
+// Parameter pack
+template<unsigned int Idx, typename... Elements>
+  struct Tuple_impl;
+
+template<unsigned int Idx, typename Head, typename... Tail>
+  struct Tuple_impl<Idx, Head, Tail...>
+  : public Tuple_impl<Idx + 1, Tail...>
+  {
+    static Head
+    M_head(Tuple_impl<Idx, Head, Tail...>&t) ;
+
+
+  };

@@ -2061,14 +2061,26 @@ class Parser(object):
         else:
             return tree.TemplateArgument(type=None, expr=None, pack=None)
 
+        assert value is not None
+
         if isinstance(value, tree.Type):
             return tree.TemplateArgument(type=value, expr=None, pack=None)
         elif isinstance(value, tree.Expression):
             return tree.TemplateArgument(type=None, expr=value, pack=None)
         elif isinstance(value, list):
+            assert all(isinstance(elt, tree.TemplateArgument) for elt in value)
             return tree.TemplateArgument(type=None, expr=None, pack=value)
         else:
             raise NotImplementedError
+
+    @parse_debug
+    def parse_TemplateArgumentPack(self, node):
+        # A kind of node that only exists because we forge it in our custom json
+        # generator
+        assert node['kind'] == "TemplateArgumentPack"
+        inner_nodes = self.parse_subnodes(node)
+        return inner_nodes
+
 
     @parse_debug
     def parse_SubstTemplateTypeParmType(self, node) -> tree.SubstTemplateTypeParmType:
@@ -2448,14 +2460,20 @@ class Parser(object):
         elif 'name' in node:
             name = node['name']
             template_args = []
-            for inner_node in inner_nodes:
-                if isinstance(inner_node, tree.Type):
-                    ta = tree.TemplateArgument(type=inner_node, expr=None)
-                elif isinstance(inner_node, tree.Expression):
-                    ta = tree.TemplateArgument(type=None, expr=inner_node)
+            def to_template_argument(obj):
+                if isinstance(obj, tree.Type):
+                    ta = tree.TemplateArgument(type=obj)
+                elif isinstance(obj, tree.Expression):
+                    ta = tree.TemplateArgument(expr=obj)
+                elif isinstance(obj, list):
+                    ta = tree.TemplateArgument(pack=[to_template_argument(elt)
+                                                     for elt in obj])
                 else:
                     raise NotImplementedError
-                template_args.append(ta)
+                return ta
+
+            for inner_node in inner_nodes:
+                template_args.append(to_template_argument(inner_node))
         else:
             raise NotImplementedError
         return tree.TemplateSpecializationType(name=name,

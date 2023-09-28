@@ -45,6 +45,52 @@ namespace clang {
 
 static llvm::json::Object fullType(const ASTContext &Ctx, QualType T);
 
+static llvm::json::Object templateArgument(const ASTContext &Ctx, TemplateArgument TA) {
+  switch(TA.getKind()) {
+    case TemplateArgument::ArgKind::Type:
+      return fullType(Ctx, TA.getAsType());
+    case TemplateArgument::ArgKind::Integral: {
+        llvm::json::Object InnerValue;
+        InnerValue["kind"] = "IntegerLiteral";
+        InnerValue["inner_type"] = fullType(Ctx, TA.getIntegralType());
+        SmallVector<char> Buffer;
+        InnerValue["value"] = (TA.getAsIntegral().toString(Buffer), Buffer);
+        return InnerValue;
+      }
+    case TemplateArgument::ArgKind::Template: {
+        llvm::json::Object InnerExpr;
+        std::string pretty_buffer;
+        llvm::raw_string_ostream pretty_stream(pretty_buffer);
+        TA.getAsTemplate().dump(pretty_stream);
+        InnerExpr["kind"] = "DumpedExpr"; // template dumped as a string
+        InnerExpr["value"] = pretty_buffer;
+        return InnerExpr;
+      }
+    case TemplateArgument::ArgKind::Expression: {
+        llvm::json::Object InnerExpr;
+        std::string pretty_buffer;
+        llvm::raw_string_ostream pretty_stream(pretty_buffer);
+        TA.getAsExpr()->printPretty(pretty_stream, nullptr, PrintingPolicy(Ctx.getLangOpts()));
+        InnerExpr["kind"] = "DumpedExpr"; // expression dumped as a string
+        InnerExpr["value"] = pretty_buffer;
+        return InnerExpr;
+      }
+    case TemplateArgument::ArgKind::Pack: {
+        llvm::json::Object InnerPack;
+        llvm::json::Array InnerPackElt;
+        for(auto TAElt : TA.pack_elements()) {
+          InnerPackElt.push_back(templateArgument(Ctx, TAElt));
+        }
+        InnerPack["kind"] = "TemplateArgumentPack";
+        InnerPack["inner"] = std::move(InnerPackElt);
+        return InnerPack;
+      }
+    default:
+      assert(false && "unsupported template argument kind");
+      return {};
+  }
+}
+
 static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
   llvm::json::Object Ret;
   if(!Ty)
@@ -286,41 +332,7 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Ret["name"] = TemplateSpecializationTy->getTemplateName().getAsTemplateDecl()->getName();
     llvm::json::Array Inner;
     for(auto& TA : TemplateSpecializationTy->template_arguments()) {
-      switch(TA.getKind()) {
-        case TemplateArgument::ArgKind::Type:
-          Inner.push_back(fullType(Ctx, TA.getAsType()));
-          break;
-        case TemplateArgument::ArgKind::Integral: {
-            llvm::json::Object InnerValue;
-            InnerValue["kind"] = "IntegerLiteral";
-            InnerValue["inner_type"] = fullType(Ctx, TA.getIntegralType());
-            SmallVector<char> Buffer;
-            InnerValue["value"] = (TA.getAsIntegral().toString(Buffer), Buffer);
-            Inner.push_back(std::move(InnerValue));
-          } break;
-        case TemplateArgument::ArgKind::Template: {
-            llvm::json::Object InnerExpr;
-            std::string pretty_buffer;
-            llvm::raw_string_ostream pretty_stream(pretty_buffer);
-            TA.getAsTemplate().dump(pretty_stream);
-            InnerExpr["kind"] = "DumpedExpr"; // template dumped as a string
-            InnerExpr["value"] = pretty_buffer;
-            Inner.push_back(std::move(InnerExpr));
-          } break;
-          break;
-        case TemplateArgument::ArgKind::Expression: {
-            llvm::json::Object InnerExpr;
-            std::string pretty_buffer;
-            llvm::raw_string_ostream pretty_stream(pretty_buffer);
-            TA.getAsExpr()->printPretty(pretty_stream, nullptr, PrintingPolicy(Ctx.getLangOpts()));
-            InnerExpr["kind"] = "DumpedExpr"; // expression dumped as a string
-            InnerExpr["value"] = pretty_buffer;
-            Inner.push_back(std::move(InnerExpr));
-          } break;
-        default:
-          TemplateSpecializationTy->dump();
-          assert(false && "unsupported template argument kind");
-      }
+      Inner.push_back(templateArgument(Ctx, TA));
     }
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
@@ -357,6 +369,7 @@ static llvm::json::Object fullType(const ASTContext &Ctx, QualType T) {
     return Ret;
   }
 }
+
 
 class JSONNodeTypeDumper
     : public ConstStmtVisitor<JSONNodeTypeDumper>,

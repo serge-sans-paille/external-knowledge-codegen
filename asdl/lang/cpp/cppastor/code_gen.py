@@ -724,8 +724,13 @@ class SourceGenerator(ExplicitNodeVisitor):
             for ta in current_type.template_args or():
                 if ta.type:
                     template_args.append(self.visit_type_helper("", ta.type))
-                else:
+                elif ta.expr:
                     template_args.append(ta.expr.value)
+                elif ta.pack:
+                    acc = []
+                    for pack_elt in ta.pack:
+                        acc.append(self.visit_type_helper("", pack_elt))
+                    template_args.append(", ".join(acc))
             return "{}<{}> {}".format(current_type.name,
                                       ", ".join(template_args),
                                       current_expr)
@@ -1120,6 +1125,8 @@ class SourceGenerator(ExplicitNodeVisitor):
             self.write(node.type)
         elif node.expr:
             self.write(node.expr)
+        elif node.pack:
+            self.comma_list(node.pack)
         else:
             raise ValueError("should have one field set")
 
