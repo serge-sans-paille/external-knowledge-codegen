@@ -152,12 +152,16 @@ def roundtrip(cpp_code: str = None, filepath: str = None,
 
     # get the (domain-specific) cpp AST of the example Cpp code snippet
     logger.debug(f'Cpp code: \n{cpp_code}')
-    if member:
-        cpp_ast = cpplang.parse.parse_member_declaration(
-            s=cpp_code, filepath=filepath, compile_command=compile_command)
-    else:
-        cpp_ast = cpplang.parse.parse(
-            s=cpp_code, filepath=filepath, compile_command=compile_command)
+    try:
+        if member:
+            cpp_ast = cpplang.parse.parse_member_declaration(
+                s=cpp_code, filepath=filepath, compile_command=compile_command)
+        else:
+            cpp_ast = cpplang.parse.parse(s=cpp_code, filepath=filepath,
+                                          compile_command=compile_command)
+    except subprocess.CalledProcessError:
+        # This has already been handled in the caller
+        return False
     # convert the cpp AST into general-purpose ASDL AST used by tranX
     asdl_ast = cpp_ast_to_asdl_ast(cpp_ast, grammar)
     logger.debug(f'String representation of the ASDL AST:')
