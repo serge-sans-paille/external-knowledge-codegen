@@ -1,10 +1,10 @@
 // C++98
 
 #include <bitset>
-//#include <functional>
+#include <functional>
 #include <typeinfo>
 #include <utility>
-//#include <memory>
+#include <memory>
 #include <new>
 #include <limits>
 #include <exception>
@@ -12,11 +12,11 @@
 #include <string>
 #include <deque>
 #include <list>
-//#include <map>
-//#include <queue>
+#include <map>
+#include <queue>
 #include <set>
 #include <stack>
-//#include <vector>
+#include <vector>
 #include <iterator>
 #include <algorithm>
 #include <complex>
