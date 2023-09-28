@@ -28,3 +28,14 @@ template <typename T> using P = typename T::P;
 
 using p = D<P>;
 p some();
+
+// unresolved version
+template<class T>
+struct Base;
+
+template<class T>
+struct bar : Base<T> {
+using typename Base<T>::foo;
+using foofoo = foo;
+foo x;
+};

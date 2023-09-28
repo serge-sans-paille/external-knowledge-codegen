@@ -1323,6 +1323,23 @@ class Parser(object):
         decls = self.parse_subnodes(node)
         return tree.NamespaceDecl(name=name, inline=inline, decls=decls)
 
+    @parse_debug
+    def parse_UnresolvedUsingTypenameDecl(self, node) -> tree.UnresolvedUsingTypenameDecl:
+        assert node['kind'] == "UnresolvedUsingTypenameDecl"
+        desc = self.get_node_source_code(node)
+        assert desc.startswith('using')
+        name = desc[len('using'):].strip()
+        assert name.endswith(node['name'])
+        return tree.UnresolvedUsingTypenameDecl(name=name)
+
+    @parse_debug
+    def parse_UnresolvedUsingType(self, node) -> tree.UnresolvedUsingType:
+        assert node['kind'] == "UnresolvedUsingType"
+        name = node.get('name')
+        if name is None:
+            name = node['decl']['name']
+        return tree.UnresolvedUsingType(name=name)
+
     #@parse_debug
     #def parse_Namespace(self, node) -> tree.Namespace:
         #assert node['kind'] == "Namespace"

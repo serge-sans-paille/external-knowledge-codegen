@@ -347,6 +347,9 @@ static llvm::json::Object fullType(const ASTContext &Ctx, const Type * Ty) {
     Inner.push_back(fullType(Ctx, MemberPointerTy->getPointeeType()));
     Ret["inner"] = llvm::json::Value(std::move(Inner));
   }
+  else if(auto* UnresolvedUsingTy = dyn_cast<UnresolvedUsingType>(Ty)) {
+    Ret["name"] = UnresolvedUsingTy->getDecl()->getName();
+  }
   else {
     Ty->dump();
     assert(false && "unsupported type");
