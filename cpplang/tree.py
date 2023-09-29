@@ -883,7 +883,7 @@ class DependentScopeDeclRefExpr(Expression):
 
 
 class CXXUnresolvedConstructExpr(Expression):
-    attrs = ("expr",)
+    attrs = ("type", "expr",)
 
 
 class ParenListExpr(Expression):
