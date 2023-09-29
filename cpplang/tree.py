@@ -882,6 +882,10 @@ class DependentScopeDeclRefExpr(Expression):
     attrs = ("name",)
 
 
+class CXXUnresolvedConstructExpr(Expression):
+    attrs = ("expr",)
+
+
 class ParenListExpr(Expression):
     attrs = ("exprs",)
 
@@ -1253,7 +1257,7 @@ class CStyleCastExpr(Expression):
 
 
 class FriendDecl(Declaration):
-    attrs = ("type",)
+    attrs = ("decl", "raw_decl",)
 
 
 class Base(Node):

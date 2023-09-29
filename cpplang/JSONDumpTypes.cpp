@@ -373,7 +373,7 @@ static llvm::json::Object fullType(const ASTContext &Ctx, QualType T) {
 
 class JSONNodeTypeDumper
     : public ConstStmtVisitor<JSONNodeTypeDumper>,
-      public ConstAttrVisitor<JSONNodeDumper>,
+      public ConstAttrVisitor<JSONNodeTypeDumper>,
       public TypeVisitor<JSONNodeTypeDumper>,
       public ConstDeclVisitor<JSONNodeTypeDumper>,
       public NodeStreamer {
@@ -381,14 +381,10 @@ class JSONNodeTypeDumper
 
   const SourceManager &SM;
   ASTContext& Ctx;
-  ASTNameGenerator ASTNameGen;
   PrintingPolicy PrintPolicy;
-  const comments::CommandTraits *Traits;
-  StringRef LastLocFilename, LastLocPresumedFilename;
-  unsigned LastLocLine, LastLocPresumedLine;
 
   using InnerStmtVisitor = ConstStmtVisitor<JSONNodeTypeDumper>;
-  using InnerAttrVisitor = ConstAttrVisitor<JSONNodeDumper>;
+  using InnerAttrVisitor = ConstAttrVisitor<JSONNodeTypeDumper>;
   using InnerTypeVisitor = TypeVisitor<JSONNodeTypeDumper>;
   using InnerDeclVisitor = ConstDeclVisitor<JSONNodeTypeDumper>;
 
@@ -400,15 +396,11 @@ class JSONNodeTypeDumper
     return "0x" + llvm::utohexstr(reinterpret_cast<uint64_t>(Ptr), true);
   }
 
-  StringRef getCommentCommandName(unsigned CommandID) const;
-
 public:
   JSONNodeTypeDumper(raw_ostream &OS, const SourceManager &SrcMgr, ASTContext &Ctx,
-                 const PrintingPolicy &PrintPolicy,
-                 const comments::CommandTraits *Traits)
-      : NodeStreamer(OS), SM(SrcMgr), Ctx(Ctx), ASTNameGen(Ctx),
-        PrintPolicy(PrintPolicy), Traits(Traits), LastLocLine(0),
-        LastLocPresumedLine(0)
+                 const PrintingPolicy &PrintPolicy)
+      : NodeStreamer(OS), SM(SrcMgr), Ctx(Ctx),
+        PrintPolicy(PrintPolicy)
 {}
 
   void Visit(const Attr *A) {
@@ -665,8 +657,7 @@ public:
     InnerDeclVisitor::Visit(D);
   }
 
-  void Visit(const GCCAsmStmt * S) {
-  }
+  void Visit(const GCCAsmStmt * S) {}
 
   void Visit(const comments::Comment *C, const comments::FullComment *FC) {}
   void Visit(const TemplateArgument &TA, SourceRange R = {},
@@ -678,20 +669,114 @@ public:
   void Visit(const concepts::Requirement *R) {}
   void Visit(const APValue &Value, QualType Ty) {}
 
+
+llvm::json::Object createQualType(QualType QT, bool Desugar = true) {
+  SplitQualType SQT = QT.split();
+  llvm::json::Object Ret{{"qualType", QualType::getAsString(SQT, PrintPolicy)}};
+
+  if (Desugar && !QT.isNull()) {
+    SplitQualType DSQT = QT.getSplitDesugaredType();
+    if (DSQT != SQT)
+      Ret["desugaredQualType"] = QualType::getAsString(DSQT, PrintPolicy);
+    if (const auto *TT = QT->getAs<TypedefType>())
+      Ret["typeAliasDeclId"] = createPointerRepresentation(TT->getDecl());
+  }
+  return Ret;
+}
+
+
+  void writeBareDeclRef(const Decl *D) {
+  JOS.attribute("id", createPointerRepresentation(D));
+  if (!D)
+    return;
+
+  JOS.attribute("kind", (llvm::Twine(D->getDeclKindName()) + "Decl").str());
+  if (const auto *ND = dyn_cast<NamedDecl>(D))
+    JOS.attribute("name", ND->getDeclName().getAsString());
+  if (const auto *VD = dyn_cast<ValueDecl>(D))
+    JOS.attribute("type", createQualType(VD->getType()));
+  }
+
 };
 
 class JSONTypeDumper : public ASTNodeTraverser<JSONTypeDumper, JSONNodeTypeDumper> {
   JSONNodeTypeDumper NodeDumper;
+  template <typename SpecializationDecl>
+  void writeTemplateDeclSpecialization(const SpecializationDecl *SD,
+                                       bool DumpExplicitInst,
+                                       bool DumpRefOnly) {
+    bool DumpedAny = false;
+    for (const auto *RedeclWithBadType : SD->redecls()) {
+      // FIXME: The redecls() range sometimes has elements of a less-specific
+      // type. (In particular, ClassTemplateSpecializationDecl::redecls() gives
+      // us TagDecls, and should give CXXRecordDecls).
+      const auto *Redecl = dyn_cast<SpecializationDecl>(RedeclWithBadType);
+      if (!Redecl) {
+        // Found the injected-class-name for a class template. This will be
+        // dumped as part of its surrounding class so we don't need to dump it
+        // here.
+        assert(isa<CXXRecordDecl>(RedeclWithBadType) &&
+               "expected an injected-class-name");
+        continue;
+      }
 
+      switch (Redecl->getTemplateSpecializationKind()) {
+      case TSK_ExplicitInstantiationDeclaration:
+      case TSK_ExplicitInstantiationDefinition:
+        if (!DumpExplicitInst)
+          break;
+        [[fallthrough]];
+      case TSK_Undeclared:
+      case TSK_ImplicitInstantiation:
+        if (DumpRefOnly)
+          NodeDumper.AddChild([=] { NodeDumper.writeBareDeclRef(Redecl); });
+        else
+          Visit(Redecl);
+        DumpedAny = true;
+        break;
+      case TSK_ExplicitSpecialization:
+        break;
+      }
+    }
 
+    // Ensure we dump at least one decl for each specialization.
+    if (!DumpedAny)
+      NodeDumper.AddChild([=] { NodeDumper.writeBareDeclRef(SD); });
+  }
+
+  template <typename TemplateDecl>
+  void writeTemplateDecl(const TemplateDecl *TD, bool DumpExplicitInst) {
+    // FIXME: it would be nice to dump template parameters and specializations
+    // to their own named arrays rather than shoving them into the "inner"
+    // array. However, template declarations are currently being handled at the
+    // wrong "level" of the traversal hierarchy and so it is difficult to
+    // achieve without losing information elsewhere.
+
+    dumpTemplateParameters(TD->getTemplateParameters());
+
+    Visit(TD->getTemplatedDecl());
+
+    for (const auto *Child : TD->specializations())
+      writeTemplateDeclSpecialization(Child, DumpExplicitInst,
+                                      !TD->isCanonicalDecl());
+  }
 
 public:
   JSONTypeDumper(raw_ostream &OS, const SourceManager &SrcMgr, ASTContext &Ctx,
              const PrintingPolicy &PrintPolicy,
              const comments::CommandTraits *Traits)
-      : NodeDumper(OS, SrcMgr, Ctx, PrintPolicy, Traits) {}
+      : NodeDumper(OS, SrcMgr, Ctx, PrintPolicy) {}
 
   JSONNodeTypeDumper &doGetNodeDelegate() { return NodeDumper; }
+  void VisitFunctionTemplateDecl(const FunctionTemplateDecl *FTD) {
+    writeTemplateDecl(FTD, true);
+  }
+  void VisitClassTemplateDecl(const ClassTemplateDecl *CTD) {
+    writeTemplateDecl(CTD, false);
+  }
+  void VisitVarTemplateDecl(const VarTemplateDecl *VTD) {
+    writeTemplateDecl(VTD, false);
+  }
 
 };
 
