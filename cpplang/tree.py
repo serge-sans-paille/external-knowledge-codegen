@@ -323,7 +323,7 @@ class RecordDecl(TypeDeclaration):
 
 
 class CXXConstructorDecl(Declaration):
-    attrs = ("name", "exception", "defaulted", "body", "attributes", "parameters", "initializers",
+    attrs = ("name", "constexpr", "exception", "defaulted", "body", "attributes", "parameters", "initializers",
              "explicit",)
 
 
@@ -561,14 +561,14 @@ class Member(NonEmptyDeclaration):
 
 
 class CXXMethodDecl(Declaration):
-    attrs = ("name", "return_type", "storage", "variadic", "inline",
+    attrs = ("name", "constexpr", "return_type", "storage", "variadic", "inline",
              "trailing_return", "exception",
              "virtual", "const", "defaulted", "method_attributes", "ref_qualifier",
              "body", "attributes", "parameters",)
 
 
 class FunctionDecl(Declaration):
-    attrs = ("name", "return_type", "storage", "variadic", "inline",
+    attrs = ("name", "constexpr", "return_type", "storage", "variadic", "inline",
              "trailing_return", "exception",
              "body", "attributes", "parameters")
 
@@ -787,7 +787,7 @@ class StaticAssertDecl(Declaration):
 
 
 class VarDecl(Declaration):
-    attrs = ("name", "type", "storage_class", "init_mode", "implicit",
+    attrs = ("name", "constexpr", "type", "storage_class", "init_mode", "implicit",
              "referenced", "init", "attributes", "tls")
 
 

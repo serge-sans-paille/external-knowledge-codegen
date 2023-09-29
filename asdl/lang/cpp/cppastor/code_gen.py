@@ -500,11 +500,16 @@ class SourceGenerator(ExplicitNodeVisitor):
         self.write("final")
 
     def visit_VarDecl(self, node: tree.VarDecl):
+        if node.constexpr:
+            self.write("constexpr ")
+
         if node.storage_class:
             self.write(node.storage_class, " ")
 
         if node.attributes:
             for attribute in node.attributes:
+                if attribute == 'const' and node.constexpr:
+                    continue # constexpr objects are implicitly const, but we must not repeat the const word
                 self.write(attribute, " ")
 
         if node.tls:
@@ -515,7 +520,7 @@ class SourceGenerator(ExplicitNodeVisitor):
         if node.implicit and node.referenced:
             self.write(node.subnodes[0])
         else:
-            self.write(self.visit_type_helper(node.name, node.type))
+            self.write(self.visit_type_helper(node.name, node.type, node.constexpr))
             if node.init_mode:
                 if node.init_mode == 'call':
                     self.write("(", node.init, ")")
@@ -588,7 +593,7 @@ class SourceGenerator(ExplicitNodeVisitor):
     def visit_CXXDefaultInitExpr(self, node: tree.CXXDefaultInitExpr):
         self.write(node.expression)
 
-    def visit_type_helper(self, current_expr, current_type):
+    def visit_type_helper(self, current_expr, current_type, is_constexpr=False):
         if isinstance(current_type, tree.BitIntType):
             return "{}_BitInt({}) {}".format("" if current_type.sign == "signed" else
                                              "unsigned ",
@@ -599,61 +604,66 @@ class SourceGenerator(ExplicitNodeVisitor):
             return "{} {}".format(current_type.name, current_expr)
 
         if isinstance(current_type, tree.PackExpansionType):
-            type_ = self.visit_type_helper("", current_type.type)
+            type_ = self.visit_type_helper("", current_type.type, is_constexpr)
             return "{}... {}".format(type_, current_expr)
 
         if isinstance(current_type, tree.ComplexType):
-            return "_Complex " + self.visit_type_helper(current_expr, current_type.type)
+            return "_Complex " + self.visit_type_helper(current_expr, current_type.type, is_constexpr)
 
         if isinstance(current_type, tree.ElaboratedType):
             if isinstance(current_type.type, tree.RecordType):
-                return"struct " + self.visit_type_helper(current_expr, current_type.type)
+                return"struct " + self.visit_type_helper(current_expr, current_type.type, is_constexpr)
             else:
-                return self.visit_type_helper(current_expr, current_type.type)
+                return self.visit_type_helper(current_expr, current_type.type, is_constexpr)
         if isinstance(current_type, tree.FunctionNoProtoType):
-            argument_types = ', '.join(self.visit_type_helper("", ty)
+            argument_types = ', '.join(self.visit_type_helper("", ty, is_constexpr)
                                        for ty in parameter_types)
             return self.visit_type_helper(
                     "{}()".format(current_expr),
-                    current_type.return_type)
+                    current_type.return_type, is_constexpr)
         if isinstance(current_type, tree.FunctionProtoType):
             parameter_types = current_type.parameter_types or []
-            argument_types = ', '.join(self.visit_type_helper("", ty)
+            argument_types = ', '.join(self.visit_type_helper("", ty, is_constexpr)
                                        for ty in parameter_types)
             if current_type.trailing_return:
-                trailing_type  = self.visit_type_helper("", current_type.return_type)
+                trailing_type  = self.visit_type_helper("", current_type.return_type, is_constexpr)
                 return "auto {} ({}) -> {}".format(current_expr, argument_types,
                                                    trailing_type)
             else:
                 return self.visit_type_helper(
                         "{}({})".format(current_expr, argument_types),
-                        current_type.return_type)
+                        current_type.return_type, is_constexpr)
         if isinstance(current_type, tree.ParenType):
             return self.visit_type_helper("({})".format(current_expr),
-                                             current_type.type)
+                                             current_type.type, is_constexpr)
         if isinstance(current_type, tree.DecayedType):
-            return self.visit_type_helper(current_expr, current_type.type)
+            return self.visit_type_helper(current_expr, current_type.type, is_constexpr)
         if isinstance(current_type, tree.PointerType):
             return self.visit_type_helper("*{}".format(current_expr),
-                                             current_type.type)
+                                             current_type.type, is_constexpr)
         if isinstance(current_type, tree.QualType):
             qualified_type = current_type.type
+
             if current_type.qualifiers is None:
-                return self.visit_type_helper(current_expr, qualified_type)
+                return self.visit_type_helper(current_expr, qualified_type, is_constexpr)
+
+            qualifiers = current_type.qualifiers
+            if is_constexpr: # constexpr objects are implicitly const, but we must not repeat the const word
+                qualifiers = qualifiers.replace("const", "")
 
             # west const
             if isinstance(qualified_type, (tree.BuiltinType, tree.RecordType,
                                            tree.AutoType,
                                            tree.TemplateTypeParmType)):
-                return "{} {}".format(current_type.qualifiers,
+                return "{} {}".format(qualifiers,
                                       self.visit_type_helper(current_expr,
-                                                                qualified_type))
+                                                                qualified_type, is_constexpr))
             # east const
             else:
                 return self.visit_type_helper(
-                        "{} {}".format(current_type.qualifiers,
+                        "{} {}".format(qualifiers,
                                        current_expr),
-                        qualified_type)
+                        qualified_type, is_constexpr)
 
         if isinstance(current_type, tree.RecordType):
             return "{} {}".format(current_type.name, current_expr)
@@ -661,27 +671,27 @@ class SourceGenerator(ExplicitNodeVisitor):
         if isinstance(current_type, tree.ConstantArrayType):
             return self.visit_type_helper("{} [{}]".format(current_expr,
                                                               current_type.size),
-                                             current_type.type)
+                                             current_type.type, is_constexpr)
         if isinstance(current_type, tree.DependentSizedArrayType):
             return self.visit_type_helper("{} [{}]".format(current_expr,
                                                               current_type.size_repr),
-                                             current_type.type)
+                                             current_type.type, is_constexpr)
         if isinstance(current_type, tree.VariableArrayType):
             return self.visit_type_helper("{} [{}]".format(current_expr,
                                                               current_type.size_repr),
-                                             current_type.type)
+                                             current_type.type, is_constexpr)
         if isinstance(current_type, tree.IncompleteArrayType):
             return self.visit_type_helper("{} []".format(current_expr),
-                                          current_type.type)
+                                          current_type.type, is_constexpr)
         if isinstance(current_type, tree.VectorType):
-            vector_type = self.visit_type_helper("", current_type.type)
+            vector_type = self.visit_type_helper("", current_type.type, is_constexpr)
             return "__attribute__((vector_size({}))) {} {}".format(current_type.size, vector_type, current_expr)
 
         if isinstance(current_type, tree.LValueReferenceType):
-            return self.visit_type_helper("& " + current_expr, current_type.type)
+            return self.visit_type_helper("& " + current_expr, current_type.type, is_constexpr)
 
         if isinstance(current_type, tree.RValueReferenceType):
-            return self.visit_type_helper("&& " + current_expr, current_type.type)
+            return self.visit_type_helper("&& " + current_expr, current_type.type, is_constexpr)
 
         if isinstance(current_type, tree.TypedefType):
             return "{} {}".format(current_type.name, current_expr)
@@ -709,27 +719,27 @@ class SourceGenerator(ExplicitNodeVisitor):
                                            current_expr)
 
         if isinstance(current_type, tree.InjectedClassNameType):
-            return self.visit_type_helper(current_expr, current_type.type)
+            return self.visit_type_helper(current_expr, current_type.type, is_constexpr)
 
         if isinstance(current_type, tree.SubstTemplateTypeParmType):
-            return self.visit_type_helper(current_expr, current_type.type)
+            return self.visit_type_helper(current_expr, current_type.type, is_constexpr)
 
         if isinstance(current_type, tree.MemberPointerType):
-            cls = self.visit_type_helper("", current_type.cls)
+            cls = self.visit_type_helper("", current_type.cls, is_constexpr)
             return self.visit_type_helper("{}::* {}".format(cls, current_expr),
-                                          current_type.type)
+                                          current_type.type, is_constexpr)
 
         if isinstance(current_type, tree.TemplateSpecializationType):
             template_args = []
             for ta in current_type.template_args or():
                 if ta.type:
-                    template_args.append(self.visit_type_helper("", ta.type))
+                    template_args.append(self.visit_type_helper("", ta.type, is_constexpr))
                 elif ta.expr:
                     template_args.append(ta.expr.value)
                 elif ta.pack:
                     acc = []
                     for pack_elt in ta.pack:
-                        acc.append(self.visit_type_helper("", pack_elt))
+                        acc.append(self.visit_type_helper("", pack_elt, is_constexpr))
                     template_args.append(", ".join(acc))
             return "{}<{}> {}".format(current_type.name,
                                       ", ".join(template_args),
@@ -1333,6 +1343,9 @@ class SourceGenerator(ExplicitNodeVisitor):
         pass
 
     def visit_function_like(self, node):
+        if getattr(node, 'constexpr', None) and not getattr(node, 'defaulted', None):
+            self.write("constexpr ")
+
         if getattr(node, 'attributes', None):
             self.space_list(node.attributes, trailing=True)
 

@@ -699,6 +699,8 @@ class Parser(object):
 
         assert not method_attrs
 
+        constexpr = 'constexpr' if node.get('constexpr') else None
+
         if self.decl_informations.get(node['id'], {}).get('isExplicit'):
             explicit = 'explicit'
         else:
@@ -706,7 +708,9 @@ class Parser(object):
 
         defaulted = self.parse_default(node)
 
-        return tree.CXXConstructorDecl(name=name, exception=exception,
+        return tree.CXXConstructorDecl(name=name,
+                                       constexpr=constexpr,
+                                       exception=exception,
                                        attributes=attrs,
                                        explicit=explicit,
                                        defaulted=defaulted, body=body,
@@ -796,6 +800,7 @@ class Parser(object):
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
         trailing_return = type_info.get("trailingReturn") and "trailing-return"
+        constexpr = 'constexpr' if node.get('constexpr') else None
 
         const = type_info.get('isconst')
         if const:
@@ -813,7 +818,9 @@ class Parser(object):
 
         defaulted = self.parse_default(node)
 
-        return tree.CXXMethodDecl(name=name, return_type=return_type,
+        return tree.CXXMethodDecl(name=name,
+                                  constexpr=constexpr,
+                                  return_type=return_type,
                                   variadic=variadic, parameters=args,
                                   inline=inline, storage=storage,
                                   virtual=virtual,
@@ -836,12 +843,15 @@ class Parser(object):
         inline = "inline" if node.get('inline') else None
         storage = node.get('storageClass')
         trailing_return = type_info.get("trailingReturn") and "trailing-return"
+        constexpr = 'constexpr' if node.get('constexpr') else None
 
         body, args, inits, method_attrs, attrs, exception = self.parse_function_inner(node)
         assert not inits
         assert not method_attrs
 
-        return tree.FunctionDecl(name=name, return_type=return_type,
+        return tree.FunctionDecl(name=name,
+                                 constexpr=constexpr,
+                                 return_type=return_type,
                                  trailing_return=trailing_return,
                                  attributes=attrs,
                                  variadic=variadic, parameters=args,
@@ -1383,7 +1393,8 @@ class Parser(object):
             sign = node['sign']
         else:
             qual_type = node['type']['qualType']
-            match = re.match('^((?:(?:un)signed)?) ?_BitInt\(([0-9]+)\)$', qual_type)
+            match = re.match(r'^((?:(?:un)signed)?) ?_BitInt\(([0-9]+)\)$',
+                             qual_type)
             sign, size = match.groups()
 
         return tree.BitIntType(size=size, sign=sign)
@@ -1417,11 +1428,13 @@ class Parser(object):
             init = None
             init_mode = ''
 
+        constexpr = 'constexpr' if node.get('constexpr') else None
         attributes = inner_nodes
 
         return tree.VarDecl(name=name,
-                            storage_class=storage_class,
                             type=type_,
+                            constexpr=constexpr,
+                            storage_class=storage_class,
                             init_mode=init_mode,
                             implicit=implicit,
                             referenced=referenced,
