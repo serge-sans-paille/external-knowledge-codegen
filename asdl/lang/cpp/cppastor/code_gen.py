@@ -600,6 +600,9 @@ class SourceGenerator(ExplicitNodeVisitor):
                                            current_type.size,
                                            current_expr)
 
+        if isinstance(current_type, tree.UnresolvedUsingType):
+            return "{} {}".format(current_type.name, current_expr)
+
         if isinstance(current_type, tree.BuiltinType):
             return "{} {}".format(current_type.name, current_expr)
 
@@ -1094,6 +1097,13 @@ class SourceGenerator(ExplicitNodeVisitor):
 
     def visit_DefaultStmt(self, node: tree.DefaultStmt):
         self.write("default:\n", node.stmt)
+
+    def visit_UnresolvedUsingTypenameDecl(self, node:
+                                          tree.UnresolvedUsingTypenameDecl):
+        self.write("using ", node.name, ";")
+
+    def visit_UnresolvedUsingType(self, node: tree.UnresolvedUsingType):
+        self.write(node.name)
 
     def visit_ClassTemplateDecl(self, node: tree.ClassTemplateDecl):
         self.write("template<")

@@ -473,6 +473,9 @@ class QualType(Type):
 class RecordType(Type):
     attrs = ("name",)
 
+class UnresolvedUsingType(Type):
+    attrs = "name",
+
 class VectorType(Type):
     attrs = ("type", "size")
 
@@ -1234,6 +1237,9 @@ class CXXConversionDecl(Declaration):
     attrs = ("name", "inline", "exception", "const", "body", "attributes", )
 
 # ------------------------------------------------------------------------------
+
+class UnresolvedUsingTypenameDecl(Declaration):
+    attrs = "name",
 
 
 class EnumConstantDecl(Declaration):
